@@ -1,12 +1,8 @@
 import json
 import os
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
-
-import motor_btc as motor
 
 
 # ============================================================
@@ -22,11 +18,12 @@ st.set_page_config(
 
 HISTORIAL_FILE = "historial_btc_15m.json"
 
-LOCAL_TZ = ZoneInfo("America/Chicago")
-
 
 # ============================================================
 # AUTO REFRESH
+#
+# SOLO REFRESCA LA PANTALLA.
+# NO EJECUTA EL MOTOR.
 # ============================================================
 
 st.html(
@@ -690,6 +687,22 @@ def escala_probabilidad(
 
 
 # ============================================================
+# CARGAR DATOS GUARDADOS POR EL MOTOR
+#
+# IMPORTANTE:
+# LA APP NO EJECUTA motor_btc.py
+# LA APP SOLO LEE EL HISTORIAL.
+# ============================================================
+
+historial = cargar_historial()
+
+analisis = None
+
+if historial:
+    analisis = historial[-1]
+
+
+# ============================================================
 # CABECERA
 # ============================================================
 
@@ -710,7 +723,7 @@ st.html(
 
 
 # ============================================================
-# BOTON + RELOJ
+# BOTON + ESTADO
 # ============================================================
 
 b1, b2 = st.columns(
@@ -725,51 +738,44 @@ with b1:
     ):
         eliminar_historial()
 
+
 with b2:
 
-    hora = datetime.now(
-        LOCAL_TZ
-    )
+    if analisis is not None:
 
-    st.caption(
-        "Actualización: "
-        + hora.strftime(
-            "%m/%d/%Y %I:%M:%S %p"
+        hora_motor = (
+            analisis.get(
+                "hora_local"
+            )
+            or analisis.get(
+                "timestamp"
+            )
+            or "N/D"
         )
-    )
 
-
-# ============================================================
-# ANALISIS LIVE
-# ============================================================
-
-analisis = None
-
-try:
-
-    mercado = (
-        motor.elegir_mercado_actual()
-    )
-
-    if mercado is not None:
-
-        analisis = (
-            motor.analizar_mercado(
-                mercado
+        st.caption(
+            "Última actualización del motor: "
+            + str(
+                hora_motor
             )
         )
 
-except Exception as e:
+    else:
 
-    st.error(
-        f"Error en análisis live: {e}"
-    )
+        st.caption(
+            "Esperando datos del motor."
+        )
 
+
+# ============================================================
+# VERIFICAR ANALISIS
+# ============================================================
 
 if analisis is None:
 
     st.warning(
-        "No hay análisis BTC 15M disponible."
+        "El motor todavía no ha guardado "
+        "ningún análisis."
     )
 
     st.stop()
@@ -827,7 +833,7 @@ st.html(
     <div class="{clase}">
 
         <div class="decision-small">
-            DECISION ACTUAL
+            ULTIMA DECISION DEL MOTOR
         </div>
 
         <div class="decision-big">
@@ -850,7 +856,7 @@ st.html(
 # ============================================================
 
 seccion(
-    "Contrato actual"
+    "Contrato"
 )
 
 c1, c2 = st.columns(2)
@@ -887,7 +893,7 @@ c3, c4 = st.columns(2)
 with c3:
 
     tarjeta(
-        "TIEMPO RESTANTE",
+        "TIEMPO RESTANTE AL ANALIZAR",
         numero(
             analisis.get(
                 "segundos_restantes"
@@ -901,7 +907,7 @@ with c3:
 with c4:
 
     tarjeta(
-        "MINUTO CONTRATO",
+        "MINUTO DE ENTRADA",
         numero(
             analisis.get(
                 "minuto_entrada"
@@ -1041,9 +1047,6 @@ dist_target = float(
     )
     or 0
 )
-
-# La escala se amplía automáticamente
-# si BTC está muy lejos del target.
 
 limite_target = max(
     0.15,
@@ -1926,8 +1929,6 @@ else:
 seccion(
     "Historial y rendimiento"
 )
-
-historial = cargar_historial()
 
 operaciones = [
     x

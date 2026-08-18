@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: prueba-motor-btc-15m
@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Configurar Python
         uses: actions/setup-python@v5
@@ -37,5 +40,55 @@ jobs:
           COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          guardar_historial() {
+            if [ ! -f historial_btc_15m.json ]; then
+              return 0
+            fi
+
+            git add historial_btc_15m.json
+
+            if git diff --cached --quiet; then
+              return 0
+            fi
+
+            echo "[HISTORIAL] Guardando resultados..."
+
+            git commit -m "Actualizar historial BTC 15M"
+
+            if git push origin HEAD:main; then
+              echo "[HISTORIAL] Guardado correctamente."
+            else
+              echo "[HISTORIAL] No se pudo hacer push en este intento."
+            fi
+          }
+
+          guardar_al_salir() {
+            echo "[STOP] Intentando guardar historial antes de salir..."
+            guardar_historial || true
+          }
+
+          trap guardar_al_salir EXIT TERM INT
+
+          (
+            while true
+            do
+              sleep 30
+              guardar_historial || true
+            done
+          ) &
+
+          GUARDADOR_PID=$!
+
           python -u motor_btc.py
+          ESTADO=$?
+
+          kill $GUARDADOR_PID 2>/dev/null || true
+
+          guardar_historial || true
+
+          exit $ESTADO

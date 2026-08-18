@@ -29,11 +29,8 @@ LOCAL_TZ = ZoneInfo("America/Chicago")
 # AUTO REFRESH
 # ============================================================
 
-st.markdown(
-    """
-    <meta http-equiv="refresh" content="10">
-    """,
-    unsafe_allow_html=True,
+st.html(
+    '<meta http-equiv="refresh" content="10">'
 )
 
 
@@ -41,289 +38,400 @@ st.markdown(
 # CSS
 # ============================================================
 
-st.markdown(
+st.html(
     """
 <style>
+:root {
+    --bg0: #02050a;
+    --bg1: #07101d;
+    --panel: rgba(11, 18, 32, .94);
+    --panel2: rgba(15, 23, 42, .92);
+    --border: rgba(148, 163, 184, .16);
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --up: #10b981;
+    --down: #ef4444;
+    --cyan: #38bdf8;
+    --purple: #a855f7;
+}
 
-html, body, [class*="css"] {
-    font-family: Inter, Arial, sans-serif;
+html, body {
+    background: var(--bg0);
 }
 
 .stApp {
     background:
         radial-gradient(
-            circle at 10% 5%,
-            rgba(0, 212, 255, .13),
-            transparent 25%
+            circle at 10% 0%,
+            rgba(56,189,248,.14),
+            transparent 27%
         ),
         radial-gradient(
-            circle at 90% 5%,
-            rgba(168, 85, 247, .14),
+            circle at 90% 0%,
+            rgba(168,85,247,.14),
             transparent 28%
         ),
         linear-gradient(
             180deg,
-            #02050a 0%,
-            #07101d 48%,
-            #02050a 100%
+            var(--bg0) 0%,
+            var(--bg1) 48%,
+            var(--bg0) 100%
         );
+    color: var(--text);
 }
 
 .block-container {
-    max-width: 1500px;
-    padding-top: 1rem;
+    max-width: 1450px;
+    padding-top: .75rem;
     padding-bottom: 4rem;
 }
 
-h1, h2, h3 {
-    color: #f8fafc;
+[data-testid="stHeader"] {
+    background: rgba(2,5,10,.82);
 }
 
-.top-title {
-    font-size: 2.4rem;
-    font-weight: 900;
-    letter-spacing: -1.5px;
+[data-testid="stToolbar"] {
+    right: 1rem;
+}
+
+.hero {
+    padding: 10px 2px 14px 2px;
+}
+
+.hero-title {
     color: white;
+    font-size: 2.15rem;
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -1.4px;
 }
 
-.top-subtitle {
-    color: #94a3b8;
-    font-size: .95rem;
-    margin-bottom: 1.2rem;
+.hero-sub {
+    color: var(--muted);
+    margin-top: 10px;
+    font-size: .86rem;
+    line-height: 1.5;
+}
+
+.section {
+    margin-top: 19px;
+    margin-bottom: 9px;
+    font-size: 1.06rem;
+    font-weight: 850;
+    color: #e2e8f0;
 }
 
 .card {
     background:
         linear-gradient(
             145deg,
-            rgba(15, 23, 42, .96),
-            rgba(6, 12, 23, .96)
+            rgba(15,23,42,.98),
+            rgba(5,10,20,.98)
         );
-    border: 1px solid rgba(148, 163, 184, .14);
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 10px;
-    box-shadow:
-        0 15px 35px rgba(0,0,0,.25);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 15px 15px 14px 15px;
+    margin-bottom: 8px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.23);
+    min-height: 92px;
 }
 
-.card-title {
-    color: #94a3b8;
-    font-size: .76rem;
-    font-weight: 700;
+.card-label {
+    color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: .67rem;
+    letter-spacing: .8px;
+    font-weight: 800;
 }
 
 .card-value {
-    color: #f8fafc;
-    font-size: 1.65rem;
-    font-weight: 850;
-    margin-top: 4px;
+    color: white;
+    font-size: 1.38rem;
+    line-height: 1.2;
+    font-weight: 900;
+    margin-top: 7px;
+    overflow-wrap: anywhere;
 }
 
-.card-small {
+.card-detail {
     color: #64748b;
-    font-size: .78rem;
+    font-size: .69rem;
+    margin-top: 5px;
+}
+
+.decision {
+    border-radius: 20px;
+    text-align: center;
+    padding: 23px 14px;
+    margin-top: 8px;
+    margin-bottom: 9px;
+    box-shadow: 0 15px 35px rgba(0,0,0,.28);
 }
 
 .decision-up {
     background:
         linear-gradient(
             135deg,
-            rgba(16,185,129,.25),
-            rgba(5,46,22,.55)
+            rgba(16,185,129,.28),
+            rgba(4,47,31,.88)
         );
-    border: 1px solid rgba(16,185,129,.45);
-    border-radius: 22px;
-    text-align: center;
-    padding: 25px;
+    border: 1px solid rgba(16,185,129,.52);
 }
 
 .decision-down {
     background:
         linear-gradient(
             135deg,
-            rgba(239,68,68,.23),
-            rgba(69,10,10,.55)
+            rgba(239,68,68,.27),
+            rgba(69,10,10,.85)
         );
-    border: 1px solid rgba(239,68,68,.45);
-    border-radius: 22px;
-    text-align: center;
-    padding: 25px;
+    border: 1px solid rgba(239,68,68,.50);
 }
 
 .decision-no {
     background:
         linear-gradient(
             135deg,
-            rgba(148,163,184,.17),
-            rgba(15,23,42,.7)
+            rgba(100,116,139,.22),
+            rgba(15,23,42,.94)
         );
-    border: 1px solid rgba(148,163,184,.30);
-    border-radius: 22px;
-    text-align: center;
-    padding: 25px;
+    border: 1px solid rgba(148,163,184,.33);
 }
 
-.decision-label {
+.decision-small {
     color: #94a3b8;
-    font-size: .8rem;
-    font-weight: 800;
+    font-size: .72rem;
     letter-spacing: 1.5px;
-}
-
-.decision-value {
-    color: white;
-    font-size: 2.6rem;
-    font-weight: 950;
-    margin: 3px 0;
-}
-
-.decision-info {
-    color: #cbd5e1;
-    font-size: .92rem;
-}
-
-.section-title {
     font-weight: 850;
-    font-size: 1.15rem;
-    color: #e2e8f0;
-    margin-top: 18px;
-    margin-bottom: 8px;
 }
 
-.scale-wrap {
-    background: rgba(15,23,42,.80);
-    border: 1px solid rgba(148,163,184,.13);
-    border-radius: 14px;
-    padding: 13px 14px 12px 14px;
+.decision-big {
+    color: white;
+    font-size: 2.35rem;
+    line-height: 1.1;
+    font-weight: 950;
+    margin-top: 7px;
     margin-bottom: 9px;
 }
 
-.scale-header {
+.decision-meta {
+    color: #cbd5e1;
+    font-size: .84rem;
+}
+
+.scale {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 13px 14px 11px 14px;
+    margin-bottom: 8px;
+}
+
+.scale-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 7px;
+    gap: 10px;
+    margin-bottom: 8px;
 }
 
 .scale-name {
     color: #cbd5e1;
-    font-size: .85rem;
-    font-weight: 700;
+    font-size: .76rem;
+    font-weight: 800;
 }
 
-.scale-number {
+.scale-value {
     color: white;
-    font-size: .95rem;
-    font-weight: 850;
+    font-size: .82rem;
+    font-weight: 900;
+    white-space: nowrap;
 }
 
-.scale-track {
+.scale-bar {
+    height: 11px;
+    border-radius: 999px;
     position: relative;
-    height: 10px;
-    border-radius: 50px;
+    overflow: visible;
     background:
         linear-gradient(
             90deg,
-            #ef4444 0%,
-            #f97316 23%,
-            #64748b 50%,
-            #22c55e 77%,
+            #dc2626 0%,
+            #f97316 24%,
+            #475569 48%,
+            #475569 52%,
+            #22c55e 76%,
             #10b981 100%
         );
-    overflow: hidden;
 }
 
-.scale-marker {
+.scale-pointer {
     position: absolute;
+    top: -4px;
     width: 4px;
-    height: 16px;
-    background: white;
+    height: 19px;
     border-radius: 3px;
-    top: -3px;
-    box-shadow: 0 0 8px white;
+    background: white;
+    box-shadow:
+        0 0 6px rgba(255,255,255,.9),
+        0 0 13px rgba(255,255,255,.45);
+    transform: translateX(-2px);
 }
 
-.scale-limits {
+.scale-foot {
     display: flex;
     justify-content: space-between;
     color: #64748b;
-    font-size: .66rem;
-    margin-top: 5px;
+    font-size: .60rem;
+    margin-top: 6px;
 }
 
-.prob-track {
-    height: 17px;
-    border-radius: 50px;
+.prob-bar {
+    height: 15px;
+    border-radius: 999px;
+    position: relative;
     background:
         linear-gradient(
             90deg,
             #ef4444 0%,
-            #64748b 50%,
+            #f97316 30%,
+            #475569 50%,
+            #22c55e 70%,
             #10b981 100%
         );
-    position: relative;
-    overflow: hidden;
 }
 
-.prob-marker {
+.prob-pointer {
     position: absolute;
+    top: -4px;
     width: 5px;
     height: 23px;
     background: white;
-    top: -3px;
     border-radius: 4px;
-    box-shadow: 0 0 10px white;
+    transform: translateX(-2px);
+    box-shadow:
+        0 0 7px white,
+        0 0 16px rgba(255,255,255,.5);
 }
 
-.metric-table {
-    width: 100%;
-    border-collapse: collapse;
+.metric-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 7px 13px;
+    margin-bottom: 8px;
 }
 
-.metric-table td {
-    padding: 7px 4px;
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 9px 0;
     border-bottom: 1px solid rgba(148,163,184,.08);
 }
 
-.metric-name {
-    color: #94a3b8;
-    font-size: .82rem;
+.metric-row:last-child {
+    border-bottom: none;
 }
 
-.metric-value {
+.metric-key {
+    color: #94a3b8;
+    font-size: .76rem;
+}
+
+.metric-val {
     color: #f8fafc;
-    font-size: .84rem;
-    font-weight: 750;
+    font-size: .78rem;
+    font-weight: 850;
     text-align: right;
+    overflow-wrap: anywhere;
 }
 
 .reason {
-    background: rgba(15,23,42,.8);
-    border-left: 3px solid #38bdf8;
-    padding: 8px 10px;
-    border-radius: 7px;
-    margin-bottom: 5px;
+    background: rgba(15,23,42,.86);
+    border: 1px solid rgba(148,163,184,.11);
+    border-left: 3px solid var(--cyan);
     color: #cbd5e1;
-    font-size: .82rem;
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: .77rem;
+    margin-bottom: 5px;
 }
 
-hr {
-    border-color: rgba(148,163,184,.10);
+.good {
+    color: #34d399;
+}
+
+.bad {
+    color: #fb7185;
+}
+
+.neutral {
+    color: #cbd5e1;
 }
 
 div.stButton > button {
-    width: 100%;
     border-radius: 12px;
+    min-height: 45px;
+    width: 100%;
     font-weight: 850;
-    min-height: 46px;
 }
 
+[data-testid="stDataFrame"] {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+@media (max-width: 700px) {
+
+    .block-container {
+        padding-left: .72rem;
+        padding-right: .72rem;
+        padding-top: .45rem;
+    }
+
+    .hero-title {
+        font-size: 1.75rem;
+    }
+
+    .hero-sub {
+        font-size: .78rem;
+    }
+
+    .decision-big {
+        font-size: 2rem;
+    }
+
+    .decision {
+        padding: 20px 10px;
+    }
+
+    .card {
+        min-height: 80px;
+        padding: 13px;
+    }
+
+    .card-value {
+        font-size: 1.22rem;
+    }
+
+    .scale-top {
+        align-items: flex-start;
+    }
+
+    .scale-name {
+        max-width: 62%;
+    }
+
+    .metric-key,
+    .metric-val {
+        font-size: .72rem;
+    }
+
+}
 </style>
-""",
-    unsafe_allow_html=True,
+"""
 )
 
 
@@ -352,17 +460,20 @@ def numero(
 
 
 def cargar_historial():
+
     if not os.path.exists(
         HISTORIAL_FILE
     ):
         return []
 
     try:
+
         with open(
             HISTORIAL_FILE,
             "r",
             encoding="utf-8",
         ) as f:
+
             datos = json.load(f)
 
         if isinstance(
@@ -378,7 +489,9 @@ def cargar_historial():
 
 
 def eliminar_historial():
+
     try:
+
         if os.path.exists(
             HISTORIAL_FILE
         ):
@@ -390,10 +503,20 @@ def eliminar_historial():
             "Historial eliminado."
         )
 
+        st.rerun()
+
     except Exception as e:
+
         st.error(
             f"Error eliminando historial: {e}"
         )
+
+
+def seccion(texto):
+
+    st.html(
+        f'<div class="section">{texto}</div>'
+    )
 
 
 def tarjeta(
@@ -401,21 +524,42 @@ def tarjeta(
     valor,
     detalle="",
 ):
-    st.markdown(
-        f"""
+
+    detalle_html = ""
+
+    if detalle:
+        detalle_html = (
+            f'<div class="card-detail">'
+            f'{detalle}'
+            f'</div>'
+        )
+
+    st.html(
+        f'''
         <div class="card">
-            <div class="card-title">
-                {titulo}
-            </div>
-            <div class="card-value">
-                {valor}
-            </div>
-            <div class="card-small">
-                {detalle}
-            </div>
+            <div class="card-label">{titulo}</div>
+            <div class="card-value">{valor}</div>
+            {detalle_html}
         </div>
-        """,
-        unsafe_allow_html=True,
+        '''
+    )
+
+
+def tabla_metricas(datos):
+
+    filas = ""
+
+    for nombre, valor in datos:
+
+        filas += (
+            '<div class="metric-row">'
+            f'<div class="metric-key">{nombre}</div>'
+            f'<div class="metric-val">{valor}</div>'
+            '</div>'
+        )
+
+    st.html(
+        f'<div class="metric-box">{filas}</div>'
     )
 
 
@@ -426,84 +570,72 @@ def escala(
     maximo,
     formato="{:.3f}",
 ):
+
     try:
-        valor_num = float(
-            valor
-        )
+        n = float(valor)
 
     except Exception:
-        valor_num = 0.0
+        n = 0.0
 
     if maximo == minimo:
-        porcentaje = 50
+        pos = 50.0
 
     else:
-        porcentaje = (
+        pos = (
             (
-                valor_num
-                - minimo
+                n - minimo
             )
             /
             (
-                maximo
-                - minimo
+                maximo - minimo
             )
-        ) * 100
+        ) * 100.0
 
-    porcentaje = max(
-        0,
+    pos = max(
+        0.0,
         min(
-            100,
-            porcentaje,
+            100.0,
+            pos,
         ),
     )
 
     try:
-        texto = formato.format(
-            valor_num
-        )
+        texto = formato.format(n)
 
     except Exception:
-        texto = str(
-            valor_num
-        )
+        texto = str(n)
 
-    st.markdown(
-        f"""
-        <div class="scale-wrap">
+    st.html(
+        f'''
+        <div class="scale">
 
-            <div class="scale-header">
-                <span class="scale-name">
-                    {nombre}
-                </span>
-
-                <span class="scale-number">
-                    {texto}
-                </span>
+            <div class="scale-top">
+                <div class="scale-name">{nombre}</div>
+                <div class="scale-value">{texto}</div>
             </div>
 
-            <div class="scale-track">
+            <div class="scale-bar">
                 <div
-                    class="scale-marker"
-                    style="left:{porcentaje}%;">
+                    class="scale-pointer"
+                    style="left:{pos:.2f}%;">
                 </div>
             </div>
 
-            <div class="scale-limits">
+            <div class="scale-foot">
                 <span>{minimo}</span>
                 <span>NEUTRO</span>
                 <span>{maximo}</span>
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
+        '''
     )
 
 
 def escala_probabilidad(
     prob_arriba,
 ):
+
     try:
         p = float(
             prob_arriba
@@ -513,78 +645,47 @@ def escala_probabilidad(
         p = 50.0
 
     p = max(
-        0,
+        0.0,
         min(
-            100,
+            100.0,
             p,
         ),
     )
 
-    st.markdown(
-        f"""
-        <div class="scale-wrap">
+    abajo = (
+        100.0
+        - p
+    )
 
-            <div class="scale-header">
+    st.html(
+        f'''
+        <div class="scale">
 
-                <span class="scale-name">
+            <div class="scale-top">
+                <div class="scale-name">
                     PROBABILIDAD DIRECCIONAL
-                </span>
+                </div>
 
-                <span class="scale-number">
-                    ABAJO {100-p:.1f}%
-                    &nbsp; | &nbsp;
-                    ARRIBA {p:.1f}%
-                </span>
-
-            </div>
-
-            <div class="prob-track">
-                <div
-                    class="prob-marker"
-                    style="left:{p}%;">
+                <div class="scale-value">
+                    ABAJO {abajo:.1f}% · ARRIBA {p:.1f}%
                 </div>
             </div>
 
-            <div class="scale-limits">
-                <span>100% ABAJO</span>
+            <div class="prob-bar">
+                <div
+                    class="prob-pointer"
+                    style="left:{p:.2f}%;">
+                </div>
+            </div>
+
+            <div class="scale-foot">
+                <span>ABAJO</span>
                 <span>50 / 50</span>
-                <span>100% ARRIBA</span>
+                <span>ARRIBA</span>
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def tabla_metricas(
-    datos,
-):
-    filas = ""
-
-    for nombre, valor in datos:
-
-        filas += f"""
-        <tr>
-            <td class="metric-name">
-                {nombre}
-            </td>
-
-            <td class="metric-value">
-                {valor}
-            </td>
-        </tr>
-        """
-
-    st.markdown(
-        f"""
-        <div class="card">
-            <table class="metric-table">
-                {filas}
-            </table>
-        </div>
-        """,
-        unsafe_allow_html=True,
+        '''
     )
 
 
@@ -592,30 +693,31 @@ def tabla_metricas(
 # CABECERA
 # ============================================================
 
-st.markdown(
-    """
-    <div class="top-title">
-        ₿ BTC 15M PROFIT ENGINE
-    </div>
+st.html(
+    '''
+    <div class="hero">
+        <div class="hero-title">
+            ₿ BTC 15M PROFIT ENGINE
+        </div>
 
-    <div class="top-subtitle">
-        Kalshi • CF Benchmarks BRTI • Coinbase • Kraken •
-        CoinMarketCap • Order Flow • Microestructura
+        <div class="hero-sub">
+            Kalshi · CF Benchmarks BRTI · Coinbase · Kraken ·
+            CoinMarketCap · Order Flow · Microestructura
+        </div>
     </div>
-    """,
-    unsafe_allow_html=True,
+    '''
 )
 
 
 # ============================================================
-# BOTON HISTORIAL
+# BOTON + RELOJ
 # ============================================================
 
-col_reset, col_clock = st.columns(
-    [1, 3]
+b1, b2 = st.columns(
+    [1.15, 1.85]
 )
 
-with col_reset:
+with b1:
 
     if st.button(
         "🗑️ ELIMINAR HISTORIAL",
@@ -623,14 +725,14 @@ with col_reset:
     ):
         eliminar_historial()
 
-with col_clock:
+with b2:
 
     hora = datetime.now(
         LOCAL_TZ
     )
 
     st.caption(
-        "Actualización automática cada 10 segundos • "
+        "Actualización: "
         + hora.strftime(
             "%m/%d/%Y %I:%M:%S %p"
         )
@@ -643,40 +745,38 @@ with col_clock:
 
 analisis = None
 
-mercado = None
-
 try:
+
     mercado = (
         motor.elegir_mercado_actual()
     )
 
     if mercado is not None:
 
-        analisis = motor.analizar_mercado(
-            mercado
+        analisis = (
+            motor.analizar_mercado(
+                mercado
+            )
         )
 
 except Exception as e:
 
     st.error(
-        "No se pudo obtener el análisis live: "
-        f"{e}"
+        f"Error en análisis live: {e}"
     )
 
 
 if analisis is None:
 
     st.warning(
-        "No hay análisis disponible ahora mismo. "
-        "Comprueba que los Secrets estén disponibles "
-        "para la app y que exista un mercado BTC 15M abierto."
+        "No hay análisis BTC 15M disponible."
     )
 
     st.stop()
 
 
 # ============================================================
-# DECISION PRINCIPAL
+# DECISION
 # ============================================================
 
 decision = analisis.get(
@@ -686,67 +786,77 @@ decision = analisis.get(
 
 fuerza = analisis.get(
     "fuerza",
-    "",
+    "DEBIL",
 )
 
-probabilidad = analisis.get(
-    "probabilidad",
-    0,
+probabilidad = float(
+    analisis.get(
+        "probabilidad",
+        0,
+    )
+    or 0
 )
 
 if decision == "ARRIBA":
-    clase = "decision-up"
-    icono = "🟢"
+
+    clase = (
+        "decision decision-up"
+    )
+
+    icono = "▲"
 
 elif decision == "ABAJO":
-    clase = "decision-down"
-    icono = "🔴"
+
+    clase = (
+        "decision decision-down"
+    )
+
+    icono = "▼"
 
 else:
-    clase = "decision-no"
-    icono = "⚪"
+
+    clase = (
+        "decision decision-no"
+    )
+
+    icono = "●"
 
 
-st.markdown(
-    f"""
+st.html(
+    f'''
     <div class="{clase}">
 
-        <div class="decision-label">
+        <div class="decision-small">
             DECISION ACTUAL
         </div>
 
-        <div class="decision-value">
+        <div class="decision-big">
             {icono} {decision}
         </div>
 
-        <div class="decision-info">
-            Fuerza:
-            <b>{fuerza}</b>
-            &nbsp; • &nbsp;
-            Probabilidad:
-            <b>{probabilidad:.1f}%</b>
+        <div class="decision-meta">
+            FUERZA <b>{fuerza}</b>
+            &nbsp;&nbsp;·&nbsp;&nbsp;
+            PROBABILIDAD <b>{probabilidad:.1f}%</b>
         </div>
 
     </div>
-    """,
-    unsafe_allow_html=True,
+    '''
 )
 
 
 # ============================================================
-# TARJETAS PRINCIPALES
+# CONTRATO
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Contrato actual</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Contrato actual"
 )
 
-c1, c2, c3, c4, c5 = st.columns(
-    5
-)
+c1, c2 = st.columns(2)
 
 with c1:
+
     tarjeta(
         "TARGET KALSHI",
         numero(
@@ -759,6 +869,7 @@ with c1:
     )
 
 with c2:
+
     tarjeta(
         "BTC CONSENSO",
         numero(
@@ -770,7 +881,11 @@ with c2:
         ),
     )
 
+
+c3, c4 = st.columns(2)
+
 with c3:
+
     tarjeta(
         "TIEMPO RESTANTE",
         numero(
@@ -784,6 +899,7 @@ with c3:
     )
 
 with c4:
+
     tarjeta(
         "MINUTO CONTRATO",
         numero(
@@ -794,25 +910,24 @@ with c4:
         ),
     )
 
-with c5:
-    tarjeta(
-        "SCORE TOTAL",
-        numero(
-            analisis.get(
-                "score"
-            ),
-            2,
+
+tarjeta(
+    "SCORE TOTAL",
+    numero(
+        analisis.get(
+            "score"
         ),
-    )
+        2,
+    ),
+)
 
 
 # ============================================================
 # PROBABILIDAD
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Probabilidad y valor</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Probabilidad y valor"
 )
 
 escala_probabilidad(
@@ -822,11 +937,10 @@ escala_probabilidad(
     )
 )
 
-p1, p2, p3, p4 = st.columns(
-    4
-)
+p1, p2 = st.columns(2)
 
 with p1:
+
     tarjeta(
         "PROB. ARRIBA",
         numero(
@@ -840,6 +954,7 @@ with p1:
     )
 
 with p2:
+
     tarjeta(
         "PROB. ABAJO",
         numero(
@@ -852,11 +967,16 @@ with p2:
         ),
     )
 
-with p3:
 
-    edge = analisis.get(
+edge = (
+    analisis.get(
         "edge"
     )
+)
+
+p3, p4 = st.columns(2)
+
+with p3:
 
     tarjeta(
         "EDGE",
@@ -873,27 +993,26 @@ with p3:
     )
 
 with p4:
+
+    precio_entrada = (
+        analisis.get(
+            "precio_entrada"
+        )
+    )
+
     tarjeta(
         "PRECIO ENTRADA",
         (
             numero(
-                analisis.get(
-                    "precio_entrada"
-                ),
+                precio_entrada,
                 3,
                 "$",
             )
-            if analisis.get(
-                "precio_entrada"
-            ) is not None
+            if precio_entrada is not None
             else "NO ENTRA"
         ),
     )
 
-
-# ============================================================
-# ESCALA SCORE
-# ============================================================
 
 escala(
     "SCORE TOTAL",
@@ -911,19 +1030,33 @@ escala(
 # TARGET
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Distancia al Target</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Distancia al Target"
 )
 
-escala(
-    "DISTANCIA BTC ↔ TARGET",
+dist_target = float(
     analisis.get(
         "distancia_target_pct",
         0,
-    ),
-    -0.15,
+    )
+    or 0
+)
+
+# La escala se amplía automáticamente
+# si BTC está muy lejos del target.
+
+limite_target = max(
     0.15,
+    abs(
+        dist_target
+    ) * 1.20,
+)
+
+escala(
+    "BTC ↔ TARGET",
+    dist_target,
+    -limite_target,
+    limite_target,
     "{:+.4f}%",
 )
 
@@ -932,449 +1065,422 @@ escala(
 # FUENTES
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Precios de todas las fuentes</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Precios de fuentes"
 )
 
-f1, f2 = st.columns(
-    2
+tabla_metricas(
+    [
+        (
+            "CF Benchmarks / BRTI",
+            numero(
+                analisis.get(
+                    "precio_cf_brti"
+                ),
+                2,
+                "$",
+            ),
+        ),
+        (
+            "Coinbase BTC-USD",
+            numero(
+                analisis.get(
+                    "precio_coinbase"
+                ),
+                2,
+                "$",
+            ),
+        ),
+        (
+            "Kraken XBTUSD",
+            numero(
+                analisis.get(
+                    "precio_kraken"
+                ),
+                2,
+                "$",
+            ),
+        ),
+        (
+            "CoinMarketCap",
+            numero(
+                analisis.get(
+                    "precio_coinmarketcap"
+                ),
+                2,
+                "$",
+            ),
+        ),
+        (
+            "Precio consenso",
+            numero(
+                analisis.get(
+                    "precio_consenso"
+                ),
+                2,
+                "$",
+            ),
+        ),
+    ]
 )
 
-with f1:
 
-    tabla_metricas(
-        [
-            (
-                "CF Benchmarks / BRTI",
-                numero(
-                    analisis.get(
-                        "precio_cf_brti"
-                    ),
-                    2,
-                    "$",
+tabla_metricas(
+    [
+        (
+            "Kalshi YES ask",
+            numero(
+                analisis.get(
+                    "yes_ask"
                 ),
+                3,
+                "$",
             ),
-            (
-                "Coinbase BTC-USD",
-                numero(
-                    analisis.get(
-                        "precio_coinbase"
-                    ),
-                    2,
-                    "$",
+        ),
+        (
+            "Kalshi NO ask",
+            numero(
+                analisis.get(
+                    "no_ask"
                 ),
+                3,
+                "$",
             ),
-            (
-                "Kraken XBTUSD",
-                numero(
-                    analisis.get(
-                        "precio_kraken"
-                    ),
-                    2,
-                    "$",
-                ),
+        ),
+        (
+            "Fuentes disponibles",
+            str(
+                analisis.get(
+                    "fuentes_disponibles",
+                    "N/D",
+                )
             ),
-            (
-                "CoinMarketCap",
-                numero(
-                    analisis.get(
-                        "precio_coinmarketcap"
-                    ),
-                    2,
-                    "$",
-                ),
+        ),
+        (
+            "Ticker",
+            str(
+                analisis.get(
+                    "ticker",
+                    "N/D",
+                )
             ),
-            (
-                "Precio consenso",
-                numero(
-                    analisis.get(
-                        "precio_consenso"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-        ]
-    )
-
-with f2:
-
-    tabla_metricas(
-        [
-            (
-                "Kalshi YES ask",
-                numero(
-                    analisis.get(
-                        "yes_ask"
-                    ),
-                    3,
-                    "$",
-                ),
-            ),
-            (
-                "Kalshi NO ask",
-                numero(
-                    analisis.get(
-                        "no_ask"
-                    ),
-                    3,
-                    "$",
-                ),
-            ),
-            (
-                "Fuentes disponibles",
-                str(
-                    analisis.get(
-                        "fuentes_disponibles"
-                    )
-                ),
-            ),
-            (
-                "Lado contrato",
-                str(
-                    analisis.get(
-                        "lado_contrato"
-                    )
-                    or "N/D"
-                ),
-            ),
-            (
-                "Ticker",
-                str(
-                    analisis.get(
-                        "ticker"
-                    )
-                    or "N/D"
-                ),
-            ),
-        ]
-    )
+        ),
+    ]
+)
 
 
 # ============================================================
 # TENDENCIA
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Tendencia técnica</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Tendencia técnica"
 )
 
-t1, t2 = st.columns(
-    2
-)
-
-with t1:
-
-    tabla_metricas(
-        [
-            (
-                "EMA 9",
-                numero(
-                    analisis.get(
-                        "ema9"
-                    ),
-                    2,
-                    "$",
+tabla_metricas(
+    [
+        (
+            "EMA 9",
+            numero(
+                analisis.get(
+                    "ema9"
                 ),
+                2,
+                "$",
             ),
-            (
-                "EMA 21",
-                numero(
-                    analisis.get(
-                        "ema21"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "EMA 50",
-                numero(
-                    analisis.get(
-                        "ema50"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "MACD",
-                numero(
-                    analisis.get(
-                        "macd"
-                    ),
-                    4,
-                ),
-            ),
-            (
-                "MACD Signal",
-                numero(
-                    analisis.get(
-                        "macd_signal"
-                    ),
-                    4,
-                ),
-            ),
-        ]
-    )
-
-with t2:
-
-    escala(
-        "RSI 14",
-        analisis.get(
-            "rsi14",
-            50,
         ),
+        (
+            "EMA 21",
+            numero(
+                analisis.get(
+                    "ema21"
+                ),
+                2,
+                "$",
+            ),
+        ),
+        (
+            "EMA 50",
+            numero(
+                analisis.get(
+                    "ema50"
+                ),
+                2,
+                "$",
+            ),
+        ),
+        (
+            "MACD",
+            numero(
+                analisis.get(
+                    "macd"
+                ),
+                4,
+            ),
+        ),
+        (
+            "MACD Signal",
+            numero(
+                analisis.get(
+                    "macd_signal"
+                ),
+                4,
+            ),
+        ),
+    ]
+)
+
+
+escala(
+    "RSI 14",
+    analisis.get(
+        "rsi14",
+        50,
+    ),
+    0,
+    100,
+    "{:.2f}",
+)
+
+
+escala(
+    "CMF 20",
+    analisis.get(
+        "cmf20",
         0,
-        100,
-        "{:.2f}",
-    )
-
-    escala(
-        "CMF 20",
-        analisis.get(
-            "cmf20",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
+    ),
+    -1,
+    1,
+    "{:+.4f}",
+)
 
 
 # ============================================================
 # MOMENTUM
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Momentum, velocidad y aceleración</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Momentum"
 )
 
-m1, m2 = st.columns(
-    2
-)
-
-with m1:
-
-    tabla_metricas(
-        [
-            (
-                "Momentum 1 minuto",
-                numero(
+tabla_metricas(
+    [
+        (
+            "Momentum 1 minuto",
+            numero(
+                (
                     analisis.get(
                         "momentum_1m",
                         0,
-                    ) * 100,
-                    4,
-                    "",
-                    "%",
-                ),
+                    )
+                    or 0
+                ) * 100,
+                4,
+                "",
+                "%",
             ),
-            (
-                "Momentum 3 minutos",
-                numero(
+        ),
+        (
+            "Momentum 3 minutos",
+            numero(
+                (
                     analisis.get(
                         "momentum_3m",
                         0,
-                    ) * 100,
-                    4,
-                    "",
-                    "%",
-                ),
+                    )
+                    or 0
+                ) * 100,
+                4,
+                "",
+                "%",
             ),
-            (
-                "Momentum 5 minutos",
-                numero(
+        ),
+        (
+            "Momentum 5 minutos",
+            numero(
+                (
                     analisis.get(
                         "momentum_5m",
                         0,
-                    ) * 100,
-                    4,
-                    "",
-                    "%",
-                ),
+                    )
+                    or 0
+                ) * 100,
+                4,
+                "",
+                "%",
             ),
-            (
-                "Momentum 10 minutos",
-                numero(
+        ),
+        (
+            "Momentum 10 minutos",
+            numero(
+                (
                     analisis.get(
                         "momentum_10m",
                         0,
-                    ) * 100,
-                    4,
-                    "",
-                    "%",
-                ),
+                    )
+                    or 0
+                ) * 100,
+                4,
+                "",
+                "%",
             ),
-        ]
-    )
+        ),
+    ]
+)
 
-with m2:
 
-    escala(
-        "VELOCIDAD",
+escala(
+    "VELOCIDAD",
+    (
         analisis.get(
             "velocidad",
             0,
-        ) * 100,
-        -0.50,
-        0.50,
-        "{:+.5f}%",
-    )
+        )
+        or 0
+    ) * 100,
+    -0.50,
+    0.50,
+    "{:+.5f}%",
+)
 
-    escala(
-        "ACELERACION",
+
+escala(
+    "ACELERACION",
+    (
         analisis.get(
             "aceleracion",
             0,
-        ) * 100,
-        -0.50,
-        0.50,
-        "{:+.5f}%",
-    )
+        )
+        or 0
+    ) * 100,
+    -0.50,
+    0.50,
+    "{:+.5f}%",
+)
 
 
 # ============================================================
 # VOLATILIDAD / VOLUMEN
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Volatilidad y volumen</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Volatilidad y volumen"
 )
 
-v1, v2 = st.columns(
-    2
-)
-
-with v1:
-
-    tabla_metricas(
-        [
-            (
-                "Volatilidad 20",
-                numero(
+tabla_metricas(
+    [
+        (
+            "Volatilidad 20",
+            numero(
+                (
                     analisis.get(
                         "volatilidad20",
                         0,
-                    ) * 100,
-                    5,
-                    "",
-                    "%",
-                ),
+                    )
+                    or 0
+                ) * 100,
+                5,
+                "",
+                "%",
             ),
-            (
-                "Volumen actual",
-                numero(
-                    analisis.get(
-                        "volumen"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Volumen promedio 20",
-                numero(
-                    analisis.get(
-                        "volumen_promedio20"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-        ]
-    )
-
-with v2:
-
-    escala(
-        "VOLUMEN RELATIVO",
-        analisis.get(
-            "volumen_relativo",
-            1,
         ),
+        (
+            "Volumen actual",
+            numero(
+                analisis.get(
+                    "volumen"
+                ),
+                4,
+                "",
+                " BTC",
+            ),
+        ),
+        (
+            "Volumen promedio 20",
+            numero(
+                analisis.get(
+                    "volumen_promedio20"
+                ),
+                4,
+                "",
+                " BTC",
+            ),
+        ),
+    ]
+)
+
+
+escala(
+    "VOLUMEN RELATIVO",
+    analisis.get(
+        "volumen_relativo",
+        1,
+    ),
+    0,
+    3,
+    "{:.2f}x",
+)
+
+
+# ============================================================
+# OBI
+# ============================================================
+
+seccion(
+    "Order Book Imbalance"
+)
+
+escala(
+    "OBI COINBASE",
+    analisis.get(
+        "obi_coinbase",
         0,
-        3,
-        "{:.2f}x",
-    )
-
-
-# ============================================================
-# ORDER BOOK IMBALANCE
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">Order Book Imbalance — OBI</div>',
-    unsafe_allow_html=True,
+    ),
+    -1,
+    1,
+    "{:+.4f}",
 )
 
-o1, o2 = st.columns(
-    2
+escala(
+    "OBI KRAKEN",
+    analisis.get(
+        "obi_kraken",
+        0,
+    ),
+    -1,
+    1,
+    "{:+.4f}",
 )
 
-with o1:
+escala(
+    "OBI KALSHI",
+    analisis.get(
+        "obi_kalshi",
+        0,
+    ),
+    -1,
+    1,
+    "{:+.4f}",
+)
 
-    escala(
-        "OBI COINBASE",
-        analisis.get(
-            "obi_coinbase",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    escala(
-        "OBI KRAKEN",
-        analisis.get(
-            "obi_kraken",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-with o2:
-
-    escala(
-        "OBI KALSHI",
-        analisis.get(
-            "obi_kalshi",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    escala(
-        "OBI PROMEDIO",
-        analisis.get(
-            "obi_promedio",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
+escala(
+    "OBI PROMEDIO",
+    analisis.get(
+        "obi_promedio",
+        0,
+    ),
+    -1,
+    1,
+    "{:+.4f}",
+)
 
 
 # ============================================================
 # ORDER FLOW
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Trades agresivos / Order Flow</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Trades agresivos / Order Flow"
 )
 
 of_cb = (
@@ -1391,107 +1497,104 @@ of_kr = (
     or {}
 )
 
-of1, of2 = st.columns(
-    2
+
+escala(
+    "ORDER FLOW COINBASE",
+    of_cb.get(
+        "imbalance",
+        0,
+    ),
+    -1,
+    1,
+    "{:+.4f}",
 )
 
-with of1:
 
-    escala(
-        "ORDER FLOW COINBASE",
-        of_cb.get(
-            "imbalance",
-            0,
+tabla_metricas(
+    [
+        (
+            "Compra agresiva Coinbase",
+            numero(
+                of_cb.get(
+                    "buy_volume"
+                ),
+                5,
+                "",
+                " BTC",
+            ),
         ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    tabla_metricas(
-        [
-            (
-                "Compra agresiva Coinbase",
-                numero(
-                    of_cb.get(
-                        "buy_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
+        (
+            "Venta agresiva Coinbase",
+            numero(
+                of_cb.get(
+                    "sell_volume"
                 ),
+                5,
+                "",
+                " BTC",
             ),
-            (
-                "Venta agresiva Coinbase",
-                numero(
-                    of_cb.get(
-                        "sell_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Trades usados Coinbase",
-                str(
-                    of_cb.get(
-                        "trades",
-                        0,
-                    )
-                ),
-            ),
-        ]
-    )
-
-with of2:
-
-    escala(
-        "ORDER FLOW KRAKEN",
-        of_kr.get(
-            "imbalance",
-            0,
         ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
+        (
+            "Trades Coinbase",
+            str(
+                of_cb.get(
+                    "trades",
+                    0,
+                )
+            ),
+        ),
+    ]
+)
 
-    tabla_metricas(
-        [
-            (
-                "Compra agresiva Kraken",
-                numero(
-                    of_kr.get(
-                        "buy_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
+
+escala(
+    "ORDER FLOW KRAKEN",
+    of_kr.get(
+        "imbalance",
+        0,
+    ),
+    -1,
+    1,
+    "{:+.4f}",
+)
+
+
+tabla_metricas(
+    [
+        (
+            "Compra agresiva Kraken",
+            numero(
+                of_kr.get(
+                    "buy_volume"
                 ),
+                5,
+                "",
+                " BTC",
             ),
-            (
-                "Venta agresiva Kraken",
-                numero(
-                    of_kr.get(
-                        "sell_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
+        ),
+        (
+            "Venta agresiva Kraken",
+            numero(
+                of_kr.get(
+                    "sell_volume"
                 ),
+                5,
+                "",
+                " BTC",
             ),
-            (
-                "Trades usados Kraken",
-                str(
-                    of_kr.get(
-                        "trades",
-                        0,
-                    )
-                ),
+        ),
+        (
+            "Trades Kraken",
+            str(
+                of_kr.get(
+                    "trades",
+                    0,
+                )
             ),
-        ]
-    )
+        ),
+    ]
+)
+
 
 escala(
     "ORDER FLOW PROMEDIO",
@@ -1509,9 +1612,8 @@ escala(
 # PROFUNDIDAD
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Profundidad de mercado</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Profundidad de mercado"
 )
 
 prof_cb = (
@@ -1535,125 +1637,110 @@ prof_ka = (
     or {}
 )
 
-d1, d2, d3 = st.columns(
-    3
+
+tabla_metricas(
+    [
+        (
+            "Coinbase BID depth",
+            numero(
+                prof_cb.get(
+                    "bid"
+                ),
+                4,
+                "",
+                " BTC",
+            ),
+        ),
+        (
+            "Coinbase ASK depth",
+            numero(
+                prof_cb.get(
+                    "ask"
+                ),
+                4,
+                "",
+                " BTC",
+            ),
+        ),
+        (
+            "Kraken BID depth",
+            numero(
+                prof_kr.get(
+                    "bid"
+                ),
+                4,
+                "",
+                " BTC",
+            ),
+        ),
+        (
+            "Kraken ASK depth",
+            numero(
+                prof_kr.get(
+                    "ask"
+                ),
+                4,
+                "",
+                " BTC",
+            ),
+        ),
+        (
+            "Kalshi YES depth",
+            numero(
+                prof_ka.get(
+                    "yes"
+                ),
+                2,
+            ),
+        ),
+        (
+            "Kalshi NO depth",
+            numero(
+                prof_ka.get(
+                    "no"
+                ),
+                2,
+            ),
+        ),
+    ]
 )
-
-with d1:
-
-    tarjeta(
-        "COINBASE BID DEPTH",
-        numero(
-            prof_cb.get(
-                "bid"
-            ),
-            4,
-            "",
-            " BTC",
-        ),
-    )
-
-    tarjeta(
-        "COINBASE ASK DEPTH",
-        numero(
-            prof_cb.get(
-                "ask"
-            ),
-            4,
-            "",
-            " BTC",
-        ),
-    )
-
-with d2:
-
-    tarjeta(
-        "KRAKEN BID DEPTH",
-        numero(
-            prof_kr.get(
-                "bid"
-            ),
-            4,
-            "",
-            " BTC",
-        ),
-    )
-
-    tarjeta(
-        "KRAKEN ASK DEPTH",
-        numero(
-            prof_kr.get(
-                "ask"
-            ),
-            4,
-            "",
-            " BTC",
-        ),
-    )
-
-with d3:
-
-    tarjeta(
-        "KALSHI YES DEPTH",
-        numero(
-            prof_ka.get(
-                "yes"
-            ),
-            2,
-        ),
-    )
-
-    tarjeta(
-        "KALSHI NO DEPTH",
-        numero(
-            prof_ka.get(
-                "no"
-            ),
-            2,
-        ),
-    )
 
 
 # ============================================================
 # SPREAD
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Spread</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Spread"
 )
 
-spread = analisis.get(
-    "spread_coinbase"
+spread = (
+    analisis.get(
+        "spread_coinbase"
+    )
 )
 
-if spread is not None:
-
-    tarjeta(
-        "COINBASE BID / ASK SPREAD",
+tarjeta(
+    "COINBASE BID / ASK SPREAD",
+    (
         numero(
             spread * 100,
             5,
             "",
             "%",
-        ),
-    )
-
-else:
-
-    tarjeta(
-        "COINBASE BID / ASK SPREAD",
-        "N/D",
-    )
+        )
+        if spread is not None
+        else "N/D"
+    ),
+)
 
 
 # ============================================================
-# SCORE POR FAMILIAS
+# SCORE FAMILIAS
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Score por familias</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Score por familias"
 )
 
 familias = (
@@ -1663,88 +1750,80 @@ familias = (
     or {}
 )
 
-sf1, sf2 = st.columns(
-    2
+
+escala(
+    "TARGET",
+    familias.get(
+        "target",
+        0,
+    ),
+    -18,
+    18,
+    "{:+.2f}",
 )
 
-with sf1:
+escala(
+    "TENDENCIA",
+    familias.get(
+        "tendencia",
+        0,
+    ),
+    -14,
+    14,
+    "{:+.2f}",
+)
 
-    escala(
-        "TARGET",
-        familias.get(
-            "target",
-            0,
-        ),
-        -18,
-        18,
-        "{:+.2f}",
-    )
+escala(
+    "MOMENTUM",
+    familias.get(
+        "momentum",
+        0,
+    ),
+    -13,
+    13,
+    "{:+.2f}",
+)
 
-    escala(
-        "TENDENCIA",
-        familias.get(
-            "tendencia",
-            0,
-        ),
-        -14,
-        14,
-        "{:+.2f}",
-    )
+escala(
+    "MICROESTRUCTURA",
+    familias.get(
+        "microestructura",
+        0,
+    ),
+    -16,
+    16,
+    "{:+.2f}",
+)
 
-    escala(
-        "MOMENTUM",
-        familias.get(
-            "momentum",
-            0,
-        ),
-        -13,
-        13,
-        "{:+.2f}",
-    )
+escala(
+    "FLUJO CAPITAL",
+    familias.get(
+        "flujo_capital",
+        0,
+    ),
+    -10,
+    10,
+    "{:+.2f}",
+)
 
-with sf2:
-
-    escala(
-        "MICROESTRUCTURA",
-        familias.get(
-            "microestructura",
-            0,
-        ),
-        -16,
-        16,
-        "{:+.2f}",
-    )
-
-    escala(
-        "FLUJO DE CAPITAL",
-        familias.get(
-            "flujo_capital",
-            0,
-        ),
-        -10,
-        10,
-        "{:+.2f}",
-    )
-
-    escala(
-        "CONSENSO",
-        familias.get(
-            "consenso",
-            0,
-        ),
-        -10,
-        10,
-        "{:+.2f}",
-    )
+escala(
+    "CONSENSO",
+    familias.get(
+        "consenso",
+        0,
+    ),
+    -10,
+    10,
+    "{:+.2f}",
+)
 
 
 # ============================================================
-# CONSENSO FUENTES
+# CONSENSO
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Consenso de fuentes</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Consenso de fuentes"
 )
 
 consenso = (
@@ -1754,11 +1833,11 @@ consenso = (
     or {}
 )
 
-cc1, cc2, cc3, cc4 = st.columns(
-    4
-)
+
+cc1, cc2 = st.columns(2)
 
 with cc1:
+
     tarjeta(
         "FUENTES ARRIBA",
         str(
@@ -1770,6 +1849,7 @@ with cc1:
     )
 
 with cc2:
+
     tarjeta(
         "FUENTES ABAJO",
         str(
@@ -1780,7 +1860,11 @@ with cc2:
         ),
     )
 
+
+cc3, cc4 = st.columns(2)
+
 with cc3:
+
     tarjeta(
         "TOTAL FUENTES",
         str(
@@ -1792,6 +1876,7 @@ with cc3:
     )
 
 with cc4:
+
     tarjeta(
         "RATIO CONSENSO",
         numero(
@@ -1805,30 +1890,26 @@ with cc4:
 
 
 # ============================================================
-# RAZONES DEL MOTOR
+# RAZONES
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Razones de la decisión</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Razones de la decisión"
 )
 
-razones = analisis.get(
-    "razones",
-    [],
+razones = (
+    analisis.get(
+        "razones"
+    )
+    or []
 )
 
 if razones:
 
     for razon in razones:
 
-        st.markdown(
-            f"""
-            <div class="reason">
-                {razon}
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st.html(
+            f'<div class="reason">{razon}</div>'
         )
 
 else:
@@ -1839,12 +1920,11 @@ else:
 
 
 # ============================================================
-# HISTORIAL / ESTADISTICAS
+# HISTORIAL / RENDIMIENTO
 # ============================================================
 
-st.markdown(
-    '<div class="section-title">Historial y rendimiento</div>',
-    unsafe_allow_html=True,
+seccion(
+    "Historial y rendimiento"
 )
 
 historial = cargar_historial()
@@ -1900,7 +1980,8 @@ if resueltas:
         / len(
             resueltas
         )
-    ) * 100
+    ) * 100.0
+
 
 pnl = sum(
     float(
@@ -1912,11 +1993,11 @@ pnl = sum(
     for x in resueltas
 )
 
-h1, h2, h3, h4, h5 = st.columns(
-    5
-)
 
-with h1:
+r1, r2 = st.columns(2)
+
+with r1:
+
     tarjeta(
         "OPERACIONES",
         str(
@@ -1926,7 +2007,18 @@ with h1:
         ),
     )
 
-with h2:
+with r2:
+
+    tarjeta(
+        "PRECISION",
+        f"{precision:.2f}%",
+    )
+
+
+r3, r4, r5 = st.columns(3)
+
+with r3:
+
     tarjeta(
         "ACIERTOS",
         str(
@@ -1934,7 +2026,8 @@ with h2:
         ),
     )
 
-with h3:
+with r4:
+
     tarjeta(
         "FALLOS",
         str(
@@ -1942,21 +2035,16 @@ with h3:
         ),
     )
 
-with h4:
-    tarjeta(
-        "PRECISION",
-        f"{precision:.2f}%",
-    )
+with r5:
 
-with h5:
     tarjeta(
-        "P&L TEORICO",
+        "P&L",
         f"${pnl:+.4f}",
     )
 
 
 # ============================================================
-# TABLA HISTORIAL
+# HISTORIAL
 # ============================================================
 
 if historial:
@@ -1984,9 +2072,9 @@ if historial:
     )
 
     columnas_existentes = [
-        x
-        for x in columnas
-        if x in df.columns
+        columna
+        for columna in columnas
+        if columna in df.columns
     ]
 
     df = df[
@@ -2007,4 +2095,4 @@ else:
 
     st.info(
         "Todavía no hay historial guardado."
-    )
+)

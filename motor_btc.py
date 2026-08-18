@@ -1834,14 +1834,16 @@ def buscar_valor_brti(
             "value",
             "price",
             "rate",
+            "indexValue",
+            "index_value",
         ]:
 
             if llave in objeto:
 
                 numero = safe_float(
-                    objeto[
+                    objeto.get(
                         llave
-                    ]
+                    )
                 )
 
                 if (
@@ -1849,6 +1851,17 @@ def buscar_valor_brti(
                     and numero > 1000
                 ):
                     return numero
+
+        for llave, valor in objeto.items():
+
+            if str(llave).upper() == "BRTI":
+
+                encontrado = buscar_valor_brti(
+                    valor
+                )
+
+                if encontrado is not None:
+                    return encontrado
 
         for valor in objeto.values():
 
@@ -1863,6 +1876,35 @@ def buscar_valor_brti(
         objeto,
         list,
     ):
+
+        for item in objeto:
+
+            if isinstance(
+                item,
+                dict,
+            ):
+
+                identificador = str(
+                    item.get(
+                        "id",
+                        item.get(
+                            "symbol",
+                            item.get(
+                                "ticker",
+                                "",
+                            ),
+                        ),
+                    )
+                ).upper()
+
+                if identificador == "BRTI":
+
+                    encontrado = buscar_valor_brti(
+                        item
+                    )
+
+                    if encontrado is not None:
+                        return encontrado
 
         for item in objeto:
 
@@ -1882,23 +1924,15 @@ def obtener_cf_brti():
     ahora = time.time()
 
     if (
-        ULTIMO_CF[
-            "precio"
-        ] is not None
+        ULTIMO_CF["precio"] is not None
         and (
             ahora
-            - ULTIMO_CF[
-                "timestamp"
-            ]
+            - ULTIMO_CF["timestamp"]
         ) < 2
     ):
-        return ULTIMO_CF[
-            "precio"
-        ]
+        return ULTIMO_CF["precio"]
 
-    path = (
-        "/cfbenchmarks/values"
-    )
+    path = "/cfbenchmarks/values"
 
     headers = headers_kalshi(
         "GET",
@@ -1906,7 +1940,12 @@ def obtener_cf_brti():
     )
 
     if headers is None:
-        return None
+        print(
+            "[CF BRTI] "
+            "No hay autenticación Kalshi."
+        )
+
+        return ULTIMO_CF["precio"]
 
     datos = http_get(
         (
@@ -1914,34 +1953,63 @@ def obtener_cf_brti():
             f"{path}"
         ),
         params={
-            "id":
-            "BRTI",
+            "id": "BRTI",
         },
         headers=headers,
     )
 
     if not datos:
-        return ULTIMO_CF[
-            "precio"
-        ]
+        print(
+            "[CF BRTI] "
+            "Sin respuesta."
+        )
 
-    precio = buscar_valor_brti(
-        datos.get(
+        return ULTIMO_CF["precio"]
+
+    try:
+
+        contenido = datos.get(
             "data",
             datos,
         )
-    )
 
-    if precio is not None:
+        precio = buscar_valor_brti(
+            contenido
+        )
+
+        if precio is None:
+
+            print(
+                "[CF BRTI] "
+                "Respuesta recibida pero "
+                "no se encontró el precio."
+            )
+
+            print(
+                "[CF BRTI RAW] "
+                + json.dumps(
+                    datos,
+                    ensure_ascii=False,
+                )[:1500]
+            )
+
+            return ULTIMO_CF["precio"]
+
         ULTIMO_CF = {
-            "precio":
-            precio,
-
-            "timestamp":
-            ahora,
+            "precio": precio,
+            "timestamp": ahora,
         }
 
-    return precio
+        return precio
+
+    except Exception as e:
+
+        print(
+            "[CF BRTI] "
+            f"Error procesando: {e}"
+        )
+
+        return ULTIMO_CF["precio"]
 
 
 # ============================================================

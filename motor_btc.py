@@ -1716,19 +1716,13 @@ def obtener_coinmarketcap():
     ahora = time.time()
 
     if (
-        ULTIMO_CMC[
-            "precio"
-        ] is not None
+        ULTIMO_CMC["precio"] is not None
         and (
             ahora
-            - ULTIMO_CMC[
-                "timestamp"
-            ]
+            - ULTIMO_CMC["timestamp"]
         ) < 60
     ):
-        return ULTIMO_CMC[
-            "precio"
-        ]
+        return ULTIMO_CMC["precio"]
 
     api_key = os.getenv(
         "COINMARKETCAP_API_KEY",
@@ -1736,61 +1730,89 @@ def obtener_coinmarketcap():
     ).strip()
 
     if not api_key:
+        print(
+            "[CMC] Falta COINMARKETCAP_API_KEY."
+        )
         return None
 
     datos = http_get(
         (
             f"{CMC_BASE}"
-            "/v1/cryptocurrency/"
+            "/v3/cryptocurrency/"
             "quotes/latest"
         ),
         params={
-            "symbol":
-            "BTC",
-
-            "convert":
-            "USD",
+            "id": "1",
+            "convert": "USD",
         },
         headers={
-            "X-CMC_PRO_API_KEY":
-            api_key,
+            "X-CMC_PRO_API_KEY": api_key,
+            "Accept": "application/json",
         },
     )
 
     if not datos:
-        return ULTIMO_CMC[
-            "precio"
-        ]
+        print(
+            "[CMC] Sin respuesta."
+        )
+        return ULTIMO_CMC["precio"]
 
     try:
-        precio = float(
-            datos[
-                "data"
-            ][
-                "BTC"
-            ][
-                "quote"
-            ][
-                "USD"
-            ][
-                "price"
-            ]
+        data = datos.get(
+            "data",
+            [],
         )
 
-        ULTIMO_CMC = {
-            "precio":
-            precio,
+        if not isinstance(
+            data,
+            list,
+        ):
+            print(
+                "[CMC] Formato inesperado."
+            )
+            return ULTIMO_CMC["precio"]
 
-            "timestamp":
-            ahora,
+        if not data:
+            print(
+                "[CMC] Respuesta sin datos."
+            )
+            return ULTIMO_CMC["precio"]
+
+        precio = safe_float(
+            data[0]
+            .get(
+                "quote",
+                {},
+            )
+            .get(
+                "USD",
+                {},
+            )
+            .get(
+                "price"
+            )
+        )
+
+        if precio is None:
+            print(
+                "[CMC] Precio BTC no encontrado."
+            )
+            return ULTIMO_CMC["precio"]
+
+        ULTIMO_CMC = {
+            "precio": precio,
+            "timestamp": ahora,
         }
 
         return precio
 
-    except Exception:
-        return ULTIMO_CMC[
-            "precio"
-        ]
+    except Exception as e:
+        print(
+            "[CMC] Error procesando "
+            f"respuesta: {e}"
+        )
+
+        return ULTIMO_CMC["precio"]
 
 
 # ============================================================

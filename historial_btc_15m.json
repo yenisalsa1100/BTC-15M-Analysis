@@ -101,10 +101,10 @@
       "CMF vendedor -0.21",
       "Todas las fuentes bajo target"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-18T17:45:33.005146+00:00",
+    "evaluacion": "NO CONTABILIZA",
     "pnl_teorico_1_contrato": null,
     "roi_teorico_pct": null
   }

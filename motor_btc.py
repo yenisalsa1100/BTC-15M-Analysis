@@ -201,15 +201,16 @@ def manejar_senal(
     DETENER = True
 
 
-signal.signal(
-    signal.SIGTERM,
-    manejar_senal,
-)
+if __name__ == "__main__":
+    signal.signal(
+        signal.SIGTERM,
+        manejar_senal,
+    )
 
-signal.signal(
-    signal.SIGINT,
-    manejar_senal,
-)
+    signal.signal(
+        signal.SIGINT,
+        manejar_senal,
+    )
 
 
 # ============================================================

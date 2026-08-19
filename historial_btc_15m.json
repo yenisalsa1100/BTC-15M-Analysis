@@ -975,11 +975,11 @@
       "CMF vendedor -0.17",
       "Mayoría de fuentes abajo"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-19T04:15:22.516286+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.33999999999999997,
+    "roi_teorico_pct": 51.5151515151515
   }
 ]

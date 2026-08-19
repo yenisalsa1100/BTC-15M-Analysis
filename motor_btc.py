@@ -1715,6 +1715,10 @@ def obtener_coinmarketcap():
 
     ahora = time.time()
 
+    # ========================================================
+    # CACHE CMC - 60 SEGUNDOS
+    # ========================================================
+
     if (
         ULTIMO_CMC["precio"] is not None
         and (
@@ -1733,7 +1737,7 @@ def obtener_coinmarketcap():
         print(
             "[CMC] Falta COINMARKETCAP_API_KEY."
         )
-        return None
+        return ULTIMO_CMC["precio"]
 
     datos = http_get(
         (
@@ -1746,8 +1750,10 @@ def obtener_coinmarketcap():
             "convert": "USD",
         },
         headers={
-            "X-CMC_PRO_API_KEY": api_key,
-            "Accept": "application/json",
+            "X-CMC_PRO_API_KEY":
+            api_key,
+            "Accept":
+            "application/json",
         },
     )
 
@@ -1760,49 +1766,121 @@ def obtener_coinmarketcap():
     try:
         data = datos.get(
             "data",
-            [],
+            {},
         )
 
-        if not isinstance(
+        moneda = None
+
+        # ====================================================
+        # FORMATO DICCIONARIO
+        #
+        # data = {
+        #     "1": {
+        #         "quote": {
+        #             "USD": {
+        #                 "price": ...
+        #             }
+        #         }
+        #     }
+        # }
+        # ====================================================
+
+        if isinstance(
+            data,
+            dict,
+        ):
+            moneda = (
+                data.get("1")
+                or data.get(1)
+            )
+
+            # Respaldo si CMC cambia la clave
+            if (
+                moneda is None
+                and data
+            ):
+                moneda = next(
+                    iter(
+                        data.values()
+                    ),
+                    None,
+                )
+
+        # ====================================================
+        # COMPATIBILIDAD CON RESPUESTA TIPO LISTA
+        # ====================================================
+
+        elif isinstance(
             data,
             list,
         ):
+            if data:
+                moneda = data[0]
+
+        if not isinstance(
+            moneda,
+            dict,
+        ):
             print(
-                "[CMC] Formato inesperado."
+                "[CMC] BTC no encontrado "
+                "en la respuesta."
             )
+
+            print(
+                "[CMC RAW] "
+                + json.dumps(
+                    datos,
+                    ensure_ascii=False,
+                )[:1500]
+            )
+
             return ULTIMO_CMC["precio"]
 
-        if not data:
-            print(
-                "[CMC] Respuesta sin datos."
-            )
-            return ULTIMO_CMC["precio"]
+        quote = moneda.get(
+            "quote",
+            {},
+        )
+
+        usd = quote.get(
+            "USD",
+            {},
+        )
 
         precio = safe_float(
-            data[0]
-            .get(
-                "quote",
-                {},
-            )
-            .get(
-                "USD",
-                {},
-            )
-            .get(
+            usd.get(
                 "price"
             )
         )
 
         if precio is None:
             print(
-                "[CMC] Precio BTC no encontrado."
+                "[CMC] Precio BTC "
+                "no encontrado."
             )
+
+            print(
+                "[CMC RAW] "
+                + json.dumps(
+                    datos,
+                    ensure_ascii=False,
+                )[:1500]
+            )
+
             return ULTIMO_CMC["precio"]
+
+        # ====================================================
+        # PRECIO VALIDO
+        # ====================================================
 
         ULTIMO_CMC = {
             "precio": precio,
             "timestamp": ahora,
         }
+
+        print(
+            "[CMC] BTC OK: "
+            f"${precio:,.2f}"
+        )
 
         return precio
 

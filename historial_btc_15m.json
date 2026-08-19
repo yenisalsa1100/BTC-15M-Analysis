@@ -2526,12 +2526,12 @@
       "3/4 fuentes arriba"
     ],
     "confirmaciones": 0,
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "resultado_hora_local": null,
-    "resultado_timestamp_local": null,
-    "evaluacion": null,
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-19T16:15:39.421055+00:00",
+    "resultado_hora_local": "2026-08-19 11:15:39 AM",
+    "resultado_timestamp_local": "2026-08-19T11:15:39.421075-05:00",
+    "evaluacion": "NO CONTABILIZA",
     "pnl_teorico_1_contrato": null,
     "roi_teorico_pct": null
   }

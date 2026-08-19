@@ -18,17 +18,7 @@ st.set_page_config(
 
 HISTORIAL_FILE = "historial_btc_15m.json"
 
-
-# ============================================================
-# AUTO REFRESH
-#
-# SOLO REFRESCA LA PANTALLA.
-# NO EJECUTA EL MOTOR.
-# ============================================================
-
-st.html(
-    '<meta http-equiv="refresh" content="10">'
-)
+AUTO_REFRESH_SEGUNDOS = 3
 
 
 # ============================================================
@@ -368,6 +358,23 @@ html, body {
     color: #cbd5e1;
 }
 
+.live {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #34d399;
+    font-size: .72rem;
+    font-weight: 850;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #10b981;
+    box-shadow: 0 0 10px rgba(16,185,129,.9);
+}
+
 div.stButton > button {
     border-radius: 12px;
     min-height: 45px;
@@ -479,8 +486,15 @@ def cargar_historial():
         ):
             return datos
 
+    except json.JSONDecodeError:
+
+        # El motor puede estar justo actualizando
+        # el archivo. En el siguiente refresh
+        # se vuelve a intentar.
+        return []
+
     except Exception:
-        pass
+        return []
 
     return []
 
@@ -687,23 +701,7 @@ def escala_probabilidad(
 
 
 # ============================================================
-# CARGAR DATOS GUARDADOS POR EL MOTOR
-#
-# IMPORTANTE:
-# LA APP NO EJECUTA motor_btc.py
-# LA APP SOLO LEE EL HISTORIAL.
-# ============================================================
-
-historial = cargar_historial()
-
-analisis = None
-
-if historial:
-    analisis = historial[-1]
-
-
-# ============================================================
-# CABECERA
+# CABECERA FIJA
 # ============================================================
 
 st.html(
@@ -722,400 +720,205 @@ st.html(
 )
 
 
-# ============================================================
-# BOTON + ESTADO
-# ============================================================
-
-b1, b2 = st.columns(
-    [1.15, 1.85]
-)
-
-with b1:
-
-    if st.button(
-        "🗑️ ELIMINAR HISTORIAL",
-        use_container_width=True,
-    ):
-        eliminar_historial()
-
-
-with b2:
-
-    if analisis is not None:
-
-        hora_motor = (
-            analisis.get(
-                "hora_local"
-            )
-            or analisis.get(
-                "timestamp"
-            )
-            or "N/D"
-        )
-
-        st.caption(
-            "Última actualización del motor: "
-            + str(
-                hora_motor
-            )
-        )
-
-    else:
-
-        st.caption(
-            "Esperando datos del motor."
-        )
-
-
-# ============================================================
-# VERIFICAR ANALISIS
-# ============================================================
-
-if analisis is None:
-
-    st.warning(
-        "El motor todavía no ha guardado "
-        "ningún análisis."
-    )
-
-    st.stop()
-
-
-# ============================================================
-# DECISION
-# ============================================================
-
-decision = analisis.get(
-    "decision",
-    "NO APOSTAR",
-)
-
-fuerza = analisis.get(
-    "fuerza",
-    "DEBIL",
-)
-
-probabilidad = float(
-    analisis.get(
-        "probabilidad",
-        0,
-    )
-    or 0
-)
-
-if decision == "ARRIBA":
-
-    clase = (
-        "decision decision-up"
-    )
-
-    icono = "▲"
-
-elif decision == "ABAJO":
-
-    clase = (
-        "decision decision-down"
-    )
-
-    icono = "▼"
-
-else:
-
-    clase = (
-        "decision decision-no"
-    )
-
-    icono = "●"
-
-
 st.html(
     f'''
-    <div class="{clase}">
-
-        <div class="decision-small">
-            ULTIMA DECISION DEL MOTOR
-        </div>
-
-        <div class="decision-big">
-            {icono} {decision}
-        </div>
-
-        <div class="decision-meta">
-            FUERZA <b>{fuerza}</b>
-            &nbsp;&nbsp;·&nbsp;&nbsp;
-            PROBABILIDAD <b>{probabilidad:.1f}%</b>
-        </div>
-
+    <div class="live">
+        <span class="live-dot"></span>
+        ACTUALIZACIÓN AUTOMÁTICA CADA
+        {AUTO_REFRESH_SEGUNDOS} SEGUNDOS
     </div>
     '''
 )
 
 
 # ============================================================
-# CONTRATO
+# DASHBOARD EN VIVO
+#
+# IMPORTANTE:
+# - NO EJECUTA motor_btc.py
+# - SOLO LEE historial_btc_15m.json
+# - SE VUELVE A EJECUTAR CADA 3 SEGUNDOS
 # ============================================================
 
-seccion(
-    "Contrato"
+@st.fragment(
+    run_every=f"{AUTO_REFRESH_SEGUNDOS}s"
 )
+def dashboard_en_vivo():
 
-c1, c2 = st.columns(2)
+    # ========================================================
+    # CARGAR ULTIMO HISTORIAL DISPONIBLE
+    # ========================================================
 
-with c1:
+    historial = cargar_historial()
 
-    tarjeta(
-        "TARGET KALSHI",
-        numero(
-            analisis.get(
-                "target"
-            ),
-            2,
-            "$",
-        ),
+    analisis = None
+
+    if historial:
+        analisis = historial[-1]
+
+
+    # ========================================================
+    # BOTON + ESTADO
+    # ========================================================
+
+    b1, b2 = st.columns(
+        [1.15, 1.85]
     )
 
-with c2:
+    with b1:
 
-    tarjeta(
-        "BTC CONSENSO",
-        numero(
-            analisis.get(
-                "precio_consenso"
-            ),
-            2,
-            "$",
-        ),
-    )
+        if st.button(
+            "🗑️ ELIMINAR HISTORIAL",
+            use_container_width=True,
+            key="eliminar_historial_btn",
+        ):
+            eliminar_historial()
 
 
-c3, c4 = st.columns(2)
+    with b2:
 
-with c3:
+        if analisis is not None:
 
-    tarjeta(
-        "TIEMPO RESTANTE AL ANALIZAR",
-        numero(
-            analisis.get(
-                "segundos_restantes"
-            ),
-            0,
-            "",
-            " s",
-        ),
-    )
-
-with c4:
-
-    tarjeta(
-        "MINUTO DE ENTRADA",
-        numero(
-            analisis.get(
-                "minuto_entrada"
-            ),
-            2,
-        ),
-    )
-
-
-tarjeta(
-    "SCORE TOTAL",
-    numero(
-        analisis.get(
-            "score"
-        ),
-        2,
-    ),
-)
-
-
-# ============================================================
-# PROBABILIDAD
-# ============================================================
-
-seccion(
-    "Probabilidad y valor"
-)
-
-escala_probabilidad(
-    analisis.get(
-        "probabilidad_arriba",
-        50,
-    )
-)
-
-p1, p2 = st.columns(2)
-
-with p1:
-
-    tarjeta(
-        "PROB. ARRIBA",
-        numero(
-            analisis.get(
-                "probabilidad_arriba"
-            ),
-            1,
-            "",
-            "%",
-        ),
-    )
-
-with p2:
-
-    tarjeta(
-        "PROB. ABAJO",
-        numero(
-            analisis.get(
-                "probabilidad_abajo"
-            ),
-            1,
-            "",
-            "%",
-        ),
-    )
-
-
-edge = (
-    analisis.get(
-        "edge"
-    )
-)
-
-p3, p4 = st.columns(2)
-
-with p3:
-
-    tarjeta(
-        "EDGE",
-        (
-            numero(
-                edge * 100,
-                2,
-                "",
-                "%",
+            hora_motor = (
+                analisis.get(
+                    "hora_local"
+                )
+                or analisis.get(
+                    "timestamp"
+                )
+                or "N/D"
             )
-            if edge is not None
-            else "SIN EDGE"
-        ),
-    )
 
-with p4:
+            st.caption(
+                "Última actualización del motor: "
+                + str(
+                    hora_motor
+                )
+            )
 
-    precio_entrada = (
-        analisis.get(
-            "precio_entrada"
+        else:
+
+            st.caption(
+                "Esperando datos del motor."
+            )
+
+
+    # ========================================================
+    # VERIFICAR ANALISIS
+    # ========================================================
+
+    if analisis is None:
+
+        st.warning(
+            "El motor todavía no ha guardado "
+            "ningún análisis."
         )
+
+        return
+
+
+    # ========================================================
+    # DECISION
+    # ========================================================
+
+    decision = analisis.get(
+        "decision",
+        "NO APOSTAR",
     )
 
-    tarjeta(
-        "PRECIO ENTRADA",
-        (
-            numero(
-                precio_entrada,
-                3,
-                "$",
+    fuerza = analisis.get(
+        "fuerza",
+        "DEBIL",
+    )
+
+    try:
+        probabilidad = float(
+            analisis.get(
+                "probabilidad",
+                0,
             )
-            if precio_entrada is not None
-            else "NO ENTRA"
-        ),
+            or 0
+        )
+
+    except Exception:
+        probabilidad = 0.0
+
+
+    if decision == "ARRIBA":
+
+        clase = (
+            "decision decision-up"
+        )
+
+        icono = "▲"
+
+    elif decision == "ABAJO":
+
+        clase = (
+            "decision decision-down"
+        )
+
+        icono = "▼"
+
+    else:
+
+        clase = (
+            "decision decision-no"
+        )
+
+        icono = "●"
+
+
+    st.html(
+        f'''
+        <div class="{clase}">
+
+            <div class="decision-small">
+                ULTIMA DECISION DEL MOTOR
+            </div>
+
+            <div class="decision-big">
+                {icono} {decision}
+            </div>
+
+            <div class="decision-meta">
+                FUERZA <b>{fuerza}</b>
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                PROBABILIDAD <b>{probabilidad:.1f}%</b>
+            </div>
+
+        </div>
+        '''
     )
 
 
-escala(
-    "SCORE TOTAL",
-    analisis.get(
-        "score",
-        0,
-    ),
-    -100,
-    100,
-    "{:+.2f}",
-)
+    # ========================================================
+    # CONTRATO
+    # ========================================================
 
-
-# ============================================================
-# TARGET
-# ============================================================
-
-seccion(
-    "Distancia al Target"
-)
-
-dist_target = float(
-    analisis.get(
-        "distancia_target_pct",
-        0,
+    seccion(
+        "Contrato"
     )
-    or 0
-)
 
-limite_target = max(
-    0.15,
-    abs(
-        dist_target
-    ) * 1.20,
-)
+    c1, c2 = st.columns(2)
 
-escala(
-    "BTC ↔ TARGET",
-    dist_target,
-    -limite_target,
-    limite_target,
-    "{:+.4f}%",
-)
+    with c1:
 
-
-# ============================================================
-# FUENTES
-# ============================================================
-
-seccion(
-    "Precios de fuentes"
-)
-
-tabla_metricas(
-    [
-        (
-            "CF Benchmarks / BRTI",
+        tarjeta(
+            "TARGET KALSHI",
             numero(
                 analisis.get(
-                    "precio_cf_brti"
+                    "target"
                 ),
                 2,
                 "$",
             ),
-        ),
-        (
-            "Coinbase BTC-USD",
-            numero(
-                analisis.get(
-                    "precio_coinbase"
-                ),
-                2,
-                "$",
-            ),
-        ),
-        (
-            "Kraken XBTUSD",
-            numero(
-                analisis.get(
-                    "precio_kraken"
-                ),
-                2,
-                "$",
-            ),
-        ),
-        (
-            "CoinMarketCap",
-            numero(
-                analisis.get(
-                    "precio_coinmarketcap"
-                ),
-                2,
-                "$",
-            ),
-        ),
-        (
-            "Precio consenso",
+        )
+
+    with c2:
+
+        tarjeta(
+            "BTC CONSENSO",
             numero(
                 analisis.get(
                     "precio_consenso"
@@ -1123,977 +926,1220 @@ tabla_metricas(
                 2,
                 "$",
             ),
-        ),
-    ]
-)
+        )
 
 
-tabla_metricas(
-    [
-        (
-            "Kalshi YES ask",
+    c3, c4 = st.columns(2)
+
+    with c3:
+
+        tarjeta(
+            "TIEMPO RESTANTE AL ANALIZAR",
             numero(
                 analisis.get(
-                    "yes_ask"
+                    "segundos_restantes"
                 ),
-                3,
-                "$",
+                0,
+                "",
+                " s",
             ),
-        ),
-        (
-            "Kalshi NO ask",
+        )
+
+    with c4:
+
+        tarjeta(
+            "MINUTO DE ENTRADA",
             numero(
                 analisis.get(
-                    "no_ask"
+                    "minuto_entrada"
                 ),
-                3,
-                "$",
+                2,
             ),
+        )
+
+
+    tarjeta(
+        "SCORE TOTAL",
+        numero(
+            analisis.get(
+                "score"
+            ),
+            2,
         ),
-        (
-            "Fuentes disponibles",
-            str(
+    )
+
+
+    # ========================================================
+    # PROBABILIDAD
+    # ========================================================
+
+    seccion(
+        "Probabilidad y valor"
+    )
+
+    escala_probabilidad(
+        analisis.get(
+            "probabilidad_arriba",
+            50,
+        )
+    )
+
+    p1, p2 = st.columns(2)
+
+    with p1:
+
+        tarjeta(
+            "PROB. ARRIBA",
+            numero(
                 analisis.get(
-                    "fuentes_disponibles",
-                    "N/D",
+                    "probabilidad_arriba"
+                ),
+                1,
+                "",
+                "%",
+            ),
+        )
+
+    with p2:
+
+        tarjeta(
+            "PROB. ABAJO",
+            numero(
+                analisis.get(
+                    "probabilidad_abajo"
+                ),
+                1,
+                "",
+                "%",
+            ),
+        )
+
+
+    edge = analisis.get(
+        "edge"
+    )
+
+    p3, p4 = st.columns(2)
+
+    with p3:
+
+        tarjeta(
+            "EDGE",
+            (
+                numero(
+                    edge * 100,
+                    2,
+                    "",
+                    "%",
                 )
+                if edge is not None
+                else "SIN EDGE"
             ),
-        ),
-        (
-            "Ticker",
-            str(
-                analisis.get(
-                    "ticker",
-                    "N/D",
+        )
+
+    with p4:
+
+        precio_entrada = analisis.get(
+            "precio_entrada"
+        )
+
+        tarjeta(
+            "PRECIO ENTRADA",
+            (
+                numero(
+                    precio_entrada,
+                    3,
+                    "$",
                 )
+                if precio_entrada is not None
+                else "NO ENTRA"
             ),
+        )
+
+
+    escala(
+        "SCORE TOTAL",
+        analisis.get(
+            "score",
+            0,
         ),
-    ]
-)
+        -100,
+        100,
+        "{:+.2f}",
+    )
 
 
-# ============================================================
-# TENDENCIA
-# ============================================================
+    # ========================================================
+    # TARGET
+    # ========================================================
 
-seccion(
-    "Tendencia técnica"
-)
+    seccion(
+        "Distancia al Target"
+    )
 
-tabla_metricas(
-    [
-        (
-            "EMA 9",
-            numero(
-                analisis.get(
-                    "ema9"
+    try:
+        dist_target = float(
+            analisis.get(
+                "distancia_target_pct",
+                0,
+            )
+            or 0
+        )
+
+    except Exception:
+        dist_target = 0.0
+
+    limite_target = max(
+        0.15,
+        abs(
+            dist_target
+        ) * 1.20,
+    )
+
+    escala(
+        "BTC ↔ TARGET",
+        dist_target,
+        -limite_target,
+        limite_target,
+        "{:+.4f}%",
+    )
+
+
+    # ========================================================
+    # FUENTES
+    # ========================================================
+
+    seccion(
+        "Precios de fuentes"
+    )
+
+    tabla_metricas(
+        [
+            (
+                "CF Benchmarks / BRTI",
+                numero(
+                    analisis.get(
+                        "precio_cf_brti"
+                    ),
+                    2,
+                    "$",
                 ),
-                2,
-                "$",
             ),
-        ),
-        (
-            "EMA 21",
-            numero(
-                analisis.get(
-                    "ema21"
+            (
+                "Coinbase BTC-USD",
+                numero(
+                    analisis.get(
+                        "precio_coinbase"
+                    ),
+                    2,
+                    "$",
                 ),
-                2,
-                "$",
             ),
-        ),
-        (
-            "EMA 50",
-            numero(
-                analisis.get(
-                    "ema50"
+            (
+                "Kraken XBTUSD",
+                numero(
+                    analisis.get(
+                        "precio_kraken"
+                    ),
+                    2,
+                    "$",
                 ),
-                2,
-                "$",
             ),
-        ),
-        (
-            "MACD",
-            numero(
-                analisis.get(
-                    "macd"
+            (
+                "CoinMarketCap",
+                numero(
+                    analisis.get(
+                        "precio_coinmarketcap"
+                    ),
+                    2,
+                    "$",
                 ),
-                4,
             ),
-        ),
-        (
-            "MACD Signal",
-            numero(
-                analisis.get(
-                    "macd_signal"
+            (
+                "Precio consenso",
+                numero(
+                    analisis.get(
+                        "precio_consenso"
+                    ),
+                    2,
+                    "$",
                 ),
-                4,
             ),
-        ),
-    ]
-)
+        ]
+    )
 
 
-escala(
-    "RSI 14",
-    analisis.get(
-        "rsi14",
-        50,
-    ),
-    0,
-    100,
-    "{:.2f}",
-)
+    tabla_metricas(
+        [
+            (
+                "Kalshi YES ask",
+                numero(
+                    analisis.get(
+                        "yes_ask"
+                    ),
+                    3,
+                    "$",
+                ),
+            ),
+            (
+                "Kalshi NO ask",
+                numero(
+                    analisis.get(
+                        "no_ask"
+                    ),
+                    3,
+                    "$",
+                ),
+            ),
+            (
+                "Fuentes disponibles",
+                str(
+                    analisis.get(
+                        "fuentes_disponibles",
+                        "N/D",
+                    )
+                ),
+            ),
+            (
+                "Ticker",
+                str(
+                    analisis.get(
+                        "ticker",
+                        "N/D",
+                    )
+                ),
+            ),
+        ]
+    )
 
 
-escala(
-    "CMF 20",
-    analisis.get(
-        "cmf20",
+    # ========================================================
+    # TENDENCIA
+    # ========================================================
+
+    seccion(
+        "Tendencia técnica"
+    )
+
+    tabla_metricas(
+        [
+            (
+                "EMA 9",
+                numero(
+                    analisis.get(
+                        "ema9"
+                    ),
+                    2,
+                    "$",
+                ),
+            ),
+            (
+                "EMA 21",
+                numero(
+                    analisis.get(
+                        "ema21"
+                    ),
+                    2,
+                    "$",
+                ),
+            ),
+            (
+                "EMA 50",
+                numero(
+                    analisis.get(
+                        "ema50"
+                    ),
+                    2,
+                    "$",
+                ),
+            ),
+            (
+                "MACD",
+                numero(
+                    analisis.get(
+                        "macd"
+                    ),
+                    4,
+                ),
+            ),
+            (
+                "MACD Signal",
+                numero(
+                    analisis.get(
+                        "macd_signal"
+                    ),
+                    4,
+                ),
+            ),
+        ]
+    )
+
+
+    escala(
+        "RSI 14",
+        analisis.get(
+            "rsi14",
+            50,
+        ),
         0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
+        100,
+        "{:.2f}",
+    )
 
 
-# ============================================================
-# MOMENTUM
-# ============================================================
-
-seccion(
-    "Momentum"
-)
-
-tabla_metricas(
-    [
-        (
-            "Momentum 1 minuto",
-            numero(
-                (
-                    analisis.get(
-                        "momentum_1m",
-                        0,
-                    )
-                    or 0
-                ) * 100,
-                4,
-                "",
-                "%",
-            ),
-        ),
-        (
-            "Momentum 3 minutos",
-            numero(
-                (
-                    analisis.get(
-                        "momentum_3m",
-                        0,
-                    )
-                    or 0
-                ) * 100,
-                4,
-                "",
-                "%",
-            ),
-        ),
-        (
-            "Momentum 5 minutos",
-            numero(
-                (
-                    analisis.get(
-                        "momentum_5m",
-                        0,
-                    )
-                    or 0
-                ) * 100,
-                4,
-                "",
-                "%",
-            ),
-        ),
-        (
-            "Momentum 10 minutos",
-            numero(
-                (
-                    analisis.get(
-                        "momentum_10m",
-                        0,
-                    )
-                    or 0
-                ) * 100,
-                4,
-                "",
-                "%",
-            ),
-        ),
-    ]
-)
-
-
-escala(
-    "VELOCIDAD",
-    (
+    escala(
+        "CMF 20",
         analisis.get(
-            "velocidad",
+            "cmf20",
             0,
-        )
-        or 0
-    ) * 100,
-    -0.50,
-    0.50,
-    "{:+.5f}%",
-)
-
-
-escala(
-    "ACELERACION",
-    (
-        analisis.get(
-            "aceleracion",
-            0,
-        )
-        or 0
-    ) * 100,
-    -0.50,
-    0.50,
-    "{:+.5f}%",
-)
-
-
-# ============================================================
-# VOLATILIDAD / VOLUMEN
-# ============================================================
-
-seccion(
-    "Volatilidad y volumen"
-)
-
-tabla_metricas(
-    [
-        (
-            "Volatilidad 20",
-            numero(
-                (
-                    analisis.get(
-                        "volatilidad20",
-                        0,
-                    )
-                    or 0
-                ) * 100,
-                5,
-                "",
-                "%",
-            ),
         ),
-        (
-            "Volumen actual",
-            numero(
-                analisis.get(
-                    "volumen"
-                ),
-                4,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Volumen promedio 20",
-            numero(
-                analisis.get(
-                    "volumen_promedio20"
-                ),
-                4,
-                "",
-                " BTC",
-            ),
-        ),
-    ]
-)
-
-
-escala(
-    "VOLUMEN RELATIVO",
-    analisis.get(
-        "volumen_relativo",
+        -1,
         1,
-    ),
-    0,
-    3,
-    "{:.2f}x",
-)
-
-
-# ============================================================
-# OBI
-# ============================================================
-
-seccion(
-    "Order Book Imbalance"
-)
-
-escala(
-    "OBI COINBASE",
-    analisis.get(
-        "obi_coinbase",
-        0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-escala(
-    "OBI KRAKEN",
-    analisis.get(
-        "obi_kraken",
-        0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-escala(
-    "OBI KALSHI",
-    analisis.get(
-        "obi_kalshi",
-        0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-escala(
-    "OBI PROMEDIO",
-    analisis.get(
-        "obi_promedio",
-        0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-
-# ============================================================
-# ORDER FLOW
-# ============================================================
-
-seccion(
-    "Trades agresivos / Order Flow"
-)
-
-of_cb = (
-    analisis.get(
-        "orderflow_coinbase"
+        "{:+.4f}",
     )
-    or {}
-)
 
-of_kr = (
-    analisis.get(
-        "orderflow_kraken"
+
+    # ========================================================
+    # MOMENTUM
+    # ========================================================
+
+    seccion(
+        "Momentum"
     )
-    or {}
-)
+
+    tabla_metricas(
+        [
+            (
+                "Momentum 1 minuto",
+                numero(
+                    (
+                        analisis.get(
+                            "momentum_1m",
+                            0,
+                        )
+                        or 0
+                    ) * 100,
+                    4,
+                    "",
+                    "%",
+                ),
+            ),
+            (
+                "Momentum 3 minutos",
+                numero(
+                    (
+                        analisis.get(
+                            "momentum_3m",
+                            0,
+                        )
+                        or 0
+                    ) * 100,
+                    4,
+                    "",
+                    "%",
+                ),
+            ),
+            (
+                "Momentum 5 minutos",
+                numero(
+                    (
+                        analisis.get(
+                            "momentum_5m",
+                            0,
+                        )
+                        or 0
+                    ) * 100,
+                    4,
+                    "",
+                    "%",
+                ),
+            ),
+            (
+                "Momentum 10 minutos",
+                numero(
+                    (
+                        analisis.get(
+                            "momentum_10m",
+                            0,
+                        )
+                        or 0
+                    ) * 100,
+                    4,
+                    "",
+                    "%",
+                ),
+            ),
+        ]
+    )
 
 
-escala(
-    "ORDER FLOW COINBASE",
-    of_cb.get(
-        "imbalance",
+    escala(
+        "VELOCIDAD",
+        (
+            analisis.get(
+                "velocidad",
+                0,
+            )
+            or 0
+        ) * 100,
+        -0.50,
+        0.50,
+        "{:+.5f}%",
+    )
+
+
+    escala(
+        "ACELERACION",
+        (
+            analisis.get(
+                "aceleracion",
+                0,
+            )
+            or 0
+        ) * 100,
+        -0.50,
+        0.50,
+        "{:+.5f}%",
+    )
+
+
+    # ========================================================
+    # VOLATILIDAD / VOLUMEN
+    # ========================================================
+
+    seccion(
+        "Volatilidad y volumen"
+    )
+
+    tabla_metricas(
+        [
+            (
+                "Volatilidad 20",
+                numero(
+                    (
+                        analisis.get(
+                            "volatilidad20",
+                            0,
+                        )
+                        or 0
+                    ) * 100,
+                    5,
+                    "",
+                    "%",
+                ),
+            ),
+            (
+                "Volumen actual",
+                numero(
+                    analisis.get(
+                        "volumen"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Volumen promedio 20",
+                numero(
+                    analisis.get(
+                        "volumen_promedio20"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+        ]
+    )
+
+
+    escala(
+        "VOLUMEN RELATIVO",
+        analisis.get(
+            "volumen_relativo",
+            1,
+        ),
         0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-
-tabla_metricas(
-    [
-        (
-            "Compra agresiva Coinbase",
-            numero(
-                of_cb.get(
-                    "buy_volume"
-                ),
-                5,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Venta agresiva Coinbase",
-            numero(
-                of_cb.get(
-                    "sell_volume"
-                ),
-                5,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Trades Coinbase",
-            str(
-                of_cb.get(
-                    "trades",
-                    0,
-                )
-            ),
-        ),
-    ]
-)
-
-
-escala(
-    "ORDER FLOW KRAKEN",
-    of_kr.get(
-        "imbalance",
-        0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-
-tabla_metricas(
-    [
-        (
-            "Compra agresiva Kraken",
-            numero(
-                of_kr.get(
-                    "buy_volume"
-                ),
-                5,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Venta agresiva Kraken",
-            numero(
-                of_kr.get(
-                    "sell_volume"
-                ),
-                5,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Trades Kraken",
-            str(
-                of_kr.get(
-                    "trades",
-                    0,
-                )
-            ),
-        ),
-    ]
-)
-
-
-escala(
-    "ORDER FLOW PROMEDIO",
-    analisis.get(
-        "orderflow_promedio",
-        0,
-    ),
-    -1,
-    1,
-    "{:+.4f}",
-)
-
-
-# ============================================================
-# PROFUNDIDAD
-# ============================================================
-
-seccion(
-    "Profundidad de mercado"
-)
-
-prof_cb = (
-    analisis.get(
-        "profundidad_coinbase"
+        3,
+        "{:.2f}x",
     )
-    or {}
-)
 
-prof_kr = (
-    analisis.get(
-        "profundidad_kraken"
+
+    # ========================================================
+    # OBI
+    # ========================================================
+
+    seccion(
+        "Order Book Imbalance"
     )
-    or {}
-)
 
-prof_ka = (
-    analisis.get(
-        "profundidad_kalshi"
+    escala(
+        "OBI COINBASE",
+        analisis.get(
+            "obi_coinbase",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
     )
-    or {}
-)
+
+    escala(
+        "OBI KRAKEN",
+        analisis.get(
+            "obi_kraken",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
+
+    escala(
+        "OBI KALSHI",
+        analisis.get(
+            "obi_kalshi",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
+
+    escala(
+        "OBI PROMEDIO",
+        analisis.get(
+            "obi_promedio",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
 
 
-tabla_metricas(
-    [
-        (
-            "Coinbase BID depth",
-            numero(
-                prof_cb.get(
-                    "bid"
-                ),
-                4,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Coinbase ASK depth",
-            numero(
-                prof_cb.get(
-                    "ask"
-                ),
-                4,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Kraken BID depth",
-            numero(
-                prof_kr.get(
-                    "bid"
-                ),
-                4,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Kraken ASK depth",
-            numero(
-                prof_kr.get(
-                    "ask"
-                ),
-                4,
-                "",
-                " BTC",
-            ),
-        ),
-        (
-            "Kalshi YES depth",
-            numero(
-                prof_ka.get(
-                    "yes"
-                ),
-                2,
-            ),
-        ),
-        (
-            "Kalshi NO depth",
-            numero(
-                prof_ka.get(
-                    "no"
-                ),
-                2,
-            ),
-        ),
-    ]
-)
+    # ========================================================
+    # ORDER FLOW
+    # ========================================================
+
+    seccion(
+        "Trades agresivos / Order Flow"
+    )
+
+    of_cb = (
+        analisis.get(
+            "orderflow_coinbase"
+        )
+        or {}
+    )
+
+    of_kr = (
+        analisis.get(
+            "orderflow_kraken"
+        )
+        or {}
+    )
 
 
-# ============================================================
-# SPREAD
-# ============================================================
+    escala(
+        "ORDER FLOW COINBASE",
+        of_cb.get(
+            "imbalance",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
 
-seccion(
-    "Spread"
-)
 
-spread = (
-    analisis.get(
+    tabla_metricas(
+        [
+            (
+                "Compra agresiva Coinbase",
+                numero(
+                    of_cb.get(
+                        "buy_volume"
+                    ),
+                    5,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Venta agresiva Coinbase",
+                numero(
+                    of_cb.get(
+                        "sell_volume"
+                    ),
+                    5,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Trades Coinbase",
+                str(
+                    of_cb.get(
+                        "trades",
+                        0,
+                    )
+                ),
+            ),
+        ]
+    )
+
+
+    escala(
+        "ORDER FLOW KRAKEN",
+        of_kr.get(
+            "imbalance",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
+
+
+    tabla_metricas(
+        [
+            (
+                "Compra agresiva Kraken",
+                numero(
+                    of_kr.get(
+                        "buy_volume"
+                    ),
+                    5,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Venta agresiva Kraken",
+                numero(
+                    of_kr.get(
+                        "sell_volume"
+                    ),
+                    5,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Trades Kraken",
+                str(
+                    of_kr.get(
+                        "trades",
+                        0,
+                    )
+                ),
+            ),
+        ]
+    )
+
+
+    escala(
+        "ORDER FLOW PROMEDIO",
+        analisis.get(
+            "orderflow_promedio",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
+
+
+    # ========================================================
+    # PROFUNDIDAD
+    # ========================================================
+
+    seccion(
+        "Profundidad de mercado"
+    )
+
+    prof_cb = (
+        analisis.get(
+            "profundidad_coinbase"
+        )
+        or {}
+    )
+
+    prof_kr = (
+        analisis.get(
+            "profundidad_kraken"
+        )
+        or {}
+    )
+
+    prof_ka = (
+        analisis.get(
+            "profundidad_kalshi"
+        )
+        or {}
+    )
+
+
+    tabla_metricas(
+        [
+            (
+                "Coinbase BID depth",
+                numero(
+                    prof_cb.get(
+                        "bid"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Coinbase ASK depth",
+                numero(
+                    prof_cb.get(
+                        "ask"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Kraken BID depth",
+                numero(
+                    prof_kr.get(
+                        "bid"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Kraken ASK depth",
+                numero(
+                    prof_kr.get(
+                        "ask"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Kalshi YES depth",
+                numero(
+                    prof_ka.get(
+                        "yes"
+                    ),
+                    2,
+                ),
+            ),
+            (
+                "Kalshi NO depth",
+                numero(
+                    prof_ka.get(
+                        "no"
+                    ),
+                    2,
+                ),
+            ),
+        ]
+    )
+
+
+    # ========================================================
+    # SPREAD
+    # ========================================================
+
+    seccion(
+        "Spread"
+    )
+
+    spread = analisis.get(
         "spread_coinbase"
     )
-)
 
-tarjeta(
-    "COINBASE BID / ASK SPREAD",
-    (
-        numero(
-            spread * 100,
-            5,
-            "",
-            "%",
+    tarjeta(
+        "COINBASE BID / ASK SPREAD",
+        (
+            numero(
+                spread * 100,
+                5,
+                "",
+                "%",
+            )
+            if spread is not None
+            else "N/D"
+        ),
+    )
+
+
+    # ========================================================
+    # SCORE FAMILIAS
+    # ========================================================
+
+    seccion(
+        "Score por familias"
+    )
+
+    familias = (
+        analisis.get(
+            "score_familias"
         )
-        if spread is not None
-        else "N/D"
-    ),
-)
-
-
-# ============================================================
-# SCORE FAMILIAS
-# ============================================================
-
-seccion(
-    "Score por familias"
-)
-
-familias = (
-    analisis.get(
-        "score_familias"
+        or {}
     )
-    or {}
-)
 
 
-escala(
-    "TARGET",
-    familias.get(
-        "target",
-        0,
-    ),
-    -18,
-    18,
-    "{:+.2f}",
-)
-
-escala(
-    "TENDENCIA",
-    familias.get(
-        "tendencia",
-        0,
-    ),
-    -14,
-    14,
-    "{:+.2f}",
-)
-
-escala(
-    "MOMENTUM",
-    familias.get(
-        "momentum",
-        0,
-    ),
-    -13,
-    13,
-    "{:+.2f}",
-)
-
-escala(
-    "MICROESTRUCTURA",
-    familias.get(
-        "microestructura",
-        0,
-    ),
-    -16,
-    16,
-    "{:+.2f}",
-)
-
-escala(
-    "FLUJO CAPITAL",
-    familias.get(
-        "flujo_capital",
-        0,
-    ),
-    -10,
-    10,
-    "{:+.2f}",
-)
-
-escala(
-    "CONSENSO",
-    familias.get(
-        "consenso",
-        0,
-    ),
-    -10,
-    10,
-    "{:+.2f}",
-)
-
-
-# ============================================================
-# CONSENSO
-# ============================================================
-
-seccion(
-    "Consenso de fuentes"
-)
-
-consenso = (
-    analisis.get(
-        "consenso_fuentes"
-    )
-    or {}
-)
-
-
-cc1, cc2 = st.columns(2)
-
-with cc1:
-
-    tarjeta(
-        "FUENTES ARRIBA",
-        str(
-            consenso.get(
-                "arriba",
-                0,
-            )
+    escala(
+        "TARGET",
+        familias.get(
+            "target",
+            0,
         ),
+        -18,
+        18,
+        "{:+.2f}",
     )
 
-with cc2:
-
-    tarjeta(
-        "FUENTES ABAJO",
-        str(
-            consenso.get(
-                "abajo",
-                0,
-            )
+    escala(
+        "TENDENCIA",
+        familias.get(
+            "tendencia",
+            0,
         ),
+        -14,
+        14,
+        "{:+.2f}",
     )
 
-
-cc3, cc4 = st.columns(2)
-
-with cc3:
-
-    tarjeta(
-        "TOTAL FUENTES",
-        str(
-            consenso.get(
-                "total",
-                0,
-            )
+    escala(
+        "MOMENTUM",
+        familias.get(
+            "momentum",
+            0,
         ),
+        -13,
+        13,
+        "{:+.2f}",
     )
 
-with cc4:
+    escala(
+        "MICROESTRUCTURA",
+        familias.get(
+            "microestructura",
+            0,
+        ),
+        -16,
+        16,
+        "{:+.2f}",
+    )
 
-    tarjeta(
-        "RATIO CONSENSO",
-        numero(
-            consenso.get(
-                "ratio",
-                0,
+    escala(
+        "FLUJO CAPITAL",
+        familias.get(
+            "flujo_capital",
+            0,
+        ),
+        -10,
+        10,
+        "{:+.2f}",
+    )
+
+    escala(
+        "CONSENSO",
+        familias.get(
+            "consenso",
+            0,
+        ),
+        -10,
+        10,
+        "{:+.2f}",
+    )
+
+
+    # ========================================================
+    # CONSENSO
+    # ========================================================
+
+    seccion(
+        "Consenso de fuentes"
+    )
+
+    consenso = (
+        analisis.get(
+            "consenso_fuentes"
+        )
+        or {}
+    )
+
+
+    cc1, cc2 = st.columns(2)
+
+    with cc1:
+
+        tarjeta(
+            "FUENTES ARRIBA",
+            str(
+                consenso.get(
+                    "arriba",
+                    0,
+                )
             ),
-            3,
-        ),
-    )
-
-
-# ============================================================
-# RAZONES
-# ============================================================
-
-seccion(
-    "Razones de la decisión"
-)
-
-razones = (
-    analisis.get(
-        "razones"
-    )
-    or []
-)
-
-if razones:
-
-    for razon in razones:
-
-        st.html(
-            f'<div class="reason">{razon}</div>'
         )
 
-else:
+    with cc2:
 
-    st.caption(
-        "No hay razones registradas."
-    )
-
-
-# ============================================================
-# HISTORIAL / RENDIMIENTO
-# ============================================================
-
-seccion(
-    "Historial y rendimiento"
-)
-
-operaciones = [
-    x
-    for x in historial
-    if x.get(
-        "decision"
-    )
-    in [
-        "ARRIBA",
-        "ABAJO",
-    ]
-]
-
-resueltas = [
-    x
-    for x in operaciones
-    if x.get(
-        "evaluacion"
-    )
-    in [
-        "ACIERTO",
-        "FALLO",
-    ]
-]
-
-aciertos = sum(
-    1
-    for x in resueltas
-    if x.get(
-        "evaluacion"
-    )
-    == "ACIERTO"
-)
-
-fallos = sum(
-    1
-    for x in resueltas
-    if x.get(
-        "evaluacion"
-    )
-    == "FALLO"
-)
-
-precision = 0.0
-
-if resueltas:
-
-    precision = (
-        aciertos
-        / len(
-            resueltas
+        tarjeta(
+            "FUENTES ABAJO",
+            str(
+                consenso.get(
+                    "abajo",
+                    0,
+                )
+            ),
         )
-    ) * 100.0
 
 
-pnl = sum(
-    float(
-        x.get(
-            "pnl_teorico_1_contrato"
+    cc3, cc4 = st.columns(2)
+
+    with cc3:
+
+        tarjeta(
+            "TOTAL FUENTES",
+            str(
+                consenso.get(
+                    "total",
+                    0,
+                )
+            ),
         )
-        or 0
+
+    with cc4:
+
+        tarjeta(
+            "RATIO CONSENSO",
+            numero(
+                consenso.get(
+                    "ratio",
+                    0,
+                ),
+                3,
+            ),
+        )
+
+
+    # ========================================================
+    # RAZONES
+    # ========================================================
+
+    seccion(
+        "Razones de la decisión"
     )
-    for x in resueltas
-)
 
+    razones = (
+        analisis.get(
+            "razones"
+        )
+        or []
+    )
 
-r1, r2 = st.columns(2)
+    if razones:
 
-with r1:
+        for razon in razones:
 
-    tarjeta(
-        "OPERACIONES",
-        str(
-            len(
-                operaciones
+            st.html(
+                f'<div class="reason">{razon}</div>'
             )
-        ),
+
+    else:
+
+        st.caption(
+            "No hay razones registradas."
+        )
+
+
+    # ========================================================
+    # HISTORIAL / RENDIMIENTO
+    # ========================================================
+
+    seccion(
+        "Historial y rendimiento"
     )
 
-with r2:
+    operaciones = [
+        x
+        for x in historial
+        if x.get(
+            "decision"
+        )
+        in [
+            "ARRIBA",
+            "ABAJO",
+        ]
+    ]
 
-    tarjeta(
-        "PRECISION",
-        f"{precision:.2f}%",
+    resueltas = [
+        x
+        for x in operaciones
+        if x.get(
+            "evaluacion"
+        )
+        in [
+            "ACIERTO",
+            "FALLO",
+        ]
+    ]
+
+    aciertos = sum(
+        1
+        for x in resueltas
+        if x.get(
+            "evaluacion"
+        )
+        == "ACIERTO"
     )
 
+    fallos = sum(
+        1
+        for x in resueltas
+        if x.get(
+            "evaluacion"
+        )
+        == "FALLO"
+    )
 
-r3, r4, r5 = st.columns(3)
+    precision = 0.0
 
-with r3:
+    if resueltas:
 
-    tarjeta(
-        "ACIERTOS",
-        str(
+        precision = (
             aciertos
-        ),
+            / len(
+                resueltas
+            )
+        ) * 100.0
+
+
+    pnl = sum(
+        float(
+            x.get(
+                "pnl_teorico_1_contrato"
+            )
+            or 0
+        )
+        for x in resueltas
     )
 
-with r4:
 
-    tarjeta(
-        "FALLOS",
-        str(
-            fallos
-        ),
-    )
+    r1, r2 = st.columns(2)
 
-with r5:
+    with r1:
 
-    tarjeta(
-        "P&L",
-        f"${pnl:+.4f}",
-    )
+        tarjeta(
+            "OPERACIONES",
+            str(
+                len(
+                    operaciones
+                )
+            ),
+        )
+
+    with r2:
+
+        tarjeta(
+            "PRECISION",
+            f"{precision:.2f}%",
+        )
+
+
+    r3, r4, r5 = st.columns(3)
+
+    with r3:
+
+        tarjeta(
+            "ACIERTOS",
+            str(
+                aciertos
+            ),
+        )
+
+    with r4:
+
+        tarjeta(
+            "FALLOS",
+            str(
+                fallos
+            ),
+        )
+
+    with r5:
+
+        tarjeta(
+            "P&L",
+            f"${pnl:+.4f}",
+        )
+
+
+    # ========================================================
+    # HISTORIAL
+    # ========================================================
+
+    if historial:
+
+        columnas = [
+            "hora_local",
+            "ticker",
+            "decision",
+            "fuerza",
+            "probabilidad",
+            "target",
+            "precio_consenso",
+            "precio_entrada",
+            "edge",
+            "minuto_entrada",
+            "score",
+            "resultado",
+            "evaluacion",
+            "pnl_teorico_1_contrato",
+            "roi_teorico_pct",
+        ]
+
+        df = pd.DataFrame(
+            historial
+        )
+
+        columnas_existentes = [
+            columna
+            for columna in columnas
+            if columna in df.columns
+        ]
+
+        df = df[
+            columnas_existentes
+        ]
+
+        df = df.iloc[
+            ::-1
+        ]
+
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    else:
+
+        st.info(
+            "Todavía no hay historial guardado."
+        )
 
 
 # ============================================================
-# HISTORIAL
+# INICIAR DASHBOARD EN VIVO
 # ============================================================
 
-if historial:
-
-    columnas = [
-        "hora_local",
-        "ticker",
-        "decision",
-        "fuerza",
-        "probabilidad",
-        "target",
-        "precio_consenso",
-        "precio_entrada",
-        "edge",
-        "minuto_entrada",
-        "score",
-        "resultado",
-        "evaluacion",
-        "pnl_teorico_1_contrato",
-        "roi_teorico_pct",
-    ]
-
-    df = pd.DataFrame(
-        historial
-    )
-
-    columnas_existentes = [
-        columna
-        for columna in columnas
-        if columna in df.columns
-    ]
-
-    df = df[
-        columnas_existentes
-    ]
-
-    df = df.iloc[
-        ::-1
-    ]
-
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-    )
-
-else:
-
-    st.info(
-        "Todavía no hay historial guardado."
-)
+dashboard_en_vivo()

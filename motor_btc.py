@@ -1709,6 +1709,9 @@ def orderflow_kraken(
 # ============================================================
 # COINMARKETCAP
 # ============================================================
+ # ============================================================
+# COINMARKETCAP
+# ============================================================
 
 def obtener_coinmarketcap():
     global ULTIMO_CMC
@@ -1728,6 +1731,11 @@ def obtener_coinmarketcap():
     ):
         return ULTIMO_CMC["precio"]
 
+
+    # ========================================================
+    # API KEY
+    # ========================================================
+
     api_key = os.getenv(
         "COINMARKETCAP_API_KEY",
         "",
@@ -1737,13 +1745,18 @@ def obtener_coinmarketcap():
         print(
             "[CMC] Falta COINMARKETCAP_API_KEY."
         )
+
         return ULTIMO_CMC["precio"]
+
+
+    # ========================================================
+    # PETICION
+    # ========================================================
 
     datos = http_get(
         (
             f"{CMC_BASE}"
-            "/v3/cryptocurrency/"
-            "quotes/latest"
+            "/v2/cryptocurrency/quotes/latest"
         ),
         params={
             "id": "1",
@@ -1752,322 +1765,305 @@ def obtener_coinmarketcap():
         headers={
             "X-CMC_PRO_API_KEY":
             api_key,
+
             "Accept":
             "application/json",
         },
     )
 
+
+    # ========================================================
+    # SIN RESPUESTA
+    # ========================================================
+
     if not datos:
         print(
             "[CMC] Sin respuesta."
         )
+
         return ULTIMO_CMC["precio"]
 
+
+    # ========================================================
+    # PROCESAR RESPUESTA
+    # ========================================================
+
     try:
+
         data = datos.get(
-            "data",
-            {},
+            "data"
         )
 
-        moneda = None
+        if data is None:
+            print(
+                "[CMC] Respuesta sin campo data."
+            )
+
+            return ULTIMO_CMC["precio"]
+
 
         # ====================================================
         # FORMATO DICCIONARIO
         #
-        # data = {
+        # Ejemplo:
+        #
+        # "data": {
         #     "1": {
-        #         "quote": {
-        #             "USD": {
-        #                 "price": ...
-        #             }
-        #         }
+        #         ...
         #     }
         # }
         # ====================================================
 
+        btc = None
+
         if isinstance(
             data,
             dict,
         ):
-            moneda = (
-                data.get("1")
-                or data.get(1)
+
+            btc = data.get(
+                "1"
             )
 
-            # Respaldo si CMC cambia la clave
-            if (
-                moneda is None
-                and data
-            ):
-                moneda = next(
-                    iter(
-                        data.values()
-                    ),
-                    None,
+            if btc is None:
+
+                btc = data.get(
+                    1
                 )
 
+            if btc is None:
+
+                for valor in data.values():
+
+                    if isinstance(
+                        valor,
+                        dict,
+                    ):
+
+                        simbolo = str(
+                            valor.get(
+                                "symbol",
+                                "",
+                            )
+                        ).upper()
+
+                        if simbolo == "BTC":
+                            btc = valor
+                            break
+
+
         # ====================================================
-        # COMPATIBILIDAD CON RESPUESTA TIPO LISTA
+        # FORMATO LISTA
+        #
+        # Algunas respuestas pueden devolver:
+        #
+        # "data": [
+        #     {
+        #         "id": 1,
+        #         "symbol": "BTC"
+        #     }
+        # ]
         # ====================================================
 
-def obtener_coinmarketcap():
-    global ULTIMO_CMC
+        elif isinstance(
+            data,
+            list,
+        ):
 
-    ahora = time.time()
+            for item in data:
 
-    if (
-        ULTIMO_CMC["precio"] is not None
-        and (
-            ahora
-            - ULTIMO_CMC["timestamp"]
-        ) < 60
-    ):
-        return ULTIMO_CMC["precio"]
+                if not isinstance(
+                    item,
+                    dict,
+                ):
+                    continue
 
-    api_key = os.getenv(
-        "COINMARKETCAP_API_KEY",
-        "",
-    ).strip()
+                item_id = item.get(
+                    "id"
+                )
 
-    if not api_key:
-        print(
-            "[CMC ERROR] "
-            "COINMARKETCAP_API_KEY NO EXISTE "
-            "EN EL ENTORNO."
-        )
-        return None
+                simbolo = str(
+                    item.get(
+                        "symbol",
+                        "",
+                    )
+                ).upper()
 
-    print(
-        "[CMC] API KEY detectada."
-    )
+                if (
+                    str(item_id) == "1"
+                    or simbolo == "BTC"
+                ):
+                    btc = item
+                    break
 
-    url = (
-        f"{CMC_BASE}"
-        "/v3/cryptocurrency/quotes/latest"
-    )
+            if (
+                btc is None
+                and data
+                and isinstance(
+                    data[0],
+                    dict,
+                )
+            ):
+                btc = data[0]
 
-    try:
 
-        respuesta = SESSION.get(
-            url,
-            params={
-                "id": "1",
-                "convert": "USD",
-            },
-            headers={
-                "X-CMC_PRO_API_KEY": api_key,
-                "Accept": "application/json",
-            },
-            timeout=TIMEOUT_HTTP,
-        )
+        # ====================================================
+        # FORMATO DESCONOCIDO
+        # ====================================================
 
-        print(
-            "[CMC] HTTP STATUS:",
-            respuesta.status_code,
-        )
-
-        if not respuesta.ok:
+        else:
 
             print(
-                "[CMC ERROR BODY]",
-                respuesta.text[:1500],
+                "[CMC] Formato de data desconocido: "
+                f"{type(data).__name__}"
             )
 
             return ULTIMO_CMC["precio"]
 
-        datos = respuesta.json()
 
-        data = datos.get(
-            "data",
+        if not isinstance(
+            btc,
+            dict,
+        ):
+
+            print(
+                "[CMC] No se encontró BTC "
+                "en la respuesta."
+            )
+
+            return ULTIMO_CMC["precio"]
+
+
+        # ====================================================
+        # QUOTE USD
+        # ====================================================
+
+        quote = btc.get(
+            "quote",
             {},
         )
 
-        moneda = None
-
-        if isinstance(
-            data,
+        if not isinstance(
+            quote,
             dict,
         ):
 
-            moneda = (
-                data.get("1")
-                or data.get(1)
+            print(
+                "[CMC] Quote inválido."
             )
+
+            return ULTIMO_CMC["precio"]
+
+
+        usd = quote.get(
+            "USD"
+        )
+
+        if usd is None:
+
+            usd = quote.get(
+                "usd"
+            )
+
+
+        # ====================================================
+        # USD PUEDE SER DICT O LISTA
+        # ====================================================
+
+        if isinstance(
+            usd,
+            list,
+        ):
 
             if (
-                moneda is None
-                and data
+                usd
+                and isinstance(
+                    usd[0],
+                    dict,
+                )
             ):
+                usd = usd[0]
 
-                moneda = next(
-                    iter(
-                        data.values()
-                    ),
-                    None,
-                )
-def obtener_coinmarketcap():
-    global ULTIMO_CMC
 
-    ahora = time.time()
+        if not isinstance(
+            usd,
+            dict,
+        ):
 
-    if (
-        ULTIMO_CMC["precio"] is not None
-        and (
-            ahora - ULTIMO_CMC["timestamp"]
-        ) < 60
-    ):
-        return ULTIMO_CMC["precio"]
-
-    api_key = os.getenv(
-        "COINMARKETCAP_API_KEY",
-        "",
-    ).strip()
-
-    if not api_key:
-        print(
-            "[CMC ERROR] "
-            "COINMARKETCAP_API_KEY NO EXISTE."
-        )
-        return None
-
-    url = (
-        f"{CMC_BASE}"
-        "/v3/cryptocurrency/quotes/latest"
-    )
-
-    try:
-        respuesta = SESSION.get(
-            url,
-            params={
-                "id": "1",
-                "convert": "USD",
-            },
-            headers={
-                "X-CMC_PRO_API_KEY": api_key,
-                "Accept": "application/json",
-            },
-            timeout=TIMEOUT_HTTP,
-        )
-
-        print(
-            "[CMC] HTTP STATUS:",
-            respuesta.status_code,
-        )
-
-        if not respuesta.ok:
             print(
-                "[CMC ERROR BODY]",
-                respuesta.text[:1500],
+                "[CMC] No se encontró quote USD."
             )
+
             return ULTIMO_CMC["precio"]
 
-        datos = respuesta.json()
 
-        data = (
-            datos.get("data")
-            if isinstance(datos, dict)
-            else datos
-        )
+        # ====================================================
+        # PRECIO
+        # ====================================================
 
-        moneda = None
-
-        if isinstance(data, dict):
-            moneda = (
-                data.get("1")
-                or data.get(1)
+        precio = safe_float(
+            usd.get(
+                "price"
             )
-
-            if moneda is None and data:
-                moneda = next(
-                    iter(data.values()),
-                    None,
-                )
-
-        elif isinstance(data, list):
-            if data:
-                moneda = data[0]
-
-        if isinstance(moneda, list):
-            if moneda:
-                moneda = moneda[0]
-
-        if not isinstance(moneda, dict):
-            print(
-                "[CMC ERROR] "
-                "Formato BTC inesperado."
-            )
-            print(
-                "[CMC RAW]",
-                json.dumps(
-                    datos,
-                    ensure_ascii=False,
-                )[:1500],
-            )
-            return ULTIMO_CMC["precio"]
-
-        quote = moneda.get(
-            "quote",
-            {}
-        )
-
-        if isinstance(quote, list):
-            quote = (
-                quote[0]
-                if quote
-                else {}
-            )
-
-        usd = (
-            quote.get("USD", {})
-            if isinstance(quote, dict)
-            else {}
-        )
-
-        if isinstance(usd, list):
-            usd = (
-                usd[0]
-                if usd
-                else {}
-            )
-
-        precio = (
-            safe_float(
-                usd.get("price")
-            )
-            if isinstance(usd, dict)
-            else None
         )
 
         if precio is None:
+
             print(
-                "[CMC ERROR] "
-                "Precio BTC no encontrado."
+                "[CMC] Precio BTC no encontrado."
             )
-            print(
-                "[CMC RAW]",
-                json.dumps(
-                    datos,
-                    ensure_ascii=False,
-                )[:1500],
-            )
+
             return ULTIMO_CMC["precio"]
 
+
+        # ====================================================
+        # VALIDACION BASICA
+        # ====================================================
+
+        if (
+            not math.isfinite(
+                precio
+            )
+            or precio <= 0
+        ):
+
+            print(
+                "[CMC] Precio BTC inválido."
+            )
+
+            return ULTIMO_CMC["precio"]
+
+
+        # ====================================================
+        # ACTUALIZAR CACHE
+        # ====================================================
+
         ULTIMO_CMC = {
-            "precio": precio,
-            "timestamp": ahora,
+            "precio":
+            precio,
+
+            "timestamp":
+            ahora,
         }
 
+
         print(
-            "[CMC OK] BTC:",
-            f"${precio:,.2f}",
+            "[CMC OK] BTC: "
+            f"${precio:,.2f}"
         )
 
         return precio
 
+
+    # ========================================================
+    # ERROR DE PROCESAMIENTO
+    # ========================================================
+
     except Exception as e:
+
         print(
-            "[CMC EXCEPTION]",
-            repr(e),
+            "[CMC EXCEPTION] "
+            f"{repr(e)}"
         )
 
         return ULTIMO_CMC["precio"]

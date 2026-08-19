@@ -1905,25 +1905,97 @@ def obtener_coinmarketcap():
                     ),
                     None,
                 )
+def obtener_coinmarketcap():
+    global ULTIMO_CMC
 
-        elif isinstance(
-            data,
-            list,
-        ):
+    ahora = time.time()
 
+    if (
+        ULTIMO_CMC["precio"] is not None
+        and (
+            ahora - ULTIMO_CMC["timestamp"]
+        ) < 60
+    ):
+        return ULTIMO_CMC["precio"]
+
+    api_key = os.getenv(
+        "COINMARKETCAP_API_KEY",
+        "",
+    ).strip()
+
+    if not api_key:
+        print(
+            "[CMC ERROR] "
+            "COINMARKETCAP_API_KEY NO EXISTE."
+        )
+        return None
+
+    url = (
+        f"{CMC_BASE}"
+        "/v3/cryptocurrency/quotes/latest"
+    )
+
+    try:
+        respuesta = SESSION.get(
+            url,
+            params={
+                "id": "1",
+                "convert": "USD",
+            },
+            headers={
+                "X-CMC_PRO_API_KEY": api_key,
+                "Accept": "application/json",
+            },
+            timeout=TIMEOUT_HTTP,
+        )
+
+        print(
+            "[CMC] HTTP STATUS:",
+            respuesta.status_code,
+        )
+
+        if not respuesta.ok:
+            print(
+                "[CMC ERROR BODY]",
+                respuesta.text[:1500],
+            )
+            return ULTIMO_CMC["precio"]
+
+        datos = respuesta.json()
+
+        data = (
+            datos.get("data")
+            if isinstance(datos, dict)
+            else datos
+        )
+
+        moneda = None
+
+        if isinstance(data, dict):
+            moneda = (
+                data.get("1")
+                or data.get(1)
+            )
+
+            if moneda is None and data:
+                moneda = next(
+                    iter(data.values()),
+                    None,
+                )
+
+        elif isinstance(data, list):
             if data:
                 moneda = data[0]
 
-        if not isinstance(
-            moneda,
-            dict,
-        ):
+        if isinstance(moneda, list):
+            if moneda:
+                moneda = moneda[0]
 
+        if not isinstance(moneda, dict):
             print(
                 "[CMC ERROR] "
-                "BTC no encontrado."
+                "Formato BTC inesperado."
             )
-
             print(
                 "[CMC RAW]",
                 json.dumps(
@@ -1931,31 +2003,46 @@ def obtener_coinmarketcap():
                     ensure_ascii=False,
                 )[:1500],
             )
-
             return ULTIMO_CMC["precio"]
 
-        precio = safe_float(
-            moneda
-            .get(
-                "quote",
-                {},
+        quote = moneda.get(
+            "quote",
+            {}
+        )
+
+        if isinstance(quote, list):
+            quote = (
+                quote[0]
+                if quote
+                else {}
             )
-            .get(
-                "USD",
-                {},
+
+        usd = (
+            quote.get("USD", {})
+            if isinstance(quote, dict)
+            else {}
+        )
+
+        if isinstance(usd, list):
+            usd = (
+                usd[0]
+                if usd
+                else {}
             )
-            .get(
-                "price"
+
+        precio = (
+            safe_float(
+                usd.get("price")
             )
+            if isinstance(usd, dict)
+            else None
         )
 
         if precio is None:
-
             print(
                 "[CMC ERROR] "
-                "PRICE no encontrado."
+                "Precio BTC no encontrado."
             )
-
             print(
                 "[CMC RAW]",
                 json.dumps(
@@ -1963,7 +2050,6 @@ def obtener_coinmarketcap():
                     ensure_ascii=False,
                 )[:1500],
             )
-
             return ULTIMO_CMC["precio"]
 
         ULTIMO_CMC = {
@@ -1979,14 +2065,12 @@ def obtener_coinmarketcap():
         return precio
 
     except Exception as e:
-
         print(
             "[CMC EXCEPTION]",
             repr(e),
         )
 
         return ULTIMO_CMC["precio"]
-
 # ============================================================
 # CF BENCHMARKS / BRTI
 # ============================================================

@@ -2864,12 +2864,12 @@
       "3/4 fuentes abajo"
     ],
     "confirmaciones": 0,
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "resultado_hora_local": null,
-    "resultado_timestamp_local": null,
-    "evaluacion": null,
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-19T17:30:14.097111+00:00",
+    "resultado_hora_local": "2026-08-19 12:30:14 PM",
+    "resultado_timestamp_local": "2026-08-19T12:30:14.097128-05:00",
+    "evaluacion": "NO CONTABILIZA",
     "pnl_teorico_1_contrato": null,
     "roi_teorico_pct": null
   }

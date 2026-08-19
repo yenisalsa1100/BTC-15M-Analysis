@@ -1849,11 +1849,11 @@
       "OBI + order flow coinciden abajo",
       "Mayoría de fuentes abajo"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-19T11:45:25.342651+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.31000000000000005,
+    "roi_teorico_pct": 44.92753623188407
   }
 ]

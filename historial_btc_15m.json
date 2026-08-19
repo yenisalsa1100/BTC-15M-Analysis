@@ -4307,11 +4307,11 @@
       "RSI favorable arriba 55.8",
       "Mayoría de fuentes arriba"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-19T21:45:25.699103+00:00",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.64,
+    "roi_teorico_pct": -100.0
   }
 ]

@@ -647,11 +647,11 @@
       "RSI favorable arriba 56.0",
       "Todas las fuentes sobre target"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-19T03:00:32.475123+00:00",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.54,
+    "roi_teorico_pct": -100.0
   }
 ]

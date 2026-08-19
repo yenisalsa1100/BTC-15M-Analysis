@@ -1810,10 +1810,107 @@ def obtener_coinmarketcap():
         # COMPATIBILIDAD CON RESPUESTA TIPO LISTA
         # ====================================================
 
+def obtener_coinmarketcap():
+    global ULTIMO_CMC
+
+    ahora = time.time()
+
+    if (
+        ULTIMO_CMC["precio"] is not None
+        and (
+            ahora
+            - ULTIMO_CMC["timestamp"]
+        ) < 60
+    ):
+        return ULTIMO_CMC["precio"]
+
+    api_key = os.getenv(
+        "COINMARKETCAP_API_KEY",
+        "",
+    ).strip()
+
+    if not api_key:
+        print(
+            "[CMC ERROR] "
+            "COINMARKETCAP_API_KEY NO EXISTE "
+            "EN EL ENTORNO."
+        )
+        return None
+
+    print(
+        "[CMC] API KEY detectada."
+    )
+
+    url = (
+        f"{CMC_BASE}"
+        "/v3/cryptocurrency/quotes/latest"
+    )
+
+    try:
+
+        respuesta = SESSION.get(
+            url,
+            params={
+                "id": "1",
+                "convert": "USD",
+            },
+            headers={
+                "X-CMC_PRO_API_KEY": api_key,
+                "Accept": "application/json",
+            },
+            timeout=TIMEOUT_HTTP,
+        )
+
+        print(
+            "[CMC] HTTP STATUS:",
+            respuesta.status_code,
+        )
+
+        if not respuesta.ok:
+
+            print(
+                "[CMC ERROR BODY]",
+                respuesta.text[:1500],
+            )
+
+            return ULTIMO_CMC["precio"]
+
+        datos = respuesta.json()
+
+        data = datos.get(
+            "data",
+            {},
+        )
+
+        moneda = None
+
+        if isinstance(
+            data,
+            dict,
+        ):
+
+            moneda = (
+                data.get("1")
+                or data.get(1)
+            )
+
+            if (
+                moneda is None
+                and data
+            ):
+
+                moneda = next(
+                    iter(
+                        data.values()
+                    ),
+                    None,
+                )
+
         elif isinstance(
             data,
             list,
         ):
+
             if data:
                 moneda = data[0]
 
@@ -1821,56 +1918,53 @@ def obtener_coinmarketcap():
             moneda,
             dict,
         ):
+
             print(
-                "[CMC] BTC no encontrado "
-                "en la respuesta."
+                "[CMC ERROR] "
+                "BTC no encontrado."
             )
 
             print(
-                "[CMC RAW] "
-                + json.dumps(
+                "[CMC RAW]",
+                json.dumps(
                     datos,
                     ensure_ascii=False,
-                )[:1500]
+                )[:1500],
             )
 
             return ULTIMO_CMC["precio"]
 
-        quote = moneda.get(
-            "quote",
-            {},
-        )
-
-        usd = quote.get(
-            "USD",
-            {},
-        )
-
         precio = safe_float(
-            usd.get(
+            moneda
+            .get(
+                "quote",
+                {},
+            )
+            .get(
+                "USD",
+                {},
+            )
+            .get(
                 "price"
             )
         )
 
         if precio is None:
+
             print(
-                "[CMC] Precio BTC "
-                "no encontrado."
+                "[CMC ERROR] "
+                "PRICE no encontrado."
             )
 
             print(
-                "[CMC RAW] "
-                + json.dumps(
+                "[CMC RAW]",
+                json.dumps(
                     datos,
                     ensure_ascii=False,
-                )[:1500]
+                )[:1500],
             )
 
             return ULTIMO_CMC["precio"]
-
-        # ====================================================
-        # PRECIO VALIDO
-        # ====================================================
 
         ULTIMO_CMC = {
             "precio": precio,
@@ -1878,20 +1972,20 @@ def obtener_coinmarketcap():
         }
 
         print(
-            "[CMC] BTC OK: "
-            f"${precio:,.2f}"
+            "[CMC OK] BTC:",
+            f"${precio:,.2f}",
         )
 
         return precio
 
     except Exception as e:
+
         print(
-            "[CMC] Error procesando "
-            f"respuesta: {e}"
+            "[CMC EXCEPTION]",
+            repr(e),
         )
 
         return ULTIMO_CMC["precio"]
-
 
 # ============================================================
 # CF BENCHMARKS / BRTI

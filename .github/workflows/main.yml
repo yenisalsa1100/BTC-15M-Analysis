@@ -16,39 +16,78 @@ jobs:
     timeout-minutes: 60
 
     steps:
+
+      # ======================================================
+      # DESCARGAR REPOSITORIO
+      # ======================================================
+
       - name: Descargar repositorio
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
 
+
+      # ======================================================
+      # PYTHON
+      # ======================================================
+
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+
+      # ======================================================
+      # DEPENDENCIAS
+      # ======================================================
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+
+      # ======================================================
+      # MOTOR BTC 15M
+      # ======================================================
+
       - name: Ejecutar motor BTC 15M
+
         env:
           KALSHI_API_KEY_ID: ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
           KALSHI_PRIVATE_KEY_BASE64: ${{ secrets.KALSHI_PRIVATE_KEY_BASE64 }}
+
           COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
+
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
         run: |
+
+          # ==================================================
+          # CONFIGURAR GIT
+          # ==================================================
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+
+          # ==================================================
+          # FUNCION GUARDAR HISTORIAL
+          # ==================================================
+
           guardar_historial() {
+
             if [ ! -f historial_btc_15m.json ]; then
               return 0
             fi
+
+
+            # ----------------------------------------------
+            # VER SI REALMENTE CAMBIO EL JSON
+            # ----------------------------------------------
 
             git add historial_btc_15m.json
 
@@ -56,39 +95,133 @@ jobs:
               return 0
             fi
 
-            echo "[HISTORIAL] Guardando resultados..."
 
-            git commit -m "Actualizar historial BTC 15M"
+            echo ""
+            echo "========================================"
+            echo "[HISTORIAL] Cambio detectado."
+            echo "========================================"
+
+
+            # ----------------------------------------------
+            # CREAR COMMIT LOCAL
+            # ----------------------------------------------
+
+            git commit \
+              -m "Actualizar historial BTC 15M"
+
+
+            # ----------------------------------------------
+            # SINCRONIZAR CON MAIN
+            #
+            # IMPORTANTE:
+            # EVITA QUE UN CAMBIO REMOTO HAGA FALLAR EL PUSH
+            # ----------------------------------------------
+
+            echo "[HISTORIAL] Sincronizando con main..."
+
+            if git pull --rebase origin main; then
+
+              echo "[HISTORIAL] Rebase correcto."
+
+            else
+
+              echo "[HISTORIAL] Error en rebase."
+
+              git rebase --abort 2>/dev/null || true
+
+              return 0
+
+            fi
+
+
+            # ----------------------------------------------
+            # SUBIR
+            # ----------------------------------------------
+
+            echo "[HISTORIAL] Subiendo JSON..."
 
             if git push origin HEAD:main; then
-              echo "[HISTORIAL] Guardado correctamente."
+
+              echo ""
+              echo "========================================"
+              echo "[HISTORIAL] JSON SUBIDO CORRECTAMENTE."
+              echo "========================================"
+              echo ""
+
             else
-              echo "[HISTORIAL] No se pudo hacer push en este intento."
+
+              echo ""
+              echo "========================================"
+              echo "[HISTORIAL] ERROR HACIENDO PUSH."
+              echo "========================================"
+              echo ""
+
             fi
           }
 
+
+          # ==================================================
+          # GUARDAR ANTES DE SALIR
+          # ==================================================
+
           guardar_al_salir() {
-            echo "[STOP] Intentando guardar historial antes de salir..."
+
+            echo ""
+            echo "[STOP] Guardando historial antes de salir..."
+
             guardar_historial || true
           }
 
+
           trap guardar_al_salir EXIT TERM INT
+
+
+          # ==================================================
+          # GUARDADOR EN SEGUNDO PLANO
+          #
+          # ANTES: 30 SEGUNDOS
+          # AHORA: 5 SEGUNDOS
+          # ==================================================
 
           (
             while true
             do
-              sleep 30
+
+              sleep 5
+
               guardar_historial || true
+
             done
+
           ) &
+
 
           GUARDADOR_PID=$!
 
+
+          # ==================================================
+          # EJECUTAR MOTOR
+          # ==================================================
+
           python -u motor_btc.py
+
           ESTADO=$?
 
-          kill $GUARDADOR_PID 2>/dev/null || true
+
+          # ==================================================
+          # DETENER GUARDADOR
+          # ==================================================
+
+          kill "$GUARDADOR_PID" 2>/dev/null || true
+
+          wait "$GUARDADOR_PID" 2>/dev/null || true
+
+
+          # ==================================================
+          # ULTIMO GUARDADO
+          # ==================================================
 
           guardar_historial || true
 
-          exit $ESTADO
+
+          exit "$ESTADO"

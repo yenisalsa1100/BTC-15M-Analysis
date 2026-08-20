@@ -459,7 +459,7 @@ def enviar_telegram(
                 "chat_id": chat_id,
                 "text": texto,
             },
-            timeout=TIMEOUT_HTTP,
+            timeout=30,
         )
 
         if not respuesta.ok:

@@ -5839,11 +5839,11 @@
       "OBI + order flow coinciden arriba",
       "CMF vendedor -0.13"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-20T11:15:24.603885+00:00",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.68,
+    "roi_teorico_pct": -100.0
   }
 ]

@@ -6715,11 +6715,11 @@
       "Volumen alto confirma caída",
       "Todas las fuentes bajo target"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-20T21:00:02.980442+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.43000000000000005,
+    "roi_teorico_pct": 75.43859649122808
   }
 ]

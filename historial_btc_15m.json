@@ -5617,11 +5617,11 @@
       "CMF comprador +0.16",
       "Todas las fuentes bajo target"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-20T10:45:41.800813+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.30000000000000004,
+    "roi_teorico_pct": 42.85714285714287
   }
 ]

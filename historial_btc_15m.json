@@ -7262,11 +7262,11 @@
       "OBI + order flow coinciden abajo",
       "RSI favorable abajo 44.2"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-21T03:00:20.259544+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.32999999999999996,
+    "roi_teorico_pct": 49.253731343283576
   }
 ]

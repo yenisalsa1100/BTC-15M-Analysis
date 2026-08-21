@@ -7152,11 +7152,11 @@
       "Order books vendedores",
       "CMF vendedor -0.17"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-21T02:45:16.523267+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.6,
+    "roi_teorico_pct": 149.99999999999997
   }
 ]

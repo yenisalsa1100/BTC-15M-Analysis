@@ -7813,11 +7813,11 @@
       "RSI favorable abajo 34.0",
       "Todas las fuentes bajo target"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-21T11:15:09.114180+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.25,
+    "roi_teorico_pct": 33.33333333333333
   }
 ]

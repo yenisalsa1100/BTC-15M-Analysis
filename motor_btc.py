@@ -3684,7 +3684,7 @@ def calcular_score(
         razones.append(
             "OBI + order flow coinciden abajo"
         )
-            tapesurf_depth = safe_float(
+                tapesurf_depth = safe_float(
         tapesurf.get(
             "imbalance_depth"
         ),
@@ -3702,7 +3702,6 @@ def calcular_score(
         tapesurf_depth >= 0.20
         and tapesurf_flow >= 0.20
     ):
-
         micro += 4.0
 
         razones.append(
@@ -3713,7 +3712,6 @@ def calcular_score(
         tapesurf_depth <= -0.20
         and tapesurf_flow <= -0.20
     ):
-
         micro -= 4.0
 
         razones.append(
@@ -3724,7 +3722,6 @@ def calcular_score(
         tapesurf_depth >= 0.10
         and tapesurf_flow >= 0.10
     ):
-
         micro += 2.0
 
         razones.append(
@@ -3735,7 +3732,6 @@ def calcular_score(
         tapesurf_depth <= -0.10
         and tapesurf_flow <= -0.10
     ):
-
         micro -= 2.0
 
         razones.append(

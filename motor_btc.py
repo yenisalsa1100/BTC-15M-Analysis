@@ -1546,7 +1546,7 @@ def profundidad_kraken(
 def obtener_binance_book():
     return http_get(
         (
-            f"{BINANCE_BASE}"
+            "https://data-api.binance.vision"
             "/api/v3/depth"
         ),
         params={
@@ -1562,7 +1562,7 @@ def obtener_binance_book():
 def obtener_binance_trades():
     datos = http_get(
         (
-            f"{BINANCE_BASE}"
+            "https://data-api.binance.vision"
             "/api/v3/aggTrades"
         ),
         params={

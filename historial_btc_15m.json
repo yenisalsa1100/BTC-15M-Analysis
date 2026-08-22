@@ -9774,11 +9774,11 @@
       "CMF comprador +0.48",
       "Mayoría de fuentes arriba"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-22T02:30:39.127834+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.31000000000000005,
+    "roi_teorico_pct": 44.92753623188407
   }
 ]

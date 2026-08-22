@@ -14106,11 +14106,11 @@
       "Volumen alto confirma caída",
       "Mayoría de fuentes arriba"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-22T23:45:16.062673+00:00",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.36,
+    "roi_teorico_pct": -100.0
   }
 ]

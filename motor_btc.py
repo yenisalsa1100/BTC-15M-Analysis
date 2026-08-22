@@ -32,6 +32,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - COINBASE
 # - KRAKEN
 # - COINMARKETCAP
+# - BINANCE ORDER BOOK / ORDER FLOW
 # - EMA / RSI / MACD
 # - MOMENTUM
 # - VELOCIDAD / ACELERACION
@@ -47,7 +48,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - EDGE CONTRA PRECIO KALSHI
 # - HISTORIAL
 # - P&L TEORICO
-# - TELEGRAM ARRIBA / ABAJO
+# - TELEGRAM ARRIBA / ABAJO SOLO 90%+
 #
 # SALIDAS:
 # ARRIBA
@@ -77,6 +78,10 @@ COINBASE_BASE = (
 
 KRAKEN_BASE = (
     "https://api.kraken.com"
+)
+
+BINANCE_BASE = (
+    "https://api.binance.com"
 )
 
 CMC_BASE = (
@@ -125,7 +130,7 @@ PROBABILIDAD_MEDIA = 56.0
 
 PROBABILIDAD_FUERTE = 63.0
 
-PROBABILIDAD_MINIMA_APUESTA = 89.0
+PROBABILIDAD_MINIMA_APUESTA = 90.0
 
 SCORE_MEDIO = 26.0
 
@@ -384,6 +389,26 @@ def enviar_telegram(
         "ARRIBA",
         "ABAJO",
     ]:
+        return
+
+    probabilidad = safe_float(
+        analisis.get(
+            "probabilidad"
+        ),
+        0.0,
+    )
+
+    if (
+        probabilidad
+        < PROBABILIDAD_MINIMA_APUESTA
+    ):
+        print(
+            "[TELEGRAM] "
+            "No se envía señal: "
+            f"{probabilidad:.1f}% "
+            f"< {PROBABILIDAD_MINIMA_APUESTA:.1f}%"
+        )
+
         return
 
     token = os.getenv(
@@ -1514,6 +1539,151 @@ def profundidad_kraken(
 
 
 # ============================================================
+# BINANCE
+# ============================================================
+
+def obtener_binance_book():
+    return http_get(
+        (
+            f"{BINANCE_BASE}"
+            "/api/v3/depth"
+        ),
+        params={
+            "symbol":
+            "BTCUSDT",
+
+            "limit":
+            ORDERBOOK_NIVELES,
+        },
+    )
+
+
+def obtener_binance_trades():
+    datos = http_get(
+        (
+            f"{BINANCE_BASE}"
+            "/api/v3/aggTrades"
+        ),
+        params={
+            "symbol":
+            "BTCUSDT",
+
+            "limit":
+            TRADES_MAX,
+        },
+    )
+
+    if not isinstance(
+        datos,
+        list,
+    ):
+        return []
+
+    return datos
+
+
+def obi_binance(
+    book,
+):
+    if not book:
+        return 0.0
+
+    bids = book.get(
+        "bids",
+        [],
+    )
+
+    asks = book.get(
+        "asks",
+        [],
+    )
+
+    bid_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in bids[
+            :ORDERBOOK_NIVELES
+        ]
+        if len(x) >= 2
+    )
+
+    ask_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in asks[
+            :ORDERBOOK_NIVELES
+        ]
+        if len(x) >= 2
+    )
+
+    total = (
+        bid_qty
+        + ask_qty
+    )
+
+    if total <= 0:
+        return 0.0
+
+    return (
+        bid_qty
+        - ask_qty
+    ) / total
+
+
+def profundidad_binance(
+    book,
+):
+    if not book:
+        return {
+            "bid": 0.0,
+            "ask": 0.0,
+            "total": 0.0,
+        }
+
+    bid_qty = sum(
+        safe_float(
+            x[1],
+            0,
+        )
+        for x in book.get(
+            "bids",
+            [],
+        )[:ORDERBOOK_NIVELES]
+        if len(x) >= 2
+    )
+
+    ask_qty = sum(
+        safe_float(
+            x[1],
+            0,
+        )
+        for x in book.get(
+            "asks",
+            [],
+        )[:ORDERBOOK_NIVELES]
+        if len(x) >= 2
+    )
+
+    return {
+        "bid":
+        bid_qty,
+
+        "ask":
+        ask_qty,
+
+        "total":
+        (
+            bid_qty
+            + ask_qty
+        ),
+    }
+
+
+# ============================================================
 # ORDER FLOW COINBASE
 # ============================================================
 
@@ -1709,6 +1879,105 @@ def orderflow_kraken(
 
 
 # ============================================================
+# ORDER FLOW BINANCE
+# ============================================================
+
+def orderflow_binance(
+    trades,
+):
+    if not trades:
+        return {
+            "imbalance": 0.0,
+            "buy_volume": 0.0,
+            "sell_volume": 0.0,
+            "trades": 0,
+        }
+
+    ahora_ms = (
+        time.time()
+        * 1000
+    )
+
+    buy_volume = 0.0
+
+    sell_volume = 0.0
+
+    usados = 0
+
+    for trade in trades:
+        try:
+            volume = safe_float(
+                trade.get(
+                    "q"
+                ),
+                0,
+            )
+
+            timestamp = safe_float(
+                trade.get(
+                    "T"
+                ),
+                0,
+            )
+
+            buyer_is_maker = bool(
+                trade.get(
+                    "m",
+                    False,
+                )
+            )
+
+            if (
+                timestamp
+                and (
+                    ahora_ms
+                    - timestamp
+                )
+                > (
+                    TRADES_WINDOW_SEGUNDOS
+                    * 1000
+                )
+            ):
+                continue
+
+            if buyer_is_maker:
+                sell_volume += volume
+
+            else:
+                buy_volume += volume
+
+            usados += 1
+
+        except Exception:
+            continue
+
+    total = (
+        buy_volume
+        + sell_volume
+    )
+
+    imbalance = 0.0
+
+    if total > 0:
+        imbalance = (
+            buy_volume
+            - sell_volume
+        ) / total
+
+    return {
+        "imbalance":
+        imbalance,
+
+        "buy_volume":
+        buy_volume,
+
+        "sell_volume":
+        sell_volume,
+
+        "trades":
+        usados,
+        }
+    # ============================================================
 # COINMARKETCAP
 # ============================================================
  # ============================================================
@@ -1806,14 +2075,6 @@ def obtener_coinmarketcap():
 
         # ====================================================
         # FORMATO DICCIONARIO
-        #
-        # Ejemplo:
-        #
-        # "data": {
-        #     "1": {
-        #         ...
-        #     }
-        # }
         # ====================================================
 
         btc = None
@@ -1856,15 +2117,6 @@ def obtener_coinmarketcap():
 
         # ====================================================
         # FORMATO LISTA
-        #
-        # Algunas respuestas pueden devolver:
-        #
-        # "data": [
-        #     {
-        #         "id": 1,
-        #         "symbol": "BTC"
-        #     }
-        # ]
         # ====================================================
 
         elif isinstance(
@@ -2069,6 +2321,8 @@ def obtener_coinmarketcap():
         )
 
         return ULTIMO_CMC["precio"]
+
+
 # ============================================================
 # CF BENCHMARKS / BRTI
 # ============================================================
@@ -2736,8 +2990,10 @@ def calcular_score(
     obi_cb,
     obi_kr,
     obi_ka,
+    obi_bi,
     orderflow_cb,
     orderflow_kr,
+    orderflow_bi,
     precios_fuentes,
 ):
     razones = []
@@ -3015,6 +3271,7 @@ def calcular_score(
             obi_cb,
             obi_kr,
             obi_ka,
+            obi_bi,
         ]
     )
 
@@ -3031,10 +3288,16 @@ def calcular_score(
         0.0,
     )
 
+    flujo_bi = orderflow_bi.get(
+        "imbalance",
+        0.0,
+    )
+
     orderflow_total = media_valida(
         [
             flujo_cb,
             flujo_kr,
+            flujo_bi,
         ]
     )
 
@@ -3430,6 +3693,8 @@ def decidir(
 
         if (
             prob
+            >= PROBABILIDAD_MINIMA_APUESTA
+            and prob
             >= PROBABILIDAD_FUERTE
             and score_abs
             >= SCORE_FUERTE
@@ -3459,6 +3724,8 @@ def decidir(
 
         if (
             prob
+            >= PROBABILIDAD_MINIMA_APUESTA
+            and prob
             >= PROBABILIDAD_MEDIA
             and score_abs
             >= SCORE_MEDIO
@@ -3532,6 +3799,8 @@ def decidir(
 
         if (
             prob
+            >= PROBABILIDAD_MINIMA_APUESTA
+            and prob
             >= PROBABILIDAD_FUERTE
             and score_abs
             >= SCORE_FUERTE
@@ -3561,6 +3830,8 @@ def decidir(
 
         if (
             prob
+            >= PROBABILIDAD_MINIMA_APUESTA
+            and prob
             >= PROBABILIDAD_MEDIA
             and score_abs
             >= SCORE_MEDIO
@@ -4083,6 +4354,8 @@ def analizar_mercado(
 
     kr_book = obtener_kraken_book()
 
+    bi_book = obtener_binance_book()
+
     ka_book = obtener_orderbook_kalshi(
         ticker
     )
@@ -4095,6 +4368,10 @@ def analizar_mercado(
         kr_book
     )
 
+    obi_bi = obi_binance(
+        bi_book
+    )
+
     obi_ka = obi_kalshi(
         ka_book
     )
@@ -4105,6 +4382,10 @@ def analizar_mercado(
 
     profundidad_kr = profundidad_kraken(
         kr_book
+    )
+
+    profundidad_bi = profundidad_binance(
+        bi_book
     )
 
     profundidad_ka = profundidad_kalshi(
@@ -4124,12 +4405,18 @@ def analizar_mercado(
 
     trades_kr = obtener_kraken_trades()
 
+    trades_bi = obtener_binance_trades()
+
     flujo_cb = orderflow_coinbase(
         trades_cb
     )
 
     flujo_kr = orderflow_kraken(
         trades_kr
+    )
+
+    flujo_bi = orderflow_binance(
+        trades_bi
     )
 
 
@@ -4164,8 +4451,10 @@ def analizar_mercado(
         obi_cb=obi_cb,
         obi_kr=obi_kr,
         obi_ka=obi_ka,
+        obi_bi=obi_bi,
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
+        orderflow_bi=flujo_bi,
         precios_fuentes=[
             cb,
             kr,
@@ -4402,6 +4691,9 @@ def analizar_mercado(
         "obi_kraken":
         obi_kr,
 
+        "obi_binance":
+        obi_bi,
+
         "obi_kalshi":
         obi_ka,
 
@@ -4416,6 +4708,9 @@ def analizar_mercado(
         "orderflow_kraken":
         flujo_kr,
 
+        "orderflow_binance":
+        flujo_bi,
+
         "orderflow_promedio":
         calculo[
             "orderflow"
@@ -4426,6 +4721,9 @@ def analizar_mercado(
 
         "profundidad_kraken":
         profundidad_kr,
+
+        "profundidad_binance":
+        profundidad_bi,
 
         "profundidad_kalshi":
         profundidad_ka,
@@ -4575,6 +4873,11 @@ def mostrar_analisis(a):
     )
 
     print(
+        "OBI Binance: "
+        f"{a['obi_binance']:+.3f}"
+    )
+
+    print(
         "OBI Kalshi: "
         f"{a['obi_kalshi']:+.3f}"
     )
@@ -4592,6 +4895,11 @@ def mostrar_analisis(a):
     print(
         "Order flow Kraken: "
         f"{a['orderflow_kraken']['imbalance']:+.3f}"
+    )
+
+    print(
+        "Order flow Binance: "
+        f"{a['orderflow_binance']['imbalance']:+.3f}"
     )
 
     print(
@@ -4796,7 +5104,57 @@ def guardar_si_corresponde(
 
 
     # ========================================================
-    # ENTRADA
+    # UNA SOLA PREDICCION POR CONTRATO
+    #
+    # 90% O MAS:
+    # ARRIBA / ABAJO
+    #
+    # MENOS DE 90%:
+    # NO APOSTAR
+    # ========================================================
+
+    if analisis[
+        "decision"
+    ] in [
+        "ARRIBA",
+        "ABAJO",
+    ]:
+
+        probabilidad = safe_float(
+            analisis.get(
+                "probabilidad"
+            ),
+            0.0,
+        )
+
+        if (
+            probabilidad
+            < PROBABILIDAD_MINIMA_APUESTA
+        ):
+
+            analisis[
+                "decision"
+            ] = "NO APOSTAR"
+
+            analisis[
+                "fuerza"
+            ] = "PROBABILIDAD < 90%"
+
+            analisis[
+                "precio_entrada"
+            ] = None
+
+            analisis[
+                "lado_contrato"
+            ] = None
+
+            analisis[
+                "edge"
+            ] = None
+
+
+    # ========================================================
+    # GUARDAR ARRIBA / ABAJO
     # ========================================================
 
     if analisis[
@@ -4858,6 +5216,50 @@ def guardar_si_corresponde(
 
         enviar_telegram(
             analisis
+        )
+
+        return True
+
+
+    # ========================================================
+    # GUARDAR NO APOSTAR
+    # ========================================================
+
+    if (
+        analisis[
+            "decision"
+        ]
+        == "NO APOSTAR"
+    ):
+
+        analisis[
+            "precio_entrada"
+        ] = None
+
+        analisis[
+            "lado_contrato"
+        ] = None
+
+        analisis[
+            "edge"
+        ] = None
+
+        historial.append(
+            analisis
+        )
+
+        guardar_historial(
+            historial
+        )
+
+        print(
+            "[DECISION GUARDADA] "
+            "NO APOSTAR"
+        )
+
+        print(
+            "[PROBABILIDAD] "
+            f"{analisis['probabilidad']:.1f}%"
         )
 
         return True
@@ -5073,6 +5475,10 @@ def main():
     )
 
     print(
+        " ARRIBA / ABAJO SOLO CON 90%+"
+    )
+
+    print(
         " NO COLOCA ORDENES REALES"
     )
 
@@ -5259,3 +5665,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

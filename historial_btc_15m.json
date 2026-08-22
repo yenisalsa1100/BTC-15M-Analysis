@@ -10128,10 +10128,10 @@
       "CMF comprador +0.37",
       "Mayoría de fuentes abajo"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-22T03:15:20.941704+00:00",
+    "evaluacion": "NO CONTABILIZA",
     "pnl_teorico_1_contrato": null,
     "roi_teorico_pct": null
   }

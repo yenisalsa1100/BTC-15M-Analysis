@@ -10372,11 +10372,11 @@
       "RSI favorable arriba 66.1",
       "Volumen alto confirma subida"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-22T03:45:39.784862+00:00",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.54,
+    "roi_teorico_pct": -100.0
   }
 ]

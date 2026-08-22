@@ -12198,5 +12198,140 @@
     "evaluacion": "NO CONTABILIZA",
     "pnl_teorico_1_contrato": null,
     "roi_teorico_pct": null
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V1",
+    "ticker": "KXBTC15M-26AUG221500-00",
+    "event_ticker": "KXBTC15M-26AUG221500",
+    "timestamp": "2026-08-22T18:45:59.725232+00:00",
+    "hora_local": "2026-08-22T13:45:59.725250-05:00",
+    "target": 77227.67,
+    "precio_consenso": 77204.005,
+    "precio_cf_brti": 77221.01,
+    "precio_coinbase": 77179.28,
+    "precio_kraken": 77187.0,
+    "precio_coinmarketcap": 77258.31551614676,
+    "fuentes_disponibles": 4,
+    "yes_ask": 0.32,
+    "no_ask": 0.69,
+    "precio_entrada": 0.69,
+    "lado_contrato": "NO",
+    "segundos_restantes": 841.309357,
+    "segundos_desde_apertura": 58.690643,
+    "minuto_entrada": 0.9781773833333334,
+    "distancia_target_pct": -0.030643161965126745,
+    "score": -65.03153830744563,
+    "score_familias": {
+      "target": -11.031538307445627,
+      "tendencia": -14.0,
+      "momentum": -13.0,
+      "microestructura": -13.0,
+      "flujo_capital": -8.0,
+      "consenso": -6.0
+    },
+    "probabilidad_arriba": 5.0,
+    "probabilidad_abajo": 95.0,
+    "decision": "ABAJO",
+    "fuerza": "FUERTE",
+    "probabilidad": 95.0,
+    "edge": 0.26,
+    "ema9": 77261.8766482806,
+    "ema21": 77272.97021867058,
+    "ema50": 77274.10602776166,
+    "rsi14": 44.72468637310141,
+    "macd": -8.527898301748792,
+    "macd_signal": -3.4313446563231533,
+    "cmf20": -0.2599356405242924,
+    "momentum_1m": -9.15099004132891e-05,
+    "momentum_3m": 0.0004445854593488896,
+    "momentum_5m": -0.0002752557147590595,
+    "momentum_10m": -0.0003339883698029178,
+    "velocidad": -9.15099004132891e-05,
+    "aceleracion": -0.0001349976655994345,
+    "volatilidad20": 0.00026041472026152543,
+    "volumen": 0.73778459,
+    "volumen_promedio20": 1.6172119939999998,
+    "volumen_relativo": 0.4562077159563782,
+    "obi_coinbase": -0.23605619488730134,
+    "obi_kraken": -0.2306846301897167,
+    "obi_binance": 0.0,
+    "obi_bitfinex_tapesurf": -0.15249852552433782,
+    "obi_kalshi": 0.0,
+    "obi_promedio": -0.12384787012027117,
+    "orderflow_coinbase": {
+      "imbalance": -0.0013025725206304171,
+      "buy_volume": 0.029081370000000016,
+      "sell_volume": 0.029157230000000003,
+      "trades": 100
+    },
+    "orderflow_kraken": {
+      "imbalance": -0.6519603899246272,
+      "buy_volume": 0.5947208,
+      "sell_volume": 2.82282584,
+      "trades": 106
+    },
+    "orderflow_binance": {
+      "imbalance": 0.0,
+      "buy_volume": 0.0,
+      "sell_volume": 0.0,
+      "trades": 0
+    },
+    "orderflow_bitfinex_tapesurf": {
+      "imbalance": -0.4995703183516293,
+      "buy_volume": 0.07237440000000002,
+      "sell_volume": 0.21687462999999996,
+      "trades": 82
+    },
+    "orderflow_promedio": -0.2882083201992217,
+    "profundidad_coinbase": {
+      "bid": 1.5148380099999998,
+      "ask": 2.4509982200000002,
+      "total": 3.96583623
+    },
+    "profundidad_kraken": {
+      "bid": 1.399,
+      "ask": 2.2379999999999995,
+      "total": 3.6369999999999996
+    },
+    "profundidad_binance": {
+      "bid": 0.0,
+      "ask": 0.0,
+      "total": 0.0
+    },
+    "profundidad_bitfinex_tapesurf": {
+      "bid": 0.33761234,
+      "ask": 0.45911156,
+      "total": 0.7967238999999999
+    },
+    "profundidad_kalshi": {
+      "yes": 0.0,
+      "no": 0.0,
+      "total": 0.0
+    },
+    "spread_coinbase": 1.2955802116396755e-07,
+    "consenso_fuentes": {
+      "arriba": 1,
+      "abajo": 3,
+      "total": 4,
+      "ratio": -0.5
+    },
+    "razones": [
+      "BTC bajo target -0.0306%",
+      "Estructura EMA bajista",
+      "MACD confirma abajo",
+      "Momentum mayormente bajista",
+      "Precio acelerando abajo",
+      "Trades agresivos vendedores",
+      "OBI + order flow coinciden abajo",
+      "RSI favorable abajo 44.7",
+      "CMF vendedor -0.26",
+      "Mayoría de fuentes abajo"
+    ],
+    "resultado": null,
+    "resultado_kalshi": null,
+    "resultado_actualizado": null,
+    "evaluacion": null,
+    "pnl_teorico_1_contrato": null,
+    "roi_teorico_pct": null
   }
 ]

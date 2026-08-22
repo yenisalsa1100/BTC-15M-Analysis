@@ -487,10 +487,6 @@ def cargar_historial():
             return datos
 
     except json.JSONDecodeError:
-
-        # El motor puede estar justo actualizando
-        # el archivo. En el siguiente refresh
-        # se vuelve a intentar.
         return []
 
     except Exception:
@@ -517,14 +513,27 @@ def eliminar_historial():
             )
 
         st.session_state[
+            "ultimo_analisis"
+        ] = None
+
+        st.session_state[
             "historial_eliminado"
         ] = True
+
+        st.toast(
+            "Historial eliminado."
+        )
+
+        return True
 
     except Exception as e:
 
         st.error(
             f"Error eliminando historial: {e}"
         )
+
+        return False
+
 
 def seccion(texto):
 
@@ -736,11 +745,6 @@ st.html(
 
 # ============================================================
 # DASHBOARD EN VIVO
-#
-# IMPORTANTE:
-# - NO EJECUTA motor_btc.py
-# - SOLO LEE historial_btc_15m.json
-# - SE VUELVE A EJECUTAR CADA 3 SEGUNDOS
 # ============================================================
 
 @st.fragment(
@@ -748,16 +752,28 @@ st.html(
 )
 def dashboard_en_vivo():
 
-    # ========================================================
-    # CARGAR ULTIMO HISTORIAL DISPONIBLE
-    # ========================================================
-
     historial = cargar_historial()
 
     analisis = None
 
     if historial:
+
         analisis = historial[-1]
+
+        st.session_state[
+            "ultimo_analisis"
+        ] = analisis
+
+    elif (
+        st.session_state.get(
+            "ultimo_analisis"
+        )
+        is not None
+    ):
+
+        analisis = st.session_state[
+            "ultimo_analisis"
+        ]
 
 
     # ========================================================
@@ -775,7 +791,12 @@ def dashboard_en_vivo():
             use_container_width=True,
             key="eliminar_historial_btn",
         ):
-            eliminar_historial()
+
+            if eliminar_historial():
+
+                historial = []
+
+                analisis = None
 
 
     with b2:
@@ -806,15 +827,10 @@ def dashboard_en_vivo():
             )
 
 
-    # ========================================================
-    # VERIFICAR ANALISIS
-    # ========================================================
-
     if analisis is None:
 
-        st.warning(
-            "El motor todavía no ha guardado "
-            "ningún análisis."
+        st.info(
+            "Esperando el próximo análisis del motor."
         )
 
         return
@@ -849,26 +865,17 @@ def dashboard_en_vivo():
 
     if decision == "ARRIBA":
 
-        clase = (
-            "decision decision-up"
-        )
-
+        clase = "decision decision-up"
         icono = "▲"
 
     elif decision == "ABAJO":
 
-        clase = (
-            "decision decision-down"
-        )
-
+        clase = "decision decision-down"
         icono = "▼"
 
     else:
 
-        clase = (
-            "decision decision-no"
-        )
-
+        clase = "decision decision-no"
         icono = "●"
 
 

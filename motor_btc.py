@@ -33,7 +33,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - KRAKEN
 # - COINMARKETCAP
 # - BINANCE ORDER BOOK / ORDER FLOW
-# - BITSTAMP / TAPE SURF SPOT
+# - BITFINEX / TAPE SURF SPOT
 # - EMA / RSI / MACD
 # - MOMENTUM
 # - VELOCIDAD / ACELERACION
@@ -85,8 +85,8 @@ BINANCE_BASE = (
     "https://api.binance.com"
 )
 
-BITSTAMP_BASE = (
-    "https://www.bitstamp.net"
+BITFINEX_BASE = (
+    "https://api-pub.bitfinex.com"
 )
 
 CMC_BASE = (
@@ -1188,6 +1188,7 @@ def obi_coinbase(
     )
 
     bid_qty = 0.0
+
     ask_qty = 0.0
 
     for nivel in bids[
@@ -1683,27 +1684,18 @@ def profundidad_binance(
 
 
 # ============================================================
-# BITSTAMP / TAPE SURF SPOT
+# BITFINEX / TAPE SURF SPOT
 # ============================================================
 
-def obtener_bitstamp_book():
-    return http_get(
-        (
-            f"{BITSTAMP_BASE}"
-            "/api/v2/order_book/btcusd/"
-        )
-    )
-
-
-def obtener_bitstamp_trades():
+def obtener_bitfinex_book():
     datos = http_get(
         (
-            f"{BITSTAMP_BASE}"
-            "/api/v2/transactions/btcusd/"
+            f"{BITFINEX_BASE}"
+            "/v2/book/tBTCUSD/P0"
         ),
         params={
-            "time":
-            "minute",
+            "len":
+            25,
         },
     )
 
@@ -1713,47 +1705,80 @@ def obtener_bitstamp_trades():
     ):
         return []
 
-    return datos[
-        :TRADES_MAX
-    ]
+    return datos
 
 
-def obi_bitstamp(
+def obtener_bitfinex_trades():
+    datos = http_get(
+        (
+            f"{BITFINEX_BASE}"
+            "/v2/trades/tBTCUSD/hist"
+        ),
+        params={
+            "limit":
+            TRADES_MAX,
+
+            "sort":
+            -1,
+        },
+    )
+
+    if not isinstance(
+        datos,
+        list,
+    ):
+        return []
+
+    return datos
+
+
+def obi_bitfinex(
     book,
 ):
     if not book:
         return 0.0
 
-    bids = book.get(
-        "bids",
-        [],
-    )
+    bids = []
 
-    asks = book.get(
-        "asks",
-        [],
-    )
+    asks = []
+
+    for nivel in book:
+        try:
+            if len(nivel) < 3:
+                continue
+
+            amount = safe_float(
+                nivel[2],
+                0.0,
+            )
+
+            if amount > 0:
+                bids.append(
+                    abs(
+                        amount
+                    )
+                )
+
+            elif amount < 0:
+                asks.append(
+                    abs(
+                        amount
+                    )
+                )
+
+        except Exception:
+            continue
 
     bid_qty = sum(
-        safe_float(
-            x[1],
-            0.0,
-        )
-        for x in bids[
+        bids[
             :ORDERBOOK_NIVELES
         ]
-        if len(x) >= 2
     )
 
     ask_qty = sum(
-        safe_float(
-            x[1],
-            0.0,
-        )
-        for x in asks[
+        asks[
             :ORDERBOOK_NIVELES
         ]
-        if len(x) >= 2
     )
 
     total = (
@@ -1770,7 +1795,7 @@ def obi_bitstamp(
     ) / total
 
 
-def profundidad_bitstamp(
+def profundidad_bitfinex(
     book,
 ):
     if not book:
@@ -1780,28 +1805,47 @@ def profundidad_bitstamp(
             "total": 0.0,
         }
 
+    bids = []
+
+    asks = []
+
+    for nivel in book:
+        try:
+            if len(nivel) < 3:
+                continue
+
+            amount = safe_float(
+                nivel[2],
+                0.0,
+            )
+
+            if amount > 0:
+                bids.append(
+                    abs(
+                        amount
+                    )
+                )
+
+            elif amount < 0:
+                asks.append(
+                    abs(
+                        amount
+                    )
+                )
+
+        except Exception:
+            continue
+
     bid_qty = sum(
-        safe_float(
-            x[1],
-            0.0,
-        )
-        for x in book.get(
-            "bids",
-            [],
-        )[:ORDERBOOK_NIVELES]
-        if len(x) >= 2
+        bids[
+            :ORDERBOOK_NIVELES
+        ]
     )
 
     ask_qty = sum(
-        safe_float(
-            x[1],
-            0.0,
-        )
-        for x in book.get(
-            "asks",
-            [],
-        )[:ORDERBOOK_NIVELES]
-        if len(x) >= 2
+        asks[
+            :ORDERBOOK_NIVELES
+        ]
     )
 
     return {
@@ -1837,7 +1881,9 @@ def orderflow_coinbase(
     ahora = ahora_utc()
 
     buy_volume = 0.0
+
     sell_volume = 0.0
+
     usados = 0
 
     for trade in trades:
@@ -1931,7 +1977,9 @@ def orderflow_kraken(
     ahora_ts = time.time()
 
     buy_volume = 0.0
+
     sell_volume = 0.0
+
     usados = 0
 
     for trade in trades:
@@ -2023,7 +2071,9 @@ def orderflow_binance(
     )
 
     buy_volume = 0.0
+
     sell_volume = 0.0
+
     usados = 0
 
     for trade in trades:
@@ -2102,10 +2152,10 @@ def orderflow_binance(
 
 
 # ============================================================
-# ORDER FLOW BITSTAMP / TAPE SURF
+# ORDER FLOW BITFINEX / TAPE SURF
 # ============================================================
 
-def orderflow_bitstamp(
+def orderflow_bitfinex(
     trades,
 ):
     if not trades:
@@ -2116,47 +2166,54 @@ def orderflow_bitstamp(
             "trades": 0,
         }
 
-    ahora_ts = time.time()
+    ahora_ms = (
+        time.time()
+        * 1000
+    )
 
     buy_volume = 0.0
+
     sell_volume = 0.0
+
     usados = 0
 
     for trade in trades:
         try:
+            if len(trade) < 4:
+                continue
+
             timestamp = safe_float(
-                trade.get(
-                    "date"
-                ),
+                trade[1],
                 0.0,
             )
 
             if (
                 timestamp
                 and (
-                    ahora_ts
+                    ahora_ms
                     - timestamp
                 )
-                > TRADES_WINDOW_SEGUNDOS
+                > (
+                    TRADES_WINDOW_SEGUNDOS
+                    * 1000
+                )
             ):
                 continue
 
-            volume = safe_float(
-                trade.get(
-                    "amount"
-                ),
+            amount = safe_float(
+                trade[2],
                 0.0,
             )
 
-            tipo = trade.get(
-                "type"
-            )
+            if amount > 0:
+                buy_volume += abs(
+                    amount
+                )
 
-            if str(tipo) == "0":
-                buy_volume += volume
-
-            elif str(tipo) == "1":
-                sell_volume += volume
+            elif amount < 0:
+                sell_volume += abs(
+                    amount
+                )
 
             usados += 1
 
@@ -2245,7 +2302,6 @@ def obtener_coinmarketcap():
         return ULTIMO_CMC["precio"]
 
     try:
-
         data = datos.get(
             "data"
         )
@@ -2269,7 +2325,6 @@ def obtener_coinmarketcap():
             )
 
             if btc is None:
-
                 btc = data.get(
                     1
                 )
@@ -2377,7 +2432,6 @@ def obtener_coinmarketcap():
         )
 
         if usd is None:
-
             usd = quote.get(
                 "usd"
             )
@@ -2611,7 +2665,6 @@ def obtener_cf_brti():
         return ULTIMO_CF["precio"]
 
     try:
-
         contenido = datos.get(
             "data",
             datos,
@@ -2901,13 +2954,9 @@ def construir_indicadores(
         )
 
     mom1 = momentum(1)
-
     mom2 = momentum(2)
-
     mom3 = momentum(3)
-
     mom5 = momentum(5)
-
     mom10 = momentum(10)
 
     velocidad = mom1
@@ -3094,10 +3143,17 @@ def calcular_consenso_fuentes(
     ) / total
 
     return {
-        "arriba": arriba,
-        "abajo": abajo,
-        "total": total,
-        "ratio": ratio,
+        "arriba":
+        arriba,
+
+        "abajo":
+        abajo,
+
+        "total":
+        total,
+
+        "ratio":
+        ratio,
     }
 
 
@@ -3113,11 +3169,11 @@ def calcular_score(
     obi_kr,
     obi_ka,
     obi_bi,
-    obi_bs,
+    obi_bf,
     orderflow_cb,
     orderflow_kr,
     orderflow_bi,
-    orderflow_bs,
+    orderflow_bf,
     precios_fuentes,
 ):
     razones = []
@@ -3322,11 +3378,9 @@ def calcular_score(
         )
 
     if velocidad > 0:
-
         momentum_score += 3.0
 
     elif velocidad < 0:
-
         momentum_score -= 3.0
 
     if (
@@ -3365,7 +3419,7 @@ def calcular_score(
             obi_kr,
             obi_ka,
             obi_bi,
-            obi_bs,
+            obi_bf,
         ]
     )
 
@@ -3387,7 +3441,7 @@ def calcular_score(
         0.0,
     )
 
-    flujo_bs = orderflow_bs.get(
+    flujo_bf = orderflow_bf.get(
         "imbalance",
         0.0,
     )
@@ -3397,7 +3451,7 @@ def calcular_score(
             flujo_cb,
             flujo_kr,
             flujo_bi,
-            flujo_bs,
+            flujo_bf,
         ]
     )
 
@@ -3517,11 +3571,9 @@ def calcular_score(
         )
 
     elif rsi > 80:
-
         flujo_capital -= 1.0
 
     elif rsi < 20:
-
         flujo_capital += 1.0
 
     if cmf > 0.10:
@@ -4241,7 +4293,9 @@ def analizar_mercado(
     ahora = ahora_utc()
 
     segundos_restantes = None
+
     segundos_desde_apertura = None
+
     minuto_entrada = None
 
     if close_time is not None:
@@ -4322,7 +4376,7 @@ def analizar_mercado(
 
     bi_book = obtener_binance_book()
 
-    bs_book = obtener_bitstamp_book()
+    bf_book = obtener_bitfinex_book()
 
     ka_book = obtener_orderbook_kalshi(
         ticker
@@ -4340,8 +4394,8 @@ def analizar_mercado(
         bi_book
     )
 
-    obi_bs = obi_bitstamp(
-        bs_book
+    obi_bf = obi_bitfinex(
+        bf_book
     )
 
     obi_ka = obi_kalshi(
@@ -4360,8 +4414,8 @@ def analizar_mercado(
         bi_book
     )
 
-    profundidad_bs = profundidad_bitstamp(
-        bs_book
+    profundidad_bf = profundidad_bitfinex(
+        bf_book
     )
 
     profundidad_ka = profundidad_kalshi(
@@ -4378,7 +4432,7 @@ def analizar_mercado(
 
     trades_bi = obtener_binance_trades()
 
-    trades_bs = obtener_bitstamp_trades()
+    trades_bf = obtener_bitfinex_trades()
 
     flujo_cb = orderflow_coinbase(
         trades_cb
@@ -4392,8 +4446,8 @@ def analizar_mercado(
         trades_bi
     )
 
-    flujo_bs = orderflow_bitstamp(
-        trades_bs
+    flujo_bf = orderflow_bitfinex(
+        trades_bf
     )
 
     mercado_actual = (
@@ -4419,11 +4473,11 @@ def analizar_mercado(
         obi_kr=obi_kr,
         obi_ka=obi_ka,
         obi_bi=obi_bi,
-        obi_bs=obi_bs,
+        obi_bf=obi_bf,
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
         orderflow_bi=flujo_bi,
-        orderflow_bs=flujo_bs,
+        orderflow_bf=flujo_bf,
         precios_fuentes=[
             cb,
             kr,
@@ -4658,8 +4712,8 @@ def analizar_mercado(
         "obi_binance":
         obi_bi,
 
-        "obi_bitstamp_tapesurf":
-        obi_bs,
+        "obi_bitfinex_tapesurf":
+        obi_bf,
 
         "obi_kalshi":
         obi_ka,
@@ -4678,8 +4732,8 @@ def analizar_mercado(
         "orderflow_binance":
         flujo_bi,
 
-        "orderflow_bitstamp_tapesurf":
-        flujo_bs,
+        "orderflow_bitfinex_tapesurf":
+        flujo_bf,
 
         "orderflow_promedio":
         calculo[
@@ -4695,8 +4749,8 @@ def analizar_mercado(
         "profundidad_binance":
         profundidad_bi,
 
-        "profundidad_bitstamp_tapesurf":
-        profundidad_bs,
+        "profundidad_bitfinex_tapesurf":
+        profundidad_bf,
 
         "profundidad_kalshi":
         profundidad_ka,
@@ -4851,8 +4905,8 @@ def mostrar_analisis(a):
     )
 
     print(
-        "OBI Bitstamp/TapeSurf: "
-        f"{a['obi_bitstamp_tapesurf']:+.3f}"
+        "OBI Bitfinex/TapeSurf: "
+        f"{a['obi_bitfinex_tapesurf']:+.3f}"
     )
 
     print(
@@ -4881,8 +4935,8 @@ def mostrar_analisis(a):
     )
 
     print(
-        "Order flow Bitstamp/TapeSurf: "
-        f"{a['orderflow_bitstamp_tapesurf']['imbalance']:+.3f}"
+        "Order flow Bitfinex/TapeSurf: "
+        f"{a['orderflow_bitfinex_tapesurf']['imbalance']:+.3f}"
     )
 
     print(
@@ -5431,7 +5485,7 @@ def main():
     )
 
     print(
-        " BITSTAMP/TAPESURF: ACTIVO"
+        " BITFINEX/TAPESURF: ACTIVO"
     )
 
     print(

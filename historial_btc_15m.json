@@ -13167,5 +13167,149 @@
     "evaluacion": "FALLO",
     "pnl_teorico_1_contrato": -0.59,
     "roi_teorico_pct": -100.0
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V1",
+    "ticker": "KXBTC15M-26AUG221800-00",
+    "event_ticker": "KXBTC15M-26AUG221800",
+    "timestamp": "2026-08-22T21:46:01.044587+00:00",
+    "hora_local": "2026-08-22T16:46:01.044604-05:00",
+    "target": 76981.97,
+    "precio_consenso": 76984.6,
+    "precio_cf_brti": 77370.98,
+    "precio_coinbase": 76971.9,
+    "precio_kraken": 76997.3,
+    "precio_coinmarketcap": 76913.7897239389,
+    "fuentes_disponibles": 4,
+    "yes_ask": 0.46,
+    "no_ask": 0.55,
+    "precio_entrada": null,
+    "lado_contrato": null,
+    "segundos_restantes": 840.277745,
+    "segundos_desde_apertura": 59.722255,
+    "minuto_entrada": 0.9953709166666667,
+    "distancia_target_pct": 0.0034163843819593814,
+    "score": -33.77010162249462,
+    "score_familias": {
+      "target": 1.2298983775053771,
+      "tendencia": -14.0,
+      "momentum": -1.0,
+      "microestructura": -17.0,
+      "flujo_capital": -3.0,
+      "consenso": 0.0
+    },
+    "probabilidad_arriba": 13.283554793058554,
+    "probabilidad_abajo": 86.71644520694144,
+    "decision": "NO APOSTAR",
+    "fuerza": "DEBIL",
+    "probabilidad": 86.71644520694144,
+    "edge": null,
+    "ema9": 76993.89364950177,
+    "ema21": 77054.62201611094,
+    "ema50": 77130.24391890646,
+    "rsi14": 36.11982930549616,
+    "macd": -57.867688334561535,
+    "macd_signal": -42.24268209265854,
+    "cmf20": -0.09291316289798704,
+    "momentum_1m": 0.0005814360169449362,
+    "momentum_3m": -1.8841154643123303e-05,
+    "momentum_5m": -0.0011671994753377213,
+    "momentum_10m": -0.002129613373515471,
+    "velocidad": 0.0005814360169449362,
+    "aceleracion": 0.0012123772738440453,
+    "volatilidad20": 0.0005172669603522162,
+    "volumen": 0.84315261,
+    "volumen_promedio20": 4.1132274959999995,
+    "volumen_relativo": 0.20498564954647966,
+    "obi_coinbase": 0.15997048304848616,
+    "obi_kraken": -0.5954370179948587,
+    "obi_binance": -0.6345771693530581,
+    "obi_bitfinex": 0.1301763239770394,
+    "obi_kalshi": 0.0,
+    "obi_promedio": -0.18797347606447826,
+    "orderflow_coinbase": {
+      "imbalance": 0.9992710648786859,
+      "buy_volume": 1.3001081200000009,
+      "sell_volume": 0.0004740199999999999,
+      "trades": 100
+    },
+    "orderflow_kraken": {
+      "imbalance": -0.9225942869406462,
+      "buy_volume": 0.0455317,
+      "sell_volume": 1.13091118,
+      "trades": 72
+    },
+    "orderflow_binance": {
+      "imbalance": -0.8793902264152809,
+      "buy_volume": 0.12196000000000003,
+      "sell_volume": 1.90043,
+      "trades": 200
+    },
+    "orderflow_bitfinex": {
+      "imbalance": -0.7280713106501832,
+      "buy_volume": 0.12030586000000001,
+      "sell_volume": 0.7645280299999998,
+      "trades": 111
+    },
+    "orderflow_promedio": -0.38269618978185604,
+    "profundidad_coinbase": {
+      "bid": 1.18733983,
+      "ask": 0.8598499000000001,
+      "total": 2.04718973
+    },
+    "profundidad_kraken": {
+      "bid": 3.7769999999999997,
+      "ask": 14.895000000000001,
+      "total": 18.672
+    },
+    "profundidad_binance": {
+      "bid": 0.8109500000000001,
+      "ask": 3.6274700000000006,
+      "total": 4.438420000000001
+    },
+    "profundidad_bitfinex": {
+      "bid": 0.81921097,
+      "ask": 0.63049374,
+      "total": 1.44970471
+    },
+    "profundidad_kalshi": {
+      "yes": 0.0,
+      "no": 0.0,
+      "total": 0.0
+    },
+    "tapesurf_agregado": {
+      "bid": 6.5945008000000005,
+      "ask": 20.01281364,
+      "delta_depth": -13.41831284,
+      "imbalance_depth": -0.5043091767212564,
+      "buy_volume": 1.5879056800000009,
+      "sell_volume": 3.7963432299999997,
+      "delta_orderflow": -2.208437549999999,
+      "imbalance_orderflow": -0.41016631788666674
+    },
+    "spread_coinbase": 1.2991753301822562e-07,
+    "consenso_fuentes": {
+      "arriba": 2,
+      "abajo": 2,
+      "total": 4,
+      "ratio": 0.0
+    },
+    "razones": [
+      "BTC sobre target +0.0034%",
+      "Estructura EMA bajista",
+      "MACD confirma abajo",
+      "Momentum mayormente bajista",
+      "Precio acelerando arriba",
+      "Trades agresivos vendedores",
+      "OBI + order flow coinciden abajo",
+      "TapeSurf confirma presión vendedora",
+      "RSI favorable abajo 36.1"
+    ],
+    "resultado": null,
+    "resultado_kalshi": null,
+    "resultado_actualizado": null,
+    "evaluacion": null,
+    "pnl_teorico_1_contrato": null,
+    "roi_teorico_pct": null
   }
 ]

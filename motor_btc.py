@@ -3679,12 +3679,24 @@ def calcular_score(
         and orderflow_total < -0.08
     ):
 
+                micro += 2.0
+
+        razones.append(
+            "OBI + order flow coinciden arriba"
+        )
+
+    elif (
+        obi_total < -0.08
+        and orderflow_total < -0.08
+    ):
+
         micro -= 2.0
 
         razones.append(
             "OBI + order flow coinciden abajo"
         )
-                tapesurf_depth = safe_float(
+
+    tapesurf_depth = safe_float(
         tapesurf.get(
             "imbalance_depth"
         ),
@@ -3699,29 +3711,10 @@ def calcular_score(
     )
 
     if (
-        tapesurf_depth >= 0.20
-        and tapesurf_flow >= 0.20
-    ):
-        micro += 4.0
-
-        razones.append(
-            "TapeSurf confirma presión compradora"
-        )
-
-    elif (
-        tapesurf_depth <= -0.20
-        and tapesurf_flow <= -0.20
-    ):
-        micro -= 4.0
-
-        razones.append(
-            "TapeSurf confirma presión vendedora"
-        )
-
-    elif (
         tapesurf_depth >= 0.10
         and tapesurf_flow >= 0.10
     ):
+
         micro += 2.0
 
         razones.append(
@@ -3732,6 +3725,7 @@ def calcular_score(
         tapesurf_depth <= -0.10
         and tapesurf_flow <= -0.10
     ):
+
         micro -= 2.0
 
         razones.append(

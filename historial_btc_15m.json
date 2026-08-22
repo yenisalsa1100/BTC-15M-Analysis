@@ -13667,11 +13667,11 @@
       "CMF vendedor -0.40",
       "Volumen alto confirma caída"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-22T22:45:40.544828+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.28,
+    "roi_teorico_pct": 38.88888888888889
   }
 ]

@@ -12059,6 +12059,139 @@
       "RSI favorable arriba 62.9",
       "Mayoría de fuentes abajo"
     ],
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-22T18:34:10.599402+00:00",
+    "evaluacion": "NO CONTABILIZA",
+    "pnl_teorico_1_contrato": null,
+    "roi_teorico_pct": null
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V1",
+    "ticker": "KXBTC15M-26AUG221445-45",
+    "event_ticker": "KXBTC15M-26AUG221445",
+    "timestamp": "2026-08-22T18:34:12.234168+00:00",
+    "hora_local": "2026-08-22T13:34:12.234188-05:00",
+    "target": 77286.85,
+    "precio_consenso": 77282.255,
+    "precio_cf_brti": 77156.3,
+    "precio_coinbase": 77284.11,
+    "precio_kraken": 77280.4,
+    "precio_coinmarketcap": 77290.97509045301,
+    "fuentes_disponibles": 4,
+    "yes_ask": 0.48,
+    "no_ask": 0.53,
+    "precio_entrada": null,
+    "lado_contrato": null,
+    "segundos_restantes": 649.302455,
+    "segundos_desde_apertura": 250.697545,
+    "minuto_entrada": 4.178292416666666,
+    "distancia_target_pct": -0.0059453839818819935,
+    "score": 3.859661766522482,
+    "score_familias": {
+      "target": -2.1403382334775176,
+      "tendencia": 1.0,
+      "momentum": 13.0,
+      "microestructura": 0.0,
+      "flujo_capital": -2.0,
+      "consenso": -6.0
+    },
+    "probabilidad_arriba": 55.34019588356537,
+    "probabilidad_abajo": 44.65980411643463,
+    "decision": "NO APOSTAR",
+    "fuerza": "DEBIL",
+    "probabilidad": 55.34019588356537,
+    "edge": null,
+    "ema9": 77295.56352431013,
+    "ema21": 77290.74341119912,
+    "ema50": 77279.10614742684,
+    "rsi14": 55.62496282604028,
+    "macd": 6.109034139764844,
+    "macd_signal": 6.92811737557515,
+    "cmf20": -0.1363594710329218,
+    "momentum_1m": 0.00023146812377294879,
+    "momentum_3m": 0.00024104485375042728,
+    "momentum_5m": 9.870695186720013e-05,
+    "momentum_10m": -5.911134818892272e-05,
+    "velocidad": 0.00023146812377294879,
+    "aceleracion": 9.362318666150671e-05,
+    "volatilidad20": 0.00018923861169446002,
+    "volumen": 0.38630495,
+    "volumen_promedio20": 1.433545332,
+    "volumen_relativo": 0.2694752243802779,
+    "obi_coinbase": 0.11804302311103229,
+    "obi_kraken": 0.45471733787105323,
+    "obi_binance": 0.0,
+    "obi_bitfinex_tapesurf": -0.26863913382533805,
+    "obi_kalshi": 0.0,
+    "obi_promedio": 0.0608242454313495,
+    "orderflow_coinbase": {
+      "imbalance": -0.4344923275075619,
+      "buy_volume": 0.1488550699999999,
+      "sell_volume": 0.37759249999999994,
+      "trades": 100
+    },
+    "orderflow_kraken": {
+      "imbalance": 0.8327984238376422,
+      "buy_volume": 0.57862556,
+      "sell_volume": 0.05278655000000001,
+      "trades": 83
+    },
+    "orderflow_binance": {
+      "imbalance": 0.0,
+      "buy_volume": 0.0,
+      "sell_volume": 0.0,
+      "trades": 0
+    },
+    "orderflow_bitfinex_tapesurf": {
+      "imbalance": -0.3773597474138551,
+      "buy_volume": 0.01972246000000001,
+      "sell_volume": 0.0436286,
+      "trades": 65
+    },
+    "orderflow_promedio": 0.0052365872290563165,
+    "profundidad_coinbase": {
+      "bid": 1.34636845,
+      "ask": 1.0620691899999999,
+      "total": 2.40843764
+    },
+    "profundidad_kraken": {
+      "bid": 7.694,
+      "ask": 2.884,
+      "total": 10.578
+    },
+    "profundidad_binance": {
+      "bid": 0.0,
+      "ask": 0.0,
+      "total": 0.0
+    },
+    "profundidad_bitfinex_tapesurf": {
+      "bid": 0.19690613999999998,
+      "ask": 0.34155893,
+      "total": 0.53846507
+    },
+    "profundidad_kalshi": {
+      "yes": 0.0,
+      "no": 0.0,
+      "total": 0.0
+    },
+    "spread_coinbase": 1.2939269596037054e-07,
+    "consenso_fuentes": {
+      "arriba": 1,
+      "abajo": 3,
+      "total": 4,
+      "ratio": -0.5
+    },
+    "razones": [
+      "BTC bajo target -0.0059%",
+      "EMA9 sobre EMA21",
+      "MACD confirma abajo",
+      "Momentum mayormente alcista",
+      "Precio acelerando arriba",
+      "RSI favorable arriba 55.6",
+      "CMF vendedor -0.14",
+      "Mayoría de fuentes abajo"
+    ],
     "resultado": null,
     "resultado_kalshi": null,
     "resultado_actualizado": null,

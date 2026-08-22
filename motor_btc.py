@@ -3310,8 +3310,10 @@ def calcular_consenso_fuentes(
 
         "ratio":
         ratio,
-}
-    # ============================================================
+    }
+
+
+# ============================================================
 # SCORE
 # ============================================================
 
@@ -3663,7 +3665,7 @@ def calcular_score(
 
         micro -= 4.0
 
-        if (
+    if (
         obi_total > 0.08
         and orderflow_total > 0.08
     ):
@@ -4701,7 +4703,7 @@ def analizar_mercado(
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
         orderflow_bi=flujo_bi,
-        orderflow_bf=flujo_bf,   
+        orderflow_bf=flujo_bf,
         precios_fuentes=[
             cb,
             kr,

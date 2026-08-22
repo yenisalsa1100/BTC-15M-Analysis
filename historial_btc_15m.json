@@ -12600,5 +12600,137 @@
     "evaluacion": "FALLO",
     "pnl_teorico_1_contrato": -0.51,
     "roi_teorico_pct": -100.0
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V1",
+    "ticker": "KXBTC15M-26AUG221545-45",
+    "event_ticker": "KXBTC15M-26AUG221545",
+    "timestamp": "2026-08-22T19:30:56.558119+00:00",
+    "hora_local": "2026-08-22T14:30:56.558137-05:00",
+    "target": 77276.67,
+    "precio_consenso": 77288.16,
+    "precio_cf_brti": 77287.62,
+    "precio_coinbase": 77288.7,
+    "precio_kraken": 77294.8,
+    "precio_coinmarketcap": 77280.1792596108,
+    "fuentes_disponibles": 4,
+    "yes_ask": 0.56,
+    "no_ask": 0.45,
+    "precio_entrada": null,
+    "lado_contrato": null,
+    "segundos_restantes": 844.397559,
+    "segundos_desde_apertura": 55.602441,
+    "minuto_entrada": 0.9267073499999999,
+    "distancia_target_pct": 0.01486865311355321,
+    "score": 35.352715120879154,
+    "score_familias": {
+      "target": 5.3527151208791555,
+      "tendencia": 6.0,
+      "momentum": 13.0,
+      "microestructura": -4.0,
+      "flujo_capital": 5.0,
+      "consenso": 10.0
+    },
+    "probabilidad_arriba": 87.69694791694039,
+    "probabilidad_abajo": 12.303052083059619,
+    "decision": "NO APOSTAR",
+    "fuerza": "DEBIL",
+    "probabilidad": 87.69694791694039,
+    "edge": null,
+    "ema9": 77285.57312044052,
+    "ema21": 77281.18982675768,
+    "ema50": 77269.7915386636,
+    "rsi14": 53.443331877837885,
+    "macd": 6.8399264798208605,
+    "macd_signal": 9.32614767711224,
+    "cmf20": 0.16536440120047846,
+    "momentum_1m": 5.822380895748047e-05,
+    "momentum_3m": 0.0003816834401157987,
+    "momentum_5m": 3.208694942258283e-05,
+    "momentum_10m": -0.0003604484925957552,
+    "velocidad": 5.822380895748047e-05,
+    "aceleracion": 0.00012692718353823906,
+    "volatilidad20": 0.0002978753534298987,
+    "volumen": 0.70790687,
+    "volumen_promedio20": 2.754640998,
+    "volumen_relativo": 0.25698697961512,
+    "obi_coinbase": -0.02866869991634438,
+    "obi_kraken": -0.7483690587138861,
+    "obi_binance": 0.0,
+    "obi_bitfinex_tapesurf": 0.37682611421882667,
+    "obi_kalshi": 0.0,
+    "obi_promedio": -0.08004232888228077,
+    "orderflow_coinbase": {
+      "imbalance": 0.41032072303879197,
+      "buy_volume": 0.6190581800000013,
+      "sell_volume": 0.25883883999999996,
+      "trades": 100
+    },
+    "orderflow_kraken": {
+      "imbalance": -0.23244549809068868,
+      "buy_volume": 0.23840059,
+      "sell_volume": 0.3827946199999999,
+      "trades": 60
+    },
+    "orderflow_binance": {
+      "imbalance": 0.0,
+      "buy_volume": 0.0,
+      "sell_volume": 0.0,
+      "trades": 0
+    },
+    "orderflow_bitfinex_tapesurf": {
+      "imbalance": 0.1272396592240479,
+      "buy_volume": 0.0470669,
+      "sell_volume": 0.036441339999999996,
+      "trades": 42
+    },
+    "orderflow_promedio": 0.07627872104303779,
+    "profundidad_coinbase": {
+      "bid": 0.62853135,
+      "ask": 0.6656333699999999,
+      "total": 1.29416472
+    },
+    "profundidad_kraken": {
+      "bid": 0.81,
+      "ask": 5.628,
+      "total": 6.438000000000001
+    },
+    "profundidad_binance": {
+      "bid": 0.0,
+      "ask": 0.0,
+      "total": 0.0
+    },
+    "profundidad_bitfinex_tapesurf": {
+      "bid": 0.40851375999999995,
+      "ask": 0.18489997,
+      "total": 0.59341373
+    },
+    "profundidad_kalshi": {
+      "yes": 0.0,
+      "no": 0.0,
+      "total": 0.0
+    },
+    "spread_coinbase": 1.2938501181140537e-07,
+    "consenso_fuentes": {
+      "arriba": 4,
+      "abajo": 0,
+      "total": 4,
+      "ratio": 1.0
+    },
+    "razones": [
+      "BTC sobre target +0.0149%",
+      "Estructura EMA alcista",
+      "MACD confirma abajo",
+      "Momentum mayormente alcista",
+      "Precio acelerando arriba",
+      "CMF comprador +0.17",
+      "Todas las fuentes sobre target"
+    ],
+    "resultado": null,
+    "resultado_kalshi": null,
+    "resultado_actualizado": null,
+    "evaluacion": null,
+    "pnl_teorico_1_contrato": null,
+    "roi_teorico_pct": null
   }
 ]

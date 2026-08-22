@@ -1,5 +1,7 @@
 import json
 import os
+import time
+from datetime import datetime, timezone
 
 import pandas as pd
 import streamlit as st
@@ -17,6 +19,8 @@ st.set_page_config(
 )
 
 HISTORIAL_FILE = "historial_btc_15m.json"
+
+RESET_FILE = ".historial_reset_btc_15m.json"
 
 AUTO_REFRESH_SEGUNDOS = 3
 
@@ -463,6 +467,123 @@ def numero(
         return str(valor)
 
 
+def timestamp_registro(
+    registro,
+):
+
+    if not isinstance(
+        registro,
+        dict,
+    ):
+        return 0.0
+
+    valores = [
+        registro.get(
+            "timestamp"
+        ),
+        registro.get(
+            "hora_local"
+        ),
+        registro.get(
+            "resultado_actualizado"
+        ),
+    ]
+
+    for valor in valores:
+
+        if not valor:
+            continue
+
+        try:
+
+            texto = str(
+                valor
+            ).strip()
+
+            fecha = datetime.fromisoformat(
+                texto.replace(
+                    "Z",
+                    "+00:00",
+                )
+            )
+
+            if fecha.tzinfo is None:
+
+                fecha = fecha.replace(
+                    tzinfo=timezone.utc
+                )
+
+            return fecha.timestamp()
+
+        except Exception:
+            continue
+
+    return 0.0
+
+
+def cargar_reset():
+
+    if not os.path.exists(
+        RESET_FILE
+    ):
+        return 0.0
+
+    try:
+
+        with open(
+            RESET_FILE,
+            "r",
+            encoding="utf-8",
+        ) as f:
+
+            datos = json.load(
+                f
+            )
+
+        return float(
+            datos.get(
+                "reset_timestamp",
+                0.0,
+            )
+        )
+
+    except Exception:
+        return 0.0
+
+
+def guardar_reset(
+    reset_timestamp,
+):
+
+    temporal = (
+        RESET_FILE
+        + ".tmp"
+    )
+
+    with open(
+        temporal,
+        "w",
+        encoding="utf-8",
+    ) as f:
+
+        json.dump(
+            {
+                "reset_timestamp":
+                float(
+                    reset_timestamp
+                )
+            },
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    os.replace(
+        temporal,
+        RESET_FILE,
+    )
+
+
 def cargar_historial():
 
     if not os.path.exists(
@@ -478,18 +599,47 @@ def cargar_historial():
             encoding="utf-8",
         ) as f:
 
-            datos = json.load(f)
+            datos = json.load(
+                f
+            )
 
-        if isinstance(
+        if not isinstance(
             datos,
             list,
         ):
+            return []
+
+        reset_timestamp = cargar_reset()
+
+        if reset_timestamp <= 0:
             return datos
 
+        nuevos = []
+
+        for registro in datos:
+
+            registro_timestamp = (
+                timestamp_registro(
+                    registro
+                )
+            )
+
+            if (
+                registro_timestamp
+                > reset_timestamp
+            ):
+                nuevos.append(
+                    registro
+                )
+
+        return nuevos
+
     except json.JSONDecodeError:
+
         return []
 
     except Exception:
+
         return []
 
     return []
@@ -499,26 +649,19 @@ def eliminar_historial():
 
     try:
 
-        with open(
-            HISTORIAL_FILE,
-            "w",
-            encoding="utf-8",
-        ) as f:
+        ahora_reset = time.time()
 
-            json.dump(
-                [],
-                f,
-                ensure_ascii=False,
-                indent=2,
-            )
-
-        st.session_state[
-            "ultimo_analisis"
-        ] = None
+        guardar_reset(
+            ahora_reset
+        )
 
         st.session_state[
             "historial_eliminado"
         ] = True
+
+        st.session_state[
+            "reset_timestamp"
+        ] = ahora_reset
 
         st.toast(
             "Historial eliminado."
@@ -595,7 +738,9 @@ def escala(
 ):
 
     try:
-        n = float(valor)
+        n = float(
+            valor
+        )
 
     except Exception:
         n = 0.0
@@ -606,11 +751,13 @@ def escala(
     else:
         pos = (
             (
-                n - minimo
+                n
+                - minimo
             )
             /
             (
-                maximo - minimo
+                maximo
+                - minimo
             )
         ) * 100.0
 
@@ -623,10 +770,14 @@ def escala(
     )
 
     try:
-        texto = formato.format(n)
+        texto = formato.format(
+            n
+        )
 
     except Exception:
-        texto = str(n)
+        texto = str(
+            n
+        )
 
     st.html(
         f'''
@@ -758,22 +909,19 @@ def dashboard_en_vivo():
 
     if historial:
 
-        analisis = historial[-1]
+        analisis = historial[
+            -1
+        ]
 
         st.session_state[
             "ultimo_analisis"
         ] = analisis
 
-    elif (
-        st.session_state.get(
+    else:
+
+        analisis = st.session_state.get(
             "ultimo_analisis"
         )
-        is not None
-    ):
-
-        analisis = st.session_state[
-            "ultimo_analisis"
-        ]
 
 
     # ========================================================
@@ -781,7 +929,10 @@ def dashboard_en_vivo():
     # ========================================================
 
     b1, b2 = st.columns(
-        [1.15, 1.85]
+        [
+            1.15,
+            1.85,
+        ]
     )
 
     with b1:
@@ -795,8 +946,6 @@ def dashboard_en_vivo():
             if eliminar_historial():
 
                 historial = []
-
-                analisis = None
 
 
     with b2:
@@ -827,10 +976,14 @@ def dashboard_en_vivo():
             )
 
 
+    # ========================================================
+    # SI TODAVIA NO EXISTE NINGUN ANALISIS
+    # ========================================================
+
     if analisis is None:
 
         st.info(
-            "Esperando el próximo análisis del motor."
+            "Esperando el primer análisis del motor."
         )
 
         return
@@ -851,6 +1004,7 @@ def dashboard_en_vivo():
     )
 
     try:
+
         probabilidad = float(
             analisis.get(
                 "probabilidad",
@@ -860,22 +1014,32 @@ def dashboard_en_vivo():
         )
 
     except Exception:
+
         probabilidad = 0.0
 
 
     if decision == "ARRIBA":
 
-        clase = "decision decision-up"
+        clase = (
+            "decision decision-up"
+        )
+
         icono = "▲"
 
     elif decision == "ABAJO":
 
-        clase = "decision decision-down"
+        clase = (
+            "decision decision-down"
+        )
+
         icono = "▼"
 
     else:
 
-        clase = "decision decision-no"
+        clase = (
+            "decision decision-no"
+        )
+
         icono = "●"
 
 
@@ -910,7 +1074,9 @@ def dashboard_en_vivo():
         "Contrato"
     )
 
-    c1, c2 = st.columns(2)
+    c1, c2 = st.columns(
+        2
+    )
 
     with c1:
 
@@ -939,7 +1105,9 @@ def dashboard_en_vivo():
         )
 
 
-    c3, c4 = st.columns(2)
+    c3, c4 = st.columns(
+        2
+    )
 
     with c3:
 
@@ -994,7 +1162,9 @@ def dashboard_en_vivo():
         )
     )
 
-    p1, p2 = st.columns(2)
+    p1, p2 = st.columns(
+        2
+    )
 
     with p1:
 
@@ -1029,7 +1199,9 @@ def dashboard_en_vivo():
         "edge"
     )
 
-    p3, p4 = st.columns(2)
+    p3, p4 = st.columns(
+        2
+    )
 
     with p3:
 
@@ -1037,7 +1209,8 @@ def dashboard_en_vivo():
             "EDGE",
             (
                 numero(
-                    edge * 100,
+                    edge
+                    * 100,
                     2,
                     "",
                     "%",
@@ -1049,8 +1222,10 @@ def dashboard_en_vivo():
 
     with p4:
 
-        precio_entrada = analisis.get(
-            "precio_entrada"
+        precio_entrada = (
+            analisis.get(
+                "precio_entrada"
+            )
         )
 
         tarjeta(
@@ -1088,6 +1263,7 @@ def dashboard_en_vivo():
     )
 
     try:
+
         dist_target = float(
             analisis.get(
                 "distancia_target_pct",
@@ -1097,13 +1273,15 @@ def dashboard_en_vivo():
         )
 
     except Exception:
+
         dist_target = 0.0
 
     limite_target = max(
         0.15,
         abs(
             dist_target
-        ) * 1.20,
+        )
+        * 1.20,
     )
 
     escala(
@@ -1328,7 +1506,8 @@ def dashboard_en_vivo():
                             0,
                         )
                         or 0
-                    ) * 100,
+                    )
+                    * 100,
                     4,
                     "",
                     "%",
@@ -1343,7 +1522,8 @@ def dashboard_en_vivo():
                             0,
                         )
                         or 0
-                    ) * 100,
+                    )
+                    * 100,
                     4,
                     "",
                     "%",
@@ -1358,7 +1538,8 @@ def dashboard_en_vivo():
                             0,
                         )
                         or 0
-                    ) * 100,
+                    )
+                    * 100,
                     4,
                     "",
                     "%",
@@ -1373,7 +1554,8 @@ def dashboard_en_vivo():
                             0,
                         )
                         or 0
-                    ) * 100,
+                    )
+                    * 100,
                     4,
                     "",
                     "%",
@@ -1391,7 +1573,8 @@ def dashboard_en_vivo():
                 0,
             )
             or 0
-        ) * 100,
+        )
+        * 100,
         -0.50,
         0.50,
         "{:+.5f}%",
@@ -1406,7 +1589,8 @@ def dashboard_en_vivo():
                 0,
             )
             or 0
-        ) * 100,
+        )
+        * 100,
         -0.50,
         0.50,
         "{:+.5f}%",
@@ -1432,7 +1616,8 @@ def dashboard_en_vivo():
                             0,
                         )
                         or 0
-                    ) * 100,
+                    )
+                    * 100,
                     5,
                     "",
                     "%",
@@ -1776,7 +1961,8 @@ def dashboard_en_vivo():
         "COINBASE BID / ASK SPREAD",
         (
             numero(
-                spread * 100,
+                spread
+                * 100,
                 5,
                 "",
                 "%",
@@ -1886,7 +2072,9 @@ def dashboard_en_vivo():
     )
 
 
-    cc1, cc2 = st.columns(2)
+    cc1, cc2 = st.columns(
+        2
+    )
 
     with cc1:
 
@@ -1913,7 +2101,9 @@ def dashboard_en_vivo():
         )
 
 
-    cc3, cc4 = st.columns(2)
+    cc3, cc4 = st.columns(
+        2
+    )
 
     with cc3:
 
@@ -2044,7 +2234,9 @@ def dashboard_en_vivo():
     )
 
 
-    r1, r2 = st.columns(2)
+    r1, r2 = st.columns(
+        2
+    )
 
     with r1:
 
@@ -2065,7 +2257,9 @@ def dashboard_en_vivo():
         )
 
 
-    r3, r4, r5 = st.columns(3)
+    r3, r4, r5 = st.columns(
+        3
+    )
 
     with r3:
 
@@ -2144,7 +2338,8 @@ def dashboard_en_vivo():
     else:
 
         st.info(
-            "Todavía no hay historial guardado."
+            "Historial eliminado. "
+            "Las nuevas operaciones aparecerán aquí."
         )
 
 

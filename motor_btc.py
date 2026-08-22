@@ -33,6 +33,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - KRAKEN
 # - COINMARKETCAP
 # - BINANCE ORDER BOOK / ORDER FLOW
+# - BITSTAMP / TAPE SURF SPOT
 # - EMA / RSI / MACD
 # - MOMENTUM
 # - VELOCIDAD / ACELERACION
@@ -84,6 +85,10 @@ BINANCE_BASE = (
     "https://api.binance.com"
 )
 
+BITSTAMP_BASE = (
+    "https://www.bitstamp.net"
+)
+
 CMC_BASE = (
     "https://pro-api.coinmarketcap.com"
 )
@@ -110,11 +115,6 @@ TIMEOUT_HTTP = 10
 
 # ============================================================
 # VENTANA DINAMICA DE ENTRADA
-#
-# NO ESPERA OBLIGATORIAMENTE A LOS ULTIMOS 5 MINUTOS.
-# EMPIEZA A BUSCAR OPORTUNIDAD DESPUES DE 45 SEGUNDOS.
-#
-# SI NO HAY EDGE SUFICIENTE, SIGUE ESPERANDO.
 # ============================================================
 
 MIN_SEGUNDOS_DESDE_APERTURA = 55
@@ -1188,7 +1188,6 @@ def obi_coinbase(
     )
 
     bid_qty = 0.0
-
     ask_qty = 0.0
 
     for nivel in bids[
@@ -1684,6 +1683,143 @@ def profundidad_binance(
 
 
 # ============================================================
+# BITSTAMP / TAPE SURF SPOT
+# ============================================================
+
+def obtener_bitstamp_book():
+    return http_get(
+        (
+            f"{BITSTAMP_BASE}"
+            "/api/v2/order_book/btcusd/"
+        )
+    )
+
+
+def obtener_bitstamp_trades():
+    datos = http_get(
+        (
+            f"{BITSTAMP_BASE}"
+            "/api/v2/transactions/btcusd/"
+        ),
+        params={
+            "time":
+            "minute",
+        },
+    )
+
+    if not isinstance(
+        datos,
+        list,
+    ):
+        return []
+
+    return datos[
+        :TRADES_MAX
+    ]
+
+
+def obi_bitstamp(
+    book,
+):
+    if not book:
+        return 0.0
+
+    bids = book.get(
+        "bids",
+        [],
+    )
+
+    asks = book.get(
+        "asks",
+        [],
+    )
+
+    bid_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in bids[
+            :ORDERBOOK_NIVELES
+        ]
+        if len(x) >= 2
+    )
+
+    ask_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in asks[
+            :ORDERBOOK_NIVELES
+        ]
+        if len(x) >= 2
+    )
+
+    total = (
+        bid_qty
+        + ask_qty
+    )
+
+    if total <= 0:
+        return 0.0
+
+    return (
+        bid_qty
+        - ask_qty
+    ) / total
+
+
+def profundidad_bitstamp(
+    book,
+):
+    if not book:
+        return {
+            "bid": 0.0,
+            "ask": 0.0,
+            "total": 0.0,
+        }
+
+    bid_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in book.get(
+            "bids",
+            [],
+        )[:ORDERBOOK_NIVELES]
+        if len(x) >= 2
+    )
+
+    ask_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in book.get(
+            "asks",
+            [],
+        )[:ORDERBOOK_NIVELES]
+        if len(x) >= 2
+    )
+
+    return {
+        "bid":
+        bid_qty,
+
+        "ask":
+        ask_qty,
+
+        "total":
+        (
+            bid_qty
+            + ask_qty
+        ),
+    }
+
+
+# ============================================================
 # ORDER FLOW COINBASE
 # ============================================================
 
@@ -1701,9 +1837,7 @@ def orderflow_coinbase(
     ahora = ahora_utc()
 
     buy_volume = 0.0
-
     sell_volume = 0.0
-
     usados = 0
 
     for trade in trades:
@@ -1739,14 +1873,6 @@ def orderflow_coinbase(
                     "",
                 )
             ).lower()
-
-            # Coinbase side = lado maker.
-            #
-            # maker SELL:
-            # comprador agresivo.
-            #
-            # maker BUY:
-            # vendedor agresivo.
 
             if side == "sell":
                 buy_volume += size
@@ -1805,9 +1931,7 @@ def orderflow_kraken(
     ahora_ts = time.time()
 
     buy_volume = 0.0
-
     sell_volume = 0.0
-
     usados = 0
 
     for trade in trades:
@@ -1899,9 +2023,7 @@ def orderflow_binance(
     )
 
     buy_volume = 0.0
-
     sell_volume = 0.0
-
     usados = 0
 
     for trade in trades:
@@ -1976,11 +2098,98 @@ def orderflow_binance(
 
         "trades":
         usados,
-        }
-    # ============================================================
-# COINMARKETCAP
+    }
+
+
 # ============================================================
- # ============================================================
+# ORDER FLOW BITSTAMP / TAPE SURF
+# ============================================================
+
+def orderflow_bitstamp(
+    trades,
+):
+    if not trades:
+        return {
+            "imbalance": 0.0,
+            "buy_volume": 0.0,
+            "sell_volume": 0.0,
+            "trades": 0,
+        }
+
+    ahora_ts = time.time()
+
+    buy_volume = 0.0
+    sell_volume = 0.0
+    usados = 0
+
+    for trade in trades:
+        try:
+            timestamp = safe_float(
+                trade.get(
+                    "date"
+                ),
+                0.0,
+            )
+
+            if (
+                timestamp
+                and (
+                    ahora_ts
+                    - timestamp
+                )
+                > TRADES_WINDOW_SEGUNDOS
+            ):
+                continue
+
+            volume = safe_float(
+                trade.get(
+                    "amount"
+                ),
+                0.0,
+            )
+
+            tipo = trade.get(
+                "type"
+            )
+
+            if str(tipo) == "0":
+                buy_volume += volume
+
+            elif str(tipo) == "1":
+                sell_volume += volume
+
+            usados += 1
+
+        except Exception:
+            continue
+
+    total = (
+        buy_volume
+        + sell_volume
+    )
+
+    imbalance = 0.0
+
+    if total > 0:
+        imbalance = (
+            buy_volume
+            - sell_volume
+        ) / total
+
+    return {
+        "imbalance":
+        imbalance,
+
+        "buy_volume":
+        buy_volume,
+
+        "sell_volume":
+        sell_volume,
+
+        "trades":
+        usados,
+    }
+    # ============================================================
 # COINMARKETCAP
 # ============================================================
 
@@ -1988,10 +2197,6 @@ def obtener_coinmarketcap():
     global ULTIMO_CMC
 
     ahora = time.time()
-
-    # ========================================================
-    # CACHE CMC - 60 SEGUNDOS
-    # ========================================================
 
     if (
         ULTIMO_CMC["precio"] is not None
@@ -2001,11 +2206,6 @@ def obtener_coinmarketcap():
         ) < 60
     ):
         return ULTIMO_CMC["precio"]
-
-
-    # ========================================================
-    # API KEY
-    # ========================================================
 
     api_key = os.getenv(
         "COINMARKETCAP_API_KEY",
@@ -2018,11 +2218,6 @@ def obtener_coinmarketcap():
         )
 
         return ULTIMO_CMC["precio"]
-
-
-    # ========================================================
-    # PETICION
-    # ========================================================
 
     datos = http_get(
         (
@@ -2042,22 +2237,12 @@ def obtener_coinmarketcap():
         },
     )
 
-
-    # ========================================================
-    # SIN RESPUESTA
-    # ========================================================
-
     if not datos:
         print(
             "[CMC] Sin respuesta."
         )
 
         return ULTIMO_CMC["precio"]
-
-
-    # ========================================================
-    # PROCESAR RESPUESTA
-    # ========================================================
 
     try:
 
@@ -2071,11 +2256,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
-
-        # ====================================================
-        # FORMATO DICCIONARIO
-        # ====================================================
 
         btc = None
 
@@ -2113,11 +2293,6 @@ def obtener_coinmarketcap():
                         if simbolo == "BTC":
                             btc = valor
                             break
-
-
-        # ====================================================
-        # FORMATO LISTA
-        # ====================================================
 
         elif isinstance(
             data,
@@ -2160,11 +2335,6 @@ def obtener_coinmarketcap():
             ):
                 btc = data[0]
 
-
-        # ====================================================
-        # FORMATO DESCONOCIDO
-        # ====================================================
-
         else:
 
             print(
@@ -2173,7 +2343,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
 
         if not isinstance(
             btc,
@@ -2186,11 +2355,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
-
-        # ====================================================
-        # QUOTE USD
-        # ====================================================
 
         quote = btc.get(
             "quote",
@@ -2208,7 +2372,6 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
-
         usd = quote.get(
             "USD"
         )
@@ -2218,11 +2381,6 @@ def obtener_coinmarketcap():
             usd = quote.get(
                 "usd"
             )
-
-
-        # ====================================================
-        # USD PUEDE SER DICT O LISTA
-        # ====================================================
 
         if isinstance(
             usd,
@@ -2238,7 +2396,6 @@ def obtener_coinmarketcap():
             ):
                 usd = usd[0]
 
-
         if not isinstance(
             usd,
             dict,
@@ -2249,11 +2406,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
-
-        # ====================================================
-        # PRECIO
-        # ====================================================
 
         precio = safe_float(
             usd.get(
@@ -2269,11 +2421,6 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
-
-        # ====================================================
-        # VALIDACION BASICA
-        # ====================================================
-
         if (
             not math.isfinite(
                 precio
@@ -2287,11 +2434,6 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
-
-        # ====================================================
-        # ACTUALIZAR CACHE
-        # ====================================================
-
         ULTIMO_CMC = {
             "precio":
             precio,
@@ -2300,18 +2442,12 @@ def obtener_coinmarketcap():
             ahora,
         }
 
-
         print(
             "[CMC OK] BTC: "
             f"${precio:,.2f}"
         )
 
         return precio
-
-
-    # ========================================================
-    # ERROR DE PROCESAMIENTO
-    # ========================================================
 
     except Exception as e:
 
@@ -2930,17 +3066,10 @@ def calcular_consenso_fuentes(
 
     if not validas:
         return {
-            "arriba":
-            0,
-
-            "abajo":
-            0,
-
-            "total":
-            0,
-
-            "ratio":
-            0.0,
+            "arriba": 0,
+            "abajo": 0,
+            "total": 0,
+            "ratio": 0.0,
         }
 
     arriba = sum(
@@ -2965,17 +3094,10 @@ def calcular_consenso_fuentes(
     ) / total
 
     return {
-        "arriba":
-        arriba,
-
-        "abajo":
-        abajo,
-
-        "total":
-        total,
-
-        "ratio":
-        ratio,
+        "arriba": arriba,
+        "abajo": abajo,
+        "total": total,
+        "ratio": ratio,
     }
 
 
@@ -2991,37 +3113,23 @@ def calcular_score(
     obi_kr,
     obi_ka,
     obi_bi,
+    obi_bs,
     orderflow_cb,
     orderflow_kr,
     orderflow_bi,
+    orderflow_bs,
     precios_fuentes,
 ):
     razones = []
 
     familias = {
-        "target":
-        0.0,
-
-        "tendencia":
-        0.0,
-
-        "momentum":
-        0.0,
-
-        "microestructura":
-        0.0,
-
-        "flujo_capital":
-        0.0,
-
-        "consenso":
-        0.0,
+        "target": 0.0,
+        "tendencia": 0.0,
+        "momentum": 0.0,
+        "microestructura": 0.0,
+        "flujo_capital": 0.0,
+        "consenso": 0.0,
     }
-
-
-    # ========================================================
-    # TARGET
-    # ========================================================
 
     distancia_pct = (
         (
@@ -3067,11 +3175,6 @@ def calcular_score(
             "BTC bajo target "
             f"{distancia_pct:+.4f}%"
         )
-
-
-    # ========================================================
-    # TENDENCIA
-    # ========================================================
 
     ema9 = indicadores[
         "ema9"
@@ -3165,11 +3268,6 @@ def calcular_score(
         14.0,
     )
 
-
-    # ========================================================
-    # MOMENTUM
-    # ========================================================
-
     moms = [
         indicadores[
             "mom1"
@@ -3261,17 +3359,13 @@ def calcular_score(
         13.0,
     )
 
-
-    # ========================================================
-    # MICROESTRUCTURA
-    # ========================================================
-
     obi_total = media_valida(
         [
             obi_cb,
             obi_kr,
             obi_ka,
             obi_bi,
+            obi_bs,
         ]
     )
 
@@ -3293,11 +3387,17 @@ def calcular_score(
         0.0,
     )
 
+    flujo_bs = orderflow_bs.get(
+        "imbalance",
+        0.0,
+    )
+
     orderflow_total = media_valida(
         [
             flujo_cb,
             flujo_kr,
             flujo_bi,
+            flujo_bs,
         ]
     )
 
@@ -3383,11 +3483,6 @@ def calcular_score(
         -16.0,
         16.0,
     )
-
-
-    # ========================================================
-    # FLUJO CAPITAL
-    # ========================================================
 
     rsi = indicadores[
         "rsi14"
@@ -3483,11 +3578,6 @@ def calcular_score(
         10.0,
     )
 
-
-    # ========================================================
-    # CONSENSO
-    # ========================================================
-
     consenso = calcular_consenso_fuentes(
         target,
         precios_fuentes,
@@ -3554,11 +3644,6 @@ def calcular_score(
     familias[
         "consenso"
     ] = consenso_score
-
-
-    # ========================================================
-    # SCORE TOTAL
-    # ========================================================
 
     score = sum(
         familias.values()
@@ -3648,11 +3733,6 @@ def decidir(
         < TARGET_ZONA_MUERTA_PCT
     )
 
-
-    # ========================================================
-    # ARRIBA
-    # ========================================================
-
     if score > 0:
 
         prob = (
@@ -3667,23 +3747,12 @@ def decidir(
         if precio_entrada is None:
 
             return {
-                "decision":
-                "NO APOSTAR",
-
-                "fuerza":
-                "SIN PRECIO",
-
-                "probabilidad":
-                prob,
-
-                "edge":
-                None,
-
-                "precio_entrada":
-                None,
-
-                "lado":
-                None,
+                "decision": "NO APOSTAR",
+                "fuerza": "SIN PRECIO",
+                "probabilidad": prob,
+                "edge": None,
+                "precio_entrada": None,
+                "lado": None,
             }
 
         edge = (
@@ -3703,23 +3772,12 @@ def decidir(
         ):
 
             return {
-                "decision":
-                "ARRIBA",
-
-                "fuerza":
-                "FUERTE",
-
-                "probabilidad":
-                prob,
-
-                "edge":
-                edge,
-
-                "precio_entrada":
-                precio_entrada,
-
-                "lado":
-                "YES",
+                "decision": "ARRIBA",
+                "fuerza": "FUERTE",
+                "probabilidad": prob,
+                "edge": edge,
+                "precio_entrada": precio_entrada,
+                "lado": "YES",
             }
 
         if (
@@ -3735,29 +3793,13 @@ def decidir(
         ):
 
             return {
-                "decision":
-                "ARRIBA",
-
-                "fuerza":
-                "MEDIA",
-
-                "probabilidad":
-                prob,
-
-                "edge":
-                edge,
-
-                "precio_entrada":
-                precio_entrada,
-
-                "lado":
-                "YES",
+                "decision": "ARRIBA",
+                "fuerza": "MEDIA",
+                "probabilidad": prob,
+                "edge": edge,
+                "precio_entrada": precio_entrada,
+                "lado": "YES",
             }
-
-
-    # ========================================================
-    # ABAJO
-    # ========================================================
 
     if score < 0:
 
@@ -3773,23 +3815,12 @@ def decidir(
         if precio_entrada is None:
 
             return {
-                "decision":
-                "NO APOSTAR",
-
-                "fuerza":
-                "SIN PRECIO",
-
-                "probabilidad":
-                prob,
-
-                "edge":
-                None,
-
-                "precio_entrada":
-                None,
-
-                "lado":
-                None,
+                "decision": "NO APOSTAR",
+                "fuerza": "SIN PRECIO",
+                "probabilidad": prob,
+                "edge": None,
+                "precio_entrada": None,
+                "lado": None,
             }
 
         edge = (
@@ -3809,23 +3840,12 @@ def decidir(
         ):
 
             return {
-                "decision":
-                "ABAJO",
-
-                "fuerza":
-                "FUERTE",
-
-                "probabilidad":
-                prob,
-
-                "edge":
-                edge,
-
-                "precio_entrada":
-                precio_entrada,
-
-                "lado":
-                "NO",
+                "decision": "ABAJO",
+                "fuerza": "FUERTE",
+                "probabilidad": prob,
+                "edge": edge,
+                "precio_entrada": precio_entrada,
+                "lado": "NO",
             }
 
         if (
@@ -3841,29 +3861,13 @@ def decidir(
         ):
 
             return {
-                "decision":
-                "ABAJO",
-
-                "fuerza":
-                "MEDIA",
-
-                "probabilidad":
-                prob,
-
-                "edge":
-                edge,
-
-                "precio_entrada":
-                precio_entrada,
-
-                "lado":
-                "NO",
+                "decision": "ABAJO",
+                "fuerza": "MEDIA",
+                "probabilidad": prob,
+                "edge": edge,
+                "precio_entrada": precio_entrada,
+                "lado": "NO",
             }
-
-
-    # ========================================================
-    # NO APOSTAR
-    # ========================================================
 
     prob_mayor = max(
         prob_arriba,
@@ -3871,23 +3875,12 @@ def decidir(
     ) * 100.0
 
     return {
-        "decision":
-        "NO APOSTAR",
-
-        "fuerza":
-        "DEBIL",
-
-        "probabilidad":
-        prob_mayor,
-
-        "edge":
-        None,
-
-        "precio_entrada":
-        None,
-
-        "lado":
-        None,
+        "decision": "NO APOSTAR",
+        "fuerza": "DEBIL",
+        "probabilidad": prob_mayor,
+        "edge": None,
+        "precio_entrada": None,
+        "lado": None,
     }
 
 
@@ -4220,11 +4213,6 @@ def analizar_mercado(
     if not ticker:
         return None
 
-
-    # ========================================================
-    # TARGET
-    # ========================================================
-
     target = extraer_target_kalshi(
         mercado
     )
@@ -4237,11 +4225,6 @@ def analizar_mercado(
         )
 
         return None
-
-
-    # ========================================================
-    # TIEMPO
-    # ========================================================
 
     close_time = parse_fecha(
         mercado.get(
@@ -4258,9 +4241,7 @@ def analizar_mercado(
     ahora = ahora_utc()
 
     segundos_restantes = None
-
     segundos_desde_apertura = None
-
     minuto_entrada = None
 
     if close_time is not None:
@@ -4281,11 +4262,6 @@ def analizar_mercado(
             segundos_desde_apertura
             / 60.0
         )
-
-
-    # ========================================================
-    # PRECIOS
-    # ========================================================
 
     cb = obtener_coinbase_ticker()
 
@@ -4325,11 +4301,6 @@ def analizar_mercado(
 
         return None
 
-
-    # ========================================================
-    # INDICADORES
-    # ========================================================
-
     candles = obtener_coinbase_candles()
 
     indicadores = construir_indicadores(
@@ -4345,16 +4316,13 @@ def analizar_mercado(
 
         return None
 
-
-    # ========================================================
-    # ORDER BOOKS
-    # ========================================================
-
     cb_book = obtener_coinbase_book()
 
     kr_book = obtener_kraken_book()
 
     bi_book = obtener_binance_book()
+
+    bs_book = obtener_bitstamp_book()
 
     ka_book = obtener_orderbook_kalshi(
         ticker
@@ -4370,6 +4338,10 @@ def analizar_mercado(
 
     obi_bi = obi_binance(
         bi_book
+    )
+
+    obi_bs = obi_bitstamp(
+        bs_book
     )
 
     obi_ka = obi_kalshi(
@@ -4388,6 +4360,10 @@ def analizar_mercado(
         bi_book
     )
 
+    profundidad_bs = profundidad_bitstamp(
+        bs_book
+    )
+
     profundidad_ka = profundidad_kalshi(
         ka_book
     )
@@ -4396,16 +4372,13 @@ def analizar_mercado(
         cb_book
     )
 
-
-    # ========================================================
-    # TRADES / ORDER FLOW
-    # ========================================================
-
     trades_cb = obtener_coinbase_trades()
 
     trades_kr = obtener_kraken_trades()
 
     trades_bi = obtener_binance_trades()
+
+    trades_bs = obtener_bitstamp_trades()
 
     flujo_cb = orderflow_coinbase(
         trades_cb
@@ -4419,10 +4392,9 @@ def analizar_mercado(
         trades_bi
     )
 
-
-    # ========================================================
-    # PRECIOS KALSHI
-    # ========================================================
+    flujo_bs = orderflow_bitstamp(
+        trades_bs
+    )
 
     mercado_actual = (
         obtener_mercado_por_ticker(
@@ -4439,11 +4411,6 @@ def analizar_mercado(
         mercado_actual
     )
 
-
-    # ========================================================
-    # SCORE
-    # ========================================================
-
     calculo = calcular_score(
         target=target,
         precio=precio,
@@ -4452,9 +4419,11 @@ def analizar_mercado(
         obi_kr=obi_kr,
         obi_ka=obi_ka,
         obi_bi=obi_bi,
+        obi_bs=obi_bs,
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
         orderflow_bi=flujo_bi,
+        orderflow_bs=flujo_bs,
         precios_fuentes=[
             cb,
             kr,
@@ -4482,11 +4451,6 @@ def analizar_mercado(
             ]
         ),
     )
-
-
-    # ========================================================
-    # REGISTRO
-    # ========================================================
 
     return {
         "version":
@@ -4694,6 +4658,9 @@ def analizar_mercado(
         "obi_binance":
         obi_bi,
 
+        "obi_bitstamp_tapesurf":
+        obi_bs,
+
         "obi_kalshi":
         obi_ka,
 
@@ -4711,6 +4678,9 @@ def analizar_mercado(
         "orderflow_binance":
         flujo_bi,
 
+        "orderflow_bitstamp_tapesurf":
+        flujo_bs,
+
         "orderflow_promedio":
         calculo[
             "orderflow"
@@ -4724,6 +4694,9 @@ def analizar_mercado(
 
         "profundidad_binance":
         profundidad_bi,
+
+        "profundidad_bitstamp_tapesurf":
+        profundidad_bs,
 
         "profundidad_kalshi":
         profundidad_ka,
@@ -4878,6 +4851,11 @@ def mostrar_analisis(a):
     )
 
     print(
+        "OBI Bitstamp/TapeSurf: "
+        f"{a['obi_bitstamp_tapesurf']:+.3f}"
+    )
+
+    print(
         "OBI Kalshi: "
         f"{a['obi_kalshi']:+.3f}"
     )
@@ -4900,6 +4878,11 @@ def mostrar_analisis(a):
     print(
         "Order flow Binance: "
         f"{a['orderflow_binance']['imbalance']:+.3f}"
+    )
+
+    print(
+        "Order flow Bitstamp/TapeSurf: "
+        f"{a['orderflow_bitstamp_tapesurf']['imbalance']:+.3f}"
     )
 
     print(
@@ -5041,11 +5024,6 @@ def guardar_si_corresponde(
         "segundos_desde_apertura"
     ]
 
-
-    # ========================================================
-    # DEMASIADO PRONTO
-    # ========================================================
-
     if (
         segundos_desde_apertura
         is not None
@@ -5053,11 +5031,6 @@ def guardar_si_corresponde(
         < MIN_SEGUNDOS_DESDE_APERTURA
     ):
         return False
-
-
-    # ========================================================
-    # FINAL SIN VENTAJA
-    # ========================================================
 
     if (
         segundos_restantes
@@ -5102,17 +5075,6 @@ def guardar_si_corresponde(
 
         return True
 
-
-    # ========================================================
-    # UNA SOLA PREDICCION POR CONTRATO
-    #
-    # 90% O MAS:
-    # ARRIBA / ABAJO
-    #
-    # MENOS DE 90%:
-    # NO APOSTAR
-    # ========================================================
-
     if analisis[
         "decision"
     ] in [
@@ -5151,11 +5113,6 @@ def guardar_si_corresponde(
             analisis[
                 "edge"
             ] = None
-
-
-    # ========================================================
-    # GUARDAR ARRIBA / ABAJO
-    # ========================================================
 
     if analisis[
         "decision"
@@ -5219,11 +5176,6 @@ def guardar_si_corresponde(
         )
 
         return True
-
-
-    # ========================================================
-    # GUARDAR NO APOSTAR
-    # ========================================================
 
     if (
         analisis[
@@ -5479,6 +5431,10 @@ def main():
     )
 
     print(
+        " BITSTAMP/TAPESURF: ACTIVO"
+    )
+
+    print(
         " NO COLOCA ORDENES REALES"
     )
 
@@ -5496,11 +5452,6 @@ def main():
         try:
             ahora = time.time()
 
-
-            # =================================================
-            # RESULTADOS
-            # =================================================
-
             if (
                 ahora
                 - ULTIMO_RESULTADO_CHECK
@@ -5514,11 +5465,6 @@ def main():
                 ULTIMO_RESULTADO_CHECK = (
                     ahora
                 )
-
-
-            # =================================================
-            # MERCADO ACTUAL
-            # =================================================
 
             mercado = elegir_mercado_actual()
 
@@ -5547,11 +5493,6 @@ def main():
 
                 continue
 
-
-            # =================================================
-            # CAMBIO DE CONTRATO
-            # =================================================
-
             if (
                 ticker_anterior
                 and ticker
@@ -5567,11 +5508,6 @@ def main():
             ticker_anterior = ticker
 
             mercado_anterior = mercado
-
-
-            # =================================================
-            # YA EXISTE DECISION
-            # =================================================
 
             historial = cargar_historial()
 
@@ -5594,11 +5530,6 @@ def main():
 
                 continue
 
-
-            # =================================================
-            # ANALISIS
-            # =================================================
-
             analisis = analizar_mercado(
                 mercado
             )
@@ -5619,7 +5550,6 @@ def main():
                 analisis
             )
 
-
         except Exception as e:
 
             print(
@@ -5627,19 +5557,9 @@ def main():
                 f"Error general: {e}"
             )
 
-
-        # =====================================================
-        # ESPERA INTERRUPTIBLE
-        # =====================================================
-
         dormir_interrumpible(
             INTERVALO_REVISION
         )
-
-
-    # ========================================================
-    # SALIDA
-    # ========================================================
 
     print("")
     print(
@@ -5665,4 +5585,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

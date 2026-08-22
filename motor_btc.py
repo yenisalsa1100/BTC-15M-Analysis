@@ -33,7 +33,8 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - KRAKEN
 # - COINMARKETCAP
 # - BINANCE ORDER BOOK / ORDER FLOW
-# - BITFINEX / TAPE SURF SPOT
+# - BITFINEX SPOT
+# - METRICAS TIPO TAPESURF AGREGADAS DE EXCHANGES
 # - EMA / RSI / MACD
 # - MOMENTUM
 # - VELOCIDAD / ACELERACION
@@ -1684,7 +1685,7 @@ def profundidad_binance(
 
 
 # ============================================================
-# BITFINEX / TAPE SURF SPOT
+# BITFINEX SPOT
 # ============================================================
 
 def obtener_bitfinex_book():
@@ -2152,7 +2153,7 @@ def orderflow_binance(
 
 
 # ============================================================
-# ORDER FLOW BITFINEX / TAPE SURF
+# ORDER FLOW BITFINEX
 # ============================================================
 
 def orderflow_bitfinex(
@@ -2246,7 +2247,162 @@ def orderflow_bitfinex(
         "trades":
         usados,
     }
-    # ============================================================
+
+
+# ============================================================
+# METRICAS TIPO TAPESURF
+# ============================================================
+
+def calcular_metricas_tapesurf(
+    profundidad_cb,
+    profundidad_kr,
+    profundidad_bi,
+    profundidad_bf,
+    flujo_cb,
+    flujo_kr,
+    flujo_bi,
+    flujo_bf,
+):
+    bid_total = sum(
+        safe_float(
+            x.get(
+                "bid"
+            ),
+            0.0,
+        )
+        for x in [
+            profundidad_cb,
+            profundidad_kr,
+            profundidad_bi,
+            profundidad_bf,
+        ]
+        if isinstance(
+            x,
+            dict,
+        )
+    )
+
+    ask_total = sum(
+        safe_float(
+            x.get(
+                "ask"
+            ),
+            0.0,
+        )
+        for x in [
+            profundidad_cb,
+            profundidad_kr,
+            profundidad_bi,
+            profundidad_bf,
+        ]
+        if isinstance(
+            x,
+            dict,
+        )
+    )
+
+    profundidad_total = (
+        bid_total
+        + ask_total
+    )
+
+    delta_profundidad = (
+        bid_total
+        - ask_total
+    )
+
+    imbalance_profundidad = 0.0
+
+    if profundidad_total > 0:
+        imbalance_profundidad = (
+            delta_profundidad
+            / profundidad_total
+        )
+
+    buy_volume = sum(
+        safe_float(
+            x.get(
+                "buy_volume"
+            ),
+            0.0,
+        )
+        for x in [
+            flujo_cb,
+            flujo_kr,
+            flujo_bi,
+            flujo_bf,
+        ]
+        if isinstance(
+            x,
+            dict,
+        )
+    )
+
+    sell_volume = sum(
+        safe_float(
+            x.get(
+                "sell_volume"
+            ),
+            0.0,
+        )
+        for x in [
+            flujo_cb,
+            flujo_kr,
+            flujo_bi,
+            flujo_bf,
+        ]
+        if isinstance(
+            x,
+            dict,
+        )
+    )
+
+    volumen_total = (
+        buy_volume
+        + sell_volume
+    )
+
+    delta_orderflow = (
+        buy_volume
+        - sell_volume
+    )
+
+    imbalance_orderflow = 0.0
+
+    if volumen_total > 0:
+        imbalance_orderflow = (
+            delta_orderflow
+            / volumen_total
+        )
+
+    return {
+        "bid":
+        bid_total,
+
+        "ask":
+        ask_total,
+
+        "delta_depth":
+        delta_profundidad,
+
+        "imbalance_depth":
+        imbalance_profundidad,
+
+        "buy_volume":
+        buy_volume,
+
+        "sell_volume":
+        sell_volume,
+
+        "delta_orderflow":
+        delta_orderflow,
+
+        "imbalance_orderflow":
+        imbalance_orderflow,
+    }
+
+
+# ============================================================
 # COINMARKETCAP
 # ============================================================
 
@@ -3154,10 +3310,8 @@ def calcular_consenso_fuentes(
 
         "ratio":
         ratio,
-    }
-
-
-# ============================================================
+}
+    # ============================================================
 # SCORE
 # ============================================================
 
@@ -4450,6 +4604,17 @@ def analizar_mercado(
         trades_bf
     )
 
+    tapesurf = calcular_metricas_tapesurf(
+        profundidad_cb,
+        profundidad_kr,
+        profundidad_bi,
+        profundidad_bf,
+        flujo_cb,
+        flujo_kr,
+        flujo_bi,
+        flujo_bf,
+    )
+
     mercado_actual = (
         obtener_mercado_por_ticker(
             ticker
@@ -4712,7 +4877,7 @@ def analizar_mercado(
         "obi_binance":
         obi_bi,
 
-        "obi_bitfinex_tapesurf":
+        "obi_bitfinex":
         obi_bf,
 
         "obi_kalshi":
@@ -4732,7 +4897,7 @@ def analizar_mercado(
         "orderflow_binance":
         flujo_bi,
 
-        "orderflow_bitfinex_tapesurf":
+        "orderflow_bitfinex":
         flujo_bf,
 
         "orderflow_promedio":
@@ -4749,11 +4914,14 @@ def analizar_mercado(
         "profundidad_binance":
         profundidad_bi,
 
-        "profundidad_bitfinex_tapesurf":
+        "profundidad_bitfinex":
         profundidad_bf,
 
         "profundidad_kalshi":
         profundidad_ka,
+
+        "tapesurf_agregado":
+        tapesurf,
 
         "spread_coinbase":
         spread_cb,
@@ -4905,8 +5073,8 @@ def mostrar_analisis(a):
     )
 
     print(
-        "OBI Bitfinex/TapeSurf: "
-        f"{a['obi_bitfinex_tapesurf']:+.3f}"
+        "OBI Bitfinex: "
+        f"{a['obi_bitfinex']:+.3f}"
     )
 
     print(
@@ -4935,13 +5103,45 @@ def mostrar_analisis(a):
     )
 
     print(
-        "Order flow Bitfinex/TapeSurf: "
-        f"{a['orderflow_bitfinex_tapesurf']['imbalance']:+.3f}"
+        "Order flow Bitfinex: "
+        f"{a['orderflow_bitfinex']['imbalance']:+.3f}"
     )
 
     print(
         "Order flow promedio: "
         f"{a['orderflow_promedio']:+.3f}"
+    )
+
+    print("")
+
+    print(
+        "TapeSurf agregado BID: "
+        f"{a['tapesurf_agregado']['bid']:.3f}"
+    )
+
+    print(
+        "TapeSurf agregado ASK: "
+        f"{a['tapesurf_agregado']['ask']:.3f}"
+    )
+
+    print(
+        "TapeSurf delta profundidad: "
+        f"{a['tapesurf_agregado']['delta_depth']:+.3f}"
+    )
+
+    print(
+        "TapeSurf imbalance profundidad: "
+        f"{a['tapesurf_agregado']['imbalance_depth']:+.3f}"
+    )
+
+    print(
+        "TapeSurf delta order flow: "
+        f"{a['tapesurf_agregado']['delta_orderflow']:+.3f}"
+    )
+
+    print(
+        "TapeSurf imbalance order flow: "
+        f"{a['tapesurf_agregado']['imbalance_orderflow']:+.3f}"
     )
 
     print("")
@@ -5485,7 +5685,11 @@ def main():
     )
 
     print(
-        " BITFINEX/TAPESURF: ACTIVO"
+        " BITFINEX: ACTIVO"
+    )
+
+    print(
+        " METRICAS TIPO TAPESURF: ACTIVAS"
     )
 
     print(

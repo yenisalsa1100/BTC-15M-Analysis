@@ -32,9 +32,6 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - COINBASE
 # - KRAKEN
 # - COINMARKETCAP
-# - BINANCE ORDER BOOK / ORDER FLOW
-# - BITFINEX SPOT
-# - METRICAS TIPO TAPESURF AGREGADAS DE EXCHANGES
 # - EMA / RSI / MACD
 # - MOMENTUM
 # - VELOCIDAD / ACELERACION
@@ -50,7 +47,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - EDGE CONTRA PRECIO KALSHI
 # - HISTORIAL
 # - P&L TEORICO
-# - TELEGRAM ARRIBA / ABAJO SOLO 90%+
+# - TELEGRAM ARRIBA / ABAJO
 #
 # SALIDAS:
 # ARRIBA
@@ -82,14 +79,6 @@ KRAKEN_BASE = (
     "https://api.kraken.com"
 )
 
-BINANCE_BASE = (
-    "https://api.binance.com"
-)
-
-BITFINEX_BASE = (
-    "https://api-pub.bitfinex.com"
-)
-
 CMC_BASE = (
     "https://pro-api.coinmarketcap.com"
 )
@@ -116,9 +105,14 @@ TIMEOUT_HTTP = 10
 
 # ============================================================
 # VENTANA DINAMICA DE ENTRADA
+#
+# NO ESPERA OBLIGATORIAMENTE A LOS ULTIMOS 5 MINUTOS.
+# EMPIEZA A BUSCAR OPORTUNIDAD DESPUES DE 45 SEGUNDOS.
+#
+# SI NO HAY EDGE SUFICIENTE, SIGUE ESPERANDO.
 # ============================================================
 
-MIN_SEGUNDOS_DESDE_APERTURA = 55
+MIN_SEGUNDOS_DESDE_APERTURA = 45
 
 MIN_SEGUNDOS_RESTANTES = 120
 
@@ -130,8 +124,6 @@ MIN_SEGUNDOS_RESTANTES = 120
 PROBABILIDAD_MEDIA = 56.0
 
 PROBABILIDAD_FUERTE = 63.0
-
-PROBABILIDAD_MINIMA_APUESTA = 90.0
 
 SCORE_MEDIO = 26.0
 
@@ -392,26 +384,6 @@ def enviar_telegram(
     ]:
         return
 
-    probabilidad = safe_float(
-        analisis.get(
-            "probabilidad"
-        ),
-        0.0,
-    )
-
-    if (
-        probabilidad
-        < PROBABILIDAD_MINIMA_APUESTA
-    ):
-        print(
-            "[TELEGRAM] "
-            "No se envía señal: "
-            f"{probabilidad:.1f}% "
-            f"< {PROBABILIDAD_MINIMA_APUESTA:.1f}%"
-        )
-
-        return
-
     token = os.getenv(
         "TELEGRAM_BOT_TOKEN",
         "",
@@ -487,7 +459,7 @@ def enviar_telegram(
                 "chat_id": chat_id,
                 "text": texto,
             },
-            timeout=30,
+            timeout=TIMEOUT_HTTP,
         )
 
         if not respuesta.ok:
@@ -1540,331 +1512,6 @@ def profundidad_kraken(
 
 
 # ============================================================
-# BINANCE
-# ============================================================
-
-def obtener_binance_book():
-    return http_get(
-        (
-            "https://data-api.binance.vision"
-            "/api/v3/depth"
-        ),
-        params={
-            "symbol":
-            "BTCUSDT",
-
-            "limit":
-            ORDERBOOK_NIVELES,
-        },
-    )
-
-
-def obtener_binance_trades():
-    datos = http_get(
-        (
-            "https://data-api.binance.vision"
-            "/api/v3/aggTrades"
-        ),
-        params={
-            "symbol":
-            "BTCUSDT",
-
-            "limit":
-            TRADES_MAX,
-        },
-    )
-
-    if not isinstance(
-        datos,
-        list,
-    ):
-        return []
-
-    return datos
-
-
-def obi_binance(
-    book,
-):
-    if not book:
-        return 0.0
-
-    bids = book.get(
-        "bids",
-        [],
-    )
-
-    asks = book.get(
-        "asks",
-        [],
-    )
-
-    bid_qty = sum(
-        safe_float(
-            x[1],
-            0.0,
-        )
-        for x in bids[
-            :ORDERBOOK_NIVELES
-        ]
-        if len(x) >= 2
-    )
-
-    ask_qty = sum(
-        safe_float(
-            x[1],
-            0.0,
-        )
-        for x in asks[
-            :ORDERBOOK_NIVELES
-        ]
-        if len(x) >= 2
-    )
-
-    total = (
-        bid_qty
-        + ask_qty
-    )
-
-    if total <= 0:
-        return 0.0
-
-    return (
-        bid_qty
-        - ask_qty
-    ) / total
-
-
-def profundidad_binance(
-    book,
-):
-    if not book:
-        return {
-            "bid": 0.0,
-            "ask": 0.0,
-            "total": 0.0,
-        }
-
-    bid_qty = sum(
-        safe_float(
-            x[1],
-            0,
-        )
-        for x in book.get(
-            "bids",
-            [],
-        )[:ORDERBOOK_NIVELES]
-        if len(x) >= 2
-    )
-
-    ask_qty = sum(
-        safe_float(
-            x[1],
-            0,
-        )
-        for x in book.get(
-            "asks",
-            [],
-        )[:ORDERBOOK_NIVELES]
-        if len(x) >= 2
-    )
-
-    return {
-        "bid":
-        bid_qty,
-
-        "ask":
-        ask_qty,
-
-        "total":
-        (
-            bid_qty
-            + ask_qty
-        ),
-    }
-
-
-# ============================================================
-# BITFINEX SPOT
-# ============================================================
-
-def obtener_bitfinex_book():
-    datos = http_get(
-        (
-            f"{BITFINEX_BASE}"
-            "/v2/book/tBTCUSD/P0"
-        ),
-        params={
-            "len":
-            25,
-        },
-    )
-
-    if not isinstance(
-        datos,
-        list,
-    ):
-        return []
-
-    return datos
-
-
-def obtener_bitfinex_trades():
-    datos = http_get(
-        (
-            f"{BITFINEX_BASE}"
-            "/v2/trades/tBTCUSD/hist"
-        ),
-        params={
-            "limit":
-            TRADES_MAX,
-
-            "sort":
-            -1,
-        },
-    )
-
-    if not isinstance(
-        datos,
-        list,
-    ):
-        return []
-
-    return datos
-
-
-def obi_bitfinex(
-    book,
-):
-    if not book:
-        return 0.0
-
-    bids = []
-
-    asks = []
-
-    for nivel in book:
-        try:
-            if len(nivel) < 3:
-                continue
-
-            amount = safe_float(
-                nivel[2],
-                0.0,
-            )
-
-            if amount > 0:
-                bids.append(
-                    abs(
-                        amount
-                    )
-                )
-
-            elif amount < 0:
-                asks.append(
-                    abs(
-                        amount
-                    )
-                )
-
-        except Exception:
-            continue
-
-    bid_qty = sum(
-        bids[
-            :ORDERBOOK_NIVELES
-        ]
-    )
-
-    ask_qty = sum(
-        asks[
-            :ORDERBOOK_NIVELES
-        ]
-    )
-
-    total = (
-        bid_qty
-        + ask_qty
-    )
-
-    if total <= 0:
-        return 0.0
-
-    return (
-        bid_qty
-        - ask_qty
-    ) / total
-
-
-def profundidad_bitfinex(
-    book,
-):
-    if not book:
-        return {
-            "bid": 0.0,
-            "ask": 0.0,
-            "total": 0.0,
-        }
-
-    bids = []
-
-    asks = []
-
-    for nivel in book:
-        try:
-            if len(nivel) < 3:
-                continue
-
-            amount = safe_float(
-                nivel[2],
-                0.0,
-            )
-
-            if amount > 0:
-                bids.append(
-                    abs(
-                        amount
-                    )
-                )
-
-            elif amount < 0:
-                asks.append(
-                    abs(
-                        amount
-                    )
-                )
-
-        except Exception:
-            continue
-
-    bid_qty = sum(
-        bids[
-            :ORDERBOOK_NIVELES
-        ]
-    )
-
-    ask_qty = sum(
-        asks[
-            :ORDERBOOK_NIVELES
-        ]
-    )
-
-    return {
-        "bid":
-        bid_qty,
-
-        "ask":
-        ask_qty,
-
-        "total":
-        (
-            bid_qty
-            + ask_qty
-        ),
-    }
-
-
-# ============================================================
 # ORDER FLOW COINBASE
 # ============================================================
 
@@ -1920,6 +1567,14 @@ def orderflow_coinbase(
                     "",
                 )
             ).lower()
+
+            # Coinbase side = lado maker.
+            #
+            # maker SELL:
+            # comprador agresivo.
+            #
+            # maker BUY:
+            # vendedor agresivo.
 
             if side == "sell":
                 buy_volume += size
@@ -2052,357 +1707,9 @@ def orderflow_kraken(
 
 
 # ============================================================
-# ORDER FLOW BINANCE
+# COINMARKETCAP
 # ============================================================
-
-def orderflow_binance(
-    trades,
-):
-    if not trades:
-        return {
-            "imbalance": 0.0,
-            "buy_volume": 0.0,
-            "sell_volume": 0.0,
-            "trades": 0,
-        }
-
-    ahora_ms = (
-        time.time()
-        * 1000
-    )
-
-    buy_volume = 0.0
-
-    sell_volume = 0.0
-
-    usados = 0
-
-    for trade in trades:
-        try:
-            volume = safe_float(
-                trade.get(
-                    "q"
-                ),
-                0,
-            )
-
-            timestamp = safe_float(
-                trade.get(
-                    "T"
-                ),
-                0,
-            )
-
-            buyer_is_maker = bool(
-                trade.get(
-                    "m",
-                    False,
-                )
-            )
-
-            if (
-                timestamp
-                and (
-                    ahora_ms
-                    - timestamp
-                )
-                > (
-                    TRADES_WINDOW_SEGUNDOS
-                    * 1000
-                )
-            ):
-                continue
-
-            if buyer_is_maker:
-                sell_volume += volume
-
-            else:
-                buy_volume += volume
-
-            usados += 1
-
-        except Exception:
-            continue
-
-    total = (
-        buy_volume
-        + sell_volume
-    )
-
-    imbalance = 0.0
-
-    if total > 0:
-        imbalance = (
-            buy_volume
-            - sell_volume
-        ) / total
-
-    return {
-        "imbalance":
-        imbalance,
-
-        "buy_volume":
-        buy_volume,
-
-        "sell_volume":
-        sell_volume,
-
-        "trades":
-        usados,
-    }
-
-
-# ============================================================
-# ORDER FLOW BITFINEX
-# ============================================================
-
-def orderflow_bitfinex(
-    trades,
-):
-    if not trades:
-        return {
-            "imbalance": 0.0,
-            "buy_volume": 0.0,
-            "sell_volume": 0.0,
-            "trades": 0,
-        }
-
-    ahora_ms = (
-        time.time()
-        * 1000
-    )
-
-    buy_volume = 0.0
-
-    sell_volume = 0.0
-
-    usados = 0
-
-    for trade in trades:
-        try:
-            if len(trade) < 4:
-                continue
-
-            timestamp = safe_float(
-                trade[1],
-                0.0,
-            )
-
-            if (
-                timestamp
-                and (
-                    ahora_ms
-                    - timestamp
-                )
-                > (
-                    TRADES_WINDOW_SEGUNDOS
-                    * 1000
-                )
-            ):
-                continue
-
-            amount = safe_float(
-                trade[2],
-                0.0,
-            )
-
-            if amount > 0:
-                buy_volume += abs(
-                    amount
-                )
-
-            elif amount < 0:
-                sell_volume += abs(
-                    amount
-                )
-
-            usados += 1
-
-        except Exception:
-            continue
-
-    total = (
-        buy_volume
-        + sell_volume
-    )
-
-    imbalance = 0.0
-
-    if total > 0:
-        imbalance = (
-            buy_volume
-            - sell_volume
-        ) / total
-
-    return {
-        "imbalance":
-        imbalance,
-
-        "buy_volume":
-        buy_volume,
-
-        "sell_volume":
-        sell_volume,
-
-        "trades":
-        usados,
-    }
-
-
-# ============================================================
-# METRICAS TIPO TAPESURF
-# ============================================================
-
-def calcular_metricas_tapesurf(
-    profundidad_cb,
-    profundidad_kr,
-    profundidad_bi,
-    profundidad_bf,
-    flujo_cb,
-    flujo_kr,
-    flujo_bi,
-    flujo_bf,
-):
-    bid_total = sum(
-        safe_float(
-            x.get(
-                "bid"
-            ),
-            0.0,
-        )
-        for x in [
-            profundidad_cb,
-            profundidad_kr,
-            profundidad_bi,
-            profundidad_bf,
-        ]
-        if isinstance(
-            x,
-            dict,
-        )
-    )
-
-    ask_total = sum(
-        safe_float(
-            x.get(
-                "ask"
-            ),
-            0.0,
-        )
-        for x in [
-            profundidad_cb,
-            profundidad_kr,
-            profundidad_bi,
-            profundidad_bf,
-        ]
-        if isinstance(
-            x,
-            dict,
-        )
-    )
-
-    profundidad_total = (
-        bid_total
-        + ask_total
-    )
-
-    delta_profundidad = (
-        bid_total
-        - ask_total
-    )
-
-    imbalance_profundidad = 0.0
-
-    if profundidad_total > 0:
-        imbalance_profundidad = (
-            delta_profundidad
-            / profundidad_total
-        )
-
-    buy_volume = sum(
-        safe_float(
-            x.get(
-                "buy_volume"
-            ),
-            0.0,
-        )
-        for x in [
-            flujo_cb,
-            flujo_kr,
-            flujo_bi,
-            flujo_bf,
-        ]
-        if isinstance(
-            x,
-            dict,
-        )
-    )
-
-    sell_volume = sum(
-        safe_float(
-            x.get(
-                "sell_volume"
-            ),
-            0.0,
-        )
-        for x in [
-            flujo_cb,
-            flujo_kr,
-            flujo_bi,
-            flujo_bf,
-        ]
-        if isinstance(
-            x,
-            dict,
-        )
-    )
-
-    volumen_total = (
-        buy_volume
-        + sell_volume
-    )
-
-    delta_orderflow = (
-        buy_volume
-        - sell_volume
-    )
-
-    imbalance_orderflow = 0.0
-
-    if volumen_total > 0:
-        imbalance_orderflow = (
-            delta_orderflow
-            / volumen_total
-        )
-
-    return {
-        "bid":
-        bid_total,
-
-        "ask":
-        ask_total,
-
-        "delta_depth":
-        delta_profundidad,
-
-        "imbalance_depth":
-        imbalance_profundidad,
-
-        "buy_volume":
-        buy_volume,
-
-        "sell_volume":
-        sell_volume,
-
-        "delta_orderflow":
-        delta_orderflow,
-
-        "imbalance_orderflow":
-        imbalance_orderflow,
-    }
-
-
-# ============================================================
+ # ============================================================
 # COINMARKETCAP
 # ============================================================
 
@@ -2410,6 +1717,10 @@ def obtener_coinmarketcap():
     global ULTIMO_CMC
 
     ahora = time.time()
+
+    # ========================================================
+    # CACHE CMC - 60 SEGUNDOS
+    # ========================================================
 
     if (
         ULTIMO_CMC["precio"] is not None
@@ -2419,6 +1730,11 @@ def obtener_coinmarketcap():
         ) < 60
     ):
         return ULTIMO_CMC["precio"]
+
+
+    # ========================================================
+    # API KEY
+    # ========================================================
 
     api_key = os.getenv(
         "COINMARKETCAP_API_KEY",
@@ -2431,6 +1747,11 @@ def obtener_coinmarketcap():
         )
 
         return ULTIMO_CMC["precio"]
+
+
+    # ========================================================
+    # PETICION
+    # ========================================================
 
     datos = http_get(
         (
@@ -2450,6 +1771,11 @@ def obtener_coinmarketcap():
         },
     )
 
+
+    # ========================================================
+    # SIN RESPUESTA
+    # ========================================================
+
     if not datos:
         print(
             "[CMC] Sin respuesta."
@@ -2457,7 +1783,13 @@ def obtener_coinmarketcap():
 
         return ULTIMO_CMC["precio"]
 
+
+    # ========================================================
+    # PROCESAR RESPUESTA
+    # ========================================================
+
     try:
+
         data = datos.get(
             "data"
         )
@@ -2468,6 +1800,19 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
+
+
+        # ====================================================
+        # FORMATO DICCIONARIO
+        #
+        # Ejemplo:
+        #
+        # "data": {
+        #     "1": {
+        #         ...
+        #     }
+        # }
+        # ====================================================
 
         btc = None
 
@@ -2481,6 +1826,7 @@ def obtener_coinmarketcap():
             )
 
             if btc is None:
+
                 btc = data.get(
                     1
                 )
@@ -2504,6 +1850,20 @@ def obtener_coinmarketcap():
                         if simbolo == "BTC":
                             btc = valor
                             break
+
+
+        # ====================================================
+        # FORMATO LISTA
+        #
+        # Algunas respuestas pueden devolver:
+        #
+        # "data": [
+        #     {
+        #         "id": 1,
+        #         "symbol": "BTC"
+        #     }
+        # ]
+        # ====================================================
 
         elif isinstance(
             data,
@@ -2546,6 +1906,11 @@ def obtener_coinmarketcap():
             ):
                 btc = data[0]
 
+
+        # ====================================================
+        # FORMATO DESCONOCIDO
+        # ====================================================
+
         else:
 
             print(
@@ -2554,6 +1919,7 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
+
 
         if not isinstance(
             btc,
@@ -2566,6 +1932,11 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
+
+
+        # ====================================================
+        # QUOTE USD
+        # ====================================================
 
         quote = btc.get(
             "quote",
@@ -2583,14 +1954,21 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
+
         usd = quote.get(
             "USD"
         )
 
         if usd is None:
+
             usd = quote.get(
                 "usd"
             )
+
+
+        # ====================================================
+        # USD PUEDE SER DICT O LISTA
+        # ====================================================
 
         if isinstance(
             usd,
@@ -2606,6 +1984,7 @@ def obtener_coinmarketcap():
             ):
                 usd = usd[0]
 
+
         if not isinstance(
             usd,
             dict,
@@ -2616,6 +1995,11 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
+
+
+        # ====================================================
+        # PRECIO
+        # ====================================================
 
         precio = safe_float(
             usd.get(
@@ -2631,6 +2015,11 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
+
+        # ====================================================
+        # VALIDACION BASICA
+        # ====================================================
+
         if (
             not math.isfinite(
                 precio
@@ -2644,6 +2033,11 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
+
+        # ====================================================
+        # ACTUALIZAR CACHE
+        # ====================================================
+
         ULTIMO_CMC = {
             "precio":
             precio,
@@ -2652,12 +2046,18 @@ def obtener_coinmarketcap():
             ahora,
         }
 
+
         print(
             "[CMC OK] BTC: "
             f"${precio:,.2f}"
         )
 
         return precio
+
+
+    # ========================================================
+    # ERROR DE PROCESAMIENTO
+    # ========================================================
 
     except Exception as e:
 
@@ -2667,8 +2067,6 @@ def obtener_coinmarketcap():
         )
 
         return ULTIMO_CMC["precio"]
-
-
 # ============================================================
 # CF BENCHMARKS / BRTI
 # ============================================================
@@ -2821,6 +2219,7 @@ def obtener_cf_brti():
         return ULTIMO_CF["precio"]
 
     try:
+
         contenido = datos.get(
             "data",
             datos,
@@ -3110,9 +2509,13 @@ def construir_indicadores(
         )
 
     mom1 = momentum(1)
+
     mom2 = momentum(2)
+
     mom3 = momentum(3)
+
     mom5 = momentum(5)
+
     mom10 = momentum(10)
 
     velocidad = mom1
@@ -3271,10 +2674,17 @@ def calcular_consenso_fuentes(
 
     if not validas:
         return {
-            "arriba": 0,
-            "abajo": 0,
-            "total": 0,
-            "ratio": 0.0,
+            "arriba":
+            0,
+
+            "abajo":
+            0,
+
+            "total":
+            0,
+
+            "ratio":
+            0.0,
         }
 
     arriba = sum(
@@ -3324,25 +2734,36 @@ def calcular_score(
     obi_cb,
     obi_kr,
     obi_ka,
-    obi_bi,
-    obi_bf,
     orderflow_cb,
     orderflow_kr,
-    orderflow_bi,
-    orderflow_bf,
     precios_fuentes,
-    tapesurf,
 ):
     razones = []
 
     familias = {
-        "target": 0.0,
-        "tendencia": 0.0,
-        "momentum": 0.0,
-        "microestructura": 0.0,
-        "flujo_capital": 0.0,
-        "consenso": 0.0,
+        "target":
+        0.0,
+
+        "tendencia":
+        0.0,
+
+        "momentum":
+        0.0,
+
+        "microestructura":
+        0.0,
+
+        "flujo_capital":
+        0.0,
+
+        "consenso":
+        0.0,
     }
+
+
+    # ========================================================
+    # TARGET
+    # ========================================================
 
     distancia_pct = (
         (
@@ -3388,6 +2809,11 @@ def calcular_score(
             "BTC bajo target "
             f"{distancia_pct:+.4f}%"
         )
+
+
+    # ========================================================
+    # TENDENCIA
+    # ========================================================
 
     ema9 = indicadores[
         "ema9"
@@ -3481,6 +2907,11 @@ def calcular_score(
         14.0,
     )
 
+
+    # ========================================================
+    # MOMENTUM
+    # ========================================================
+
     moms = [
         indicadores[
             "mom1"
@@ -3535,9 +2966,11 @@ def calcular_score(
         )
 
     if velocidad > 0:
+
         momentum_score += 3.0
 
     elif velocidad < 0:
+
         momentum_score -= 3.0
 
     if (
@@ -3570,13 +3003,16 @@ def calcular_score(
         13.0,
     )
 
+
+    # ========================================================
+    # MICROESTRUCTURA
+    # ========================================================
+
     obi_total = media_valida(
         [
             obi_cb,
             obi_kr,
             obi_ka,
-            obi_bi,
-            obi_bf,
         ]
     )
 
@@ -3593,22 +3029,10 @@ def calcular_score(
         0.0,
     )
 
-    flujo_bi = orderflow_bi.get(
-        "imbalance",
-        0.0,
-    )
-
-    flujo_bf = orderflow_bf.get(
-        "imbalance",
-        0.0,
-    )
-
     orderflow_total = media_valida(
         [
             flujo_cb,
             flujo_kr,
-            flujo_bi,
-            flujo_bf,
         ]
     )
 
@@ -3687,71 +3111,18 @@ def calcular_score(
             "OBI + order flow coinciden abajo"
         )
 
-    tapesurf_depth = safe_float(
-        tapesurf.get(
-            "imbalance_depth"
-        ),
-        0.0,
-    )
-
-    tapesurf_flow = safe_float(
-        tapesurf.get(
-            "imbalance_orderflow"
-        ),
-        0.0,
-    )
-
-    if (
-        tapesurf_depth >= 0.20
-        and tapesurf_flow >= 0.20
-    ):
-
-        micro += 4.0
-
-        razones.append(
-            "TapeSurf confirma presión compradora"
-        )
-
-    elif (
-        tapesurf_depth <= -0.20
-        and tapesurf_flow <= -0.20
-    ):
-
-        micro -= 4.0
-
-        razones.append(
-            "TapeSurf confirma presión vendedora"
-        )
-
-    elif (
-        tapesurf_depth >= 0.10
-        and tapesurf_flow >= 0.10
-    ):
-
-        micro += 2.0
-
-        razones.append(
-            "TapeSurf apoya subida"
-        )
-
-    elif (
-        tapesurf_depth <= -0.10
-        and tapesurf_flow <= -0.10
-    ):
-
-        micro -= 2.0
-
-        razones.append(
-            "TapeSurf apoya caída"
-        )
-
     familias[
         "microestructura"
     ] = limitar(
         micro,
-        -20.0,
-        20.0,
+        -16.0,
+        16.0,
     )
+
+
+    # ========================================================
+    # FLUJO CAPITAL
+    # ========================================================
 
     rsi = indicadores[
         "rsi14"
@@ -3786,9 +3157,11 @@ def calcular_score(
         )
 
     elif rsi > 80:
+
         flujo_capital -= 1.0
 
     elif rsi < 20:
+
         flujo_capital += 1.0
 
     if cmf > 0.10:
@@ -3844,6 +3217,11 @@ def calcular_score(
         -10.0,
         10.0,
     )
+
+
+    # ========================================================
+    # CONSENSO
+    # ========================================================
 
     consenso = calcular_consenso_fuentes(
         target,
@@ -3911,6 +3289,11 @@ def calcular_score(
     familias[
         "consenso"
     ] = consenso_score
+
+
+    # ========================================================
+    # SCORE TOTAL
+    # ========================================================
 
     score = sum(
         familias.values()
@@ -4000,6 +3383,11 @@ def decidir(
         < TARGET_ZONA_MUERTA_PCT
     )
 
+
+    # ========================================================
+    # ARRIBA
+    # ========================================================
+
     if score > 0:
 
         prob = (
@@ -4014,12 +3402,23 @@ def decidir(
         if precio_entrada is None:
 
             return {
-                "decision": "NO APOSTAR",
-                "fuerza": "SIN PRECIO",
-                "probabilidad": prob,
-                "edge": None,
-                "precio_entrada": None,
-                "lado": None,
+                "decision":
+                "NO APOSTAR",
+
+                "fuerza":
+                "SIN PRECIO",
+
+                "probabilidad":
+                prob,
+
+                "edge":
+                None,
+
+                "precio_entrada":
+                None,
+
+                "lado":
+                None,
             }
 
         edge = (
@@ -4029,8 +3428,6 @@ def decidir(
 
         if (
             prob
-            >= PROBABILIDAD_MINIMA_APUESTA
-            and prob
             >= PROBABILIDAD_FUERTE
             and score_abs
             >= SCORE_FUERTE
@@ -4039,18 +3436,27 @@ def decidir(
         ):
 
             return {
-                "decision": "ARRIBA",
-                "fuerza": "FUERTE",
-                "probabilidad": prob,
-                "edge": edge,
-                "precio_entrada": precio_entrada,
-                "lado": "YES",
+                "decision":
+                "ARRIBA",
+
+                "fuerza":
+                "FUERTE",
+
+                "probabilidad":
+                prob,
+
+                "edge":
+                edge,
+
+                "precio_entrada":
+                precio_entrada,
+
+                "lado":
+                "YES",
             }
 
         if (
             prob
-            >= PROBABILIDAD_MINIMA_APUESTA
-            and prob
             >= PROBABILIDAD_MEDIA
             and score_abs
             >= SCORE_MEDIO
@@ -4060,13 +3466,29 @@ def decidir(
         ):
 
             return {
-                "decision": "ARRIBA",
-                "fuerza": "MEDIA",
-                "probabilidad": prob,
-                "edge": edge,
-                "precio_entrada": precio_entrada,
-                "lado": "YES",
+                "decision":
+                "ARRIBA",
+
+                "fuerza":
+                "MEDIA",
+
+                "probabilidad":
+                prob,
+
+                "edge":
+                edge,
+
+                "precio_entrada":
+                precio_entrada,
+
+                "lado":
+                "YES",
             }
+
+
+    # ========================================================
+    # ABAJO
+    # ========================================================
 
     if score < 0:
 
@@ -4082,12 +3504,23 @@ def decidir(
         if precio_entrada is None:
 
             return {
-                "decision": "NO APOSTAR",
-                "fuerza": "SIN PRECIO",
-                "probabilidad": prob,
-                "edge": None,
-                "precio_entrada": None,
-                "lado": None,
+                "decision":
+                "NO APOSTAR",
+
+                "fuerza":
+                "SIN PRECIO",
+
+                "probabilidad":
+                prob,
+
+                "edge":
+                None,
+
+                "precio_entrada":
+                None,
+
+                "lado":
+                None,
             }
 
         edge = (
@@ -4097,8 +3530,6 @@ def decidir(
 
         if (
             prob
-            >= PROBABILIDAD_MINIMA_APUESTA
-            and prob
             >= PROBABILIDAD_FUERTE
             and score_abs
             >= SCORE_FUERTE
@@ -4107,18 +3538,27 @@ def decidir(
         ):
 
             return {
-                "decision": "ABAJO",
-                "fuerza": "FUERTE",
-                "probabilidad": prob,
-                "edge": edge,
-                "precio_entrada": precio_entrada,
-                "lado": "NO",
+                "decision":
+                "ABAJO",
+
+                "fuerza":
+                "FUERTE",
+
+                "probabilidad":
+                prob,
+
+                "edge":
+                edge,
+
+                "precio_entrada":
+                precio_entrada,
+
+                "lado":
+                "NO",
             }
 
         if (
             prob
-            >= PROBABILIDAD_MINIMA_APUESTA
-            and prob
             >= PROBABILIDAD_MEDIA
             and score_abs
             >= SCORE_MEDIO
@@ -4128,13 +3568,29 @@ def decidir(
         ):
 
             return {
-                "decision": "ABAJO",
-                "fuerza": "MEDIA",
-                "probabilidad": prob,
-                "edge": edge,
-                "precio_entrada": precio_entrada,
-                "lado": "NO",
+                "decision":
+                "ABAJO",
+
+                "fuerza":
+                "MEDIA",
+
+                "probabilidad":
+                prob,
+
+                "edge":
+                edge,
+
+                "precio_entrada":
+                precio_entrada,
+
+                "lado":
+                "NO",
             }
+
+
+    # ========================================================
+    # NO APOSTAR
+    # ========================================================
 
     prob_mayor = max(
         prob_arriba,
@@ -4142,12 +3598,23 @@ def decidir(
     ) * 100.0
 
     return {
-        "decision": "NO APOSTAR",
-        "fuerza": "DEBIL",
-        "probabilidad": prob_mayor,
-        "edge": None,
-        "precio_entrada": None,
-        "lado": None,
+        "decision":
+        "NO APOSTAR",
+
+        "fuerza":
+        "DEBIL",
+
+        "probabilidad":
+        prob_mayor,
+
+        "edge":
+        None,
+
+        "precio_entrada":
+        None,
+
+        "lado":
+        None,
     }
 
 
@@ -4480,6 +3947,11 @@ def analizar_mercado(
     if not ticker:
         return None
 
+
+    # ========================================================
+    # TARGET
+    # ========================================================
+
     target = extraer_target_kalshi(
         mercado
     )
@@ -4492,6 +3964,11 @@ def analizar_mercado(
         )
 
         return None
+
+
+    # ========================================================
+    # TIEMPO
+    # ========================================================
 
     close_time = parse_fecha(
         mercado.get(
@@ -4532,6 +4009,11 @@ def analizar_mercado(
             / 60.0
         )
 
+
+    # ========================================================
+    # PRECIOS
+    # ========================================================
+
     cb = obtener_coinbase_ticker()
 
     kr = obtener_kraken_ticker()
@@ -4570,6 +4052,11 @@ def analizar_mercado(
 
         return None
 
+
+    # ========================================================
+    # INDICADORES
+    # ========================================================
+
     candles = obtener_coinbase_candles()
 
     indicadores = construir_indicadores(
@@ -4585,13 +4072,14 @@ def analizar_mercado(
 
         return None
 
+
+    # ========================================================
+    # ORDER BOOKS
+    # ========================================================
+
     cb_book = obtener_coinbase_book()
 
     kr_book = obtener_kraken_book()
-
-    bi_book = obtener_binance_book()
-
-    bf_book = obtener_bitfinex_book()
 
     ka_book = obtener_orderbook_kalshi(
         ticker
@@ -4603,14 +4091,6 @@ def analizar_mercado(
 
     obi_kr = obi_kraken(
         kr_book
-    )
-
-    obi_bi = obi_binance(
-        bi_book
-    )
-
-    obi_bf = obi_bitfinex(
-        bf_book
     )
 
     obi_ka = obi_kalshi(
@@ -4625,14 +4105,6 @@ def analizar_mercado(
         kr_book
     )
 
-    profundidad_bi = profundidad_binance(
-        bi_book
-    )
-
-    profundidad_bf = profundidad_bitfinex(
-        bf_book
-    )
-
     profundidad_ka = profundidad_kalshi(
         ka_book
     )
@@ -4641,13 +4113,14 @@ def analizar_mercado(
         cb_book
     )
 
+
+    # ========================================================
+    # TRADES / ORDER FLOW
+    # ========================================================
+
     trades_cb = obtener_coinbase_trades()
 
     trades_kr = obtener_kraken_trades()
-
-    trades_bi = obtener_binance_trades()
-
-    trades_bf = obtener_bitfinex_trades()
 
     flujo_cb = orderflow_coinbase(
         trades_cb
@@ -4657,24 +4130,10 @@ def analizar_mercado(
         trades_kr
     )
 
-    flujo_bi = orderflow_binance(
-        trades_bi
-    )
 
-    flujo_bf = orderflow_bitfinex(
-        trades_bf
-    )
-
-    tapesurf = calcular_metricas_tapesurf(
-        profundidad_cb,
-        profundidad_kr,
-        profundidad_bi,
-        profundidad_bf,
-        flujo_cb,
-        flujo_kr,
-        flujo_bi,
-        flujo_bf,
-    )
+    # ========================================================
+    # PRECIOS KALSHI
+    # ========================================================
 
     mercado_actual = (
         obtener_mercado_por_ticker(
@@ -4691,6 +4150,11 @@ def analizar_mercado(
         mercado_actual
     )
 
+
+    # ========================================================
+    # SCORE
+    # ========================================================
+
     calculo = calcular_score(
         target=target,
         precio=precio,
@@ -4698,19 +4162,14 @@ def analizar_mercado(
         obi_cb=obi_cb,
         obi_kr=obi_kr,
         obi_ka=obi_ka,
-        obi_bi=obi_bi,
-        obi_bf=obi_bf,
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
-        orderflow_bi=flujo_bi,
-        orderflow_bf=flujo_bf,
         precios_fuentes=[
             cb,
             kr,
             cmc,
             cf,
         ],
-        tapesurf=tapesurf,
     )
 
     score = calculo[
@@ -4732,6 +4191,11 @@ def analizar_mercado(
             ]
         ),
     )
+
+
+    # ========================================================
+    # REGISTRO
+    # ========================================================
 
     return {
         "version":
@@ -4936,12 +4400,6 @@ def analizar_mercado(
         "obi_kraken":
         obi_kr,
 
-        "obi_binance":
-        obi_bi,
-
-        "obi_bitfinex":
-        obi_bf,
-
         "obi_kalshi":
         obi_ka,
 
@@ -4956,12 +4414,6 @@ def analizar_mercado(
         "orderflow_kraken":
         flujo_kr,
 
-        "orderflow_binance":
-        flujo_bi,
-
-        "orderflow_bitfinex":
-        flujo_bf,
-
         "orderflow_promedio":
         calculo[
             "orderflow"
@@ -4973,17 +4425,8 @@ def analizar_mercado(
         "profundidad_kraken":
         profundidad_kr,
 
-        "profundidad_binance":
-        profundidad_bi,
-
-        "profundidad_bitfinex":
-        profundidad_bf,
-
         "profundidad_kalshi":
         profundidad_ka,
-
-        "tapesurf_agregado":
-        tapesurf,
 
         "spread_coinbase":
         spread_cb,
@@ -5130,16 +4573,6 @@ def mostrar_analisis(a):
     )
 
     print(
-        "OBI Binance: "
-        f"{a['obi_binance']:+.3f}"
-    )
-
-    print(
-        "OBI Bitfinex: "
-        f"{a['obi_bitfinex']:+.3f}"
-    )
-
-    print(
         "OBI Kalshi: "
         f"{a['obi_kalshi']:+.3f}"
     )
@@ -5160,50 +4593,8 @@ def mostrar_analisis(a):
     )
 
     print(
-        "Order flow Binance: "
-        f"{a['orderflow_binance']['imbalance']:+.3f}"
-    )
-
-    print(
-        "Order flow Bitfinex: "
-        f"{a['orderflow_bitfinex']['imbalance']:+.3f}"
-    )
-
-    print(
         "Order flow promedio: "
         f"{a['orderflow_promedio']:+.3f}"
-    )
-
-    print("")
-
-    print(
-        "TapeSurf agregado BID: "
-        f"{a['tapesurf_agregado']['bid']:.3f}"
-    )
-
-    print(
-        "TapeSurf agregado ASK: "
-        f"{a['tapesurf_agregado']['ask']:.3f}"
-    )
-
-    print(
-        "TapeSurf delta profundidad: "
-        f"{a['tapesurf_agregado']['delta_depth']:+.3f}"
-    )
-
-    print(
-        "TapeSurf imbalance profundidad: "
-        f"{a['tapesurf_agregado']['imbalance_depth']:+.3f}"
-    )
-
-    print(
-        "TapeSurf delta order flow: "
-        f"{a['tapesurf_agregado']['delta_orderflow']:+.3f}"
-    )
-
-    print(
-        "TapeSurf imbalance order flow: "
-        f"{a['tapesurf_agregado']['imbalance_orderflow']:+.3f}"
     )
 
     print("")
@@ -5340,6 +4731,11 @@ def guardar_si_corresponde(
         "segundos_desde_apertura"
     ]
 
+
+    # ========================================================
+    # DEMASIADO PRONTO
+    # ========================================================
+
     if (
         segundos_desde_apertura
         is not None
@@ -5347,6 +4743,11 @@ def guardar_si_corresponde(
         < MIN_SEGUNDOS_DESDE_APERTURA
     ):
         return False
+
+
+    # ========================================================
+    # FINAL SIN VENTAJA
+    # ========================================================
 
     if (
         segundos_restantes
@@ -5391,44 +4792,10 @@ def guardar_si_corresponde(
 
         return True
 
-    if analisis[
-        "decision"
-    ] in [
-        "ARRIBA",
-        "ABAJO",
-    ]:
 
-        probabilidad = safe_float(
-            analisis.get(
-                "probabilidad"
-            ),
-            0.0,
-        )
-
-        if (
-            probabilidad
-            < PROBABILIDAD_MINIMA_APUESTA
-        ):
-
-            analisis[
-                "decision"
-            ] = "NO APOSTAR"
-
-            analisis[
-                "fuerza"
-            ] = "PROBABILIDAD < 90%"
-
-            analisis[
-                "precio_entrada"
-            ] = None
-
-            analisis[
-                "lado_contrato"
-            ] = None
-
-            analisis[
-                "edge"
-            ] = None
+    # ========================================================
+    # ENTRADA
+    # ========================================================
 
     if analisis[
         "decision"
@@ -5489,45 +4856,6 @@ def guardar_si_corresponde(
 
         enviar_telegram(
             analisis
-        )
-
-        return True
-
-    if (
-        analisis[
-            "decision"
-        ]
-        == "NO APOSTAR"
-    ):
-
-        analisis[
-            "precio_entrada"
-        ] = None
-
-        analisis[
-            "lado_contrato"
-        ] = None
-
-        analisis[
-            "edge"
-        ] = None
-
-        historial.append(
-            analisis
-        )
-
-        guardar_historial(
-            historial
-        )
-
-        print(
-            "[DECISION GUARDADA] "
-            "NO APOSTAR"
-        )
-
-        print(
-            "[PROBABILIDAD] "
-            f"{analisis['probabilidad']:.1f}%"
         )
 
         return True
@@ -5743,18 +5071,6 @@ def main():
     )
 
     print(
-        " ARRIBA / ABAJO SOLO CON 90%+"
-    )
-
-    print(
-        " BITFINEX: ACTIVO"
-    )
-
-    print(
-        " METRICAS TIPO TAPESURF: ACTIVAS"
-    )
-
-    print(
         " NO COLOCA ORDENES REALES"
     )
 
@@ -5772,6 +5088,11 @@ def main():
         try:
             ahora = time.time()
 
+
+            # =================================================
+            # RESULTADOS
+            # =================================================
+
             if (
                 ahora
                 - ULTIMO_RESULTADO_CHECK
@@ -5785,6 +5106,11 @@ def main():
                 ULTIMO_RESULTADO_CHECK = (
                     ahora
                 )
+
+
+            # =================================================
+            # MERCADO ACTUAL
+            # =================================================
 
             mercado = elegir_mercado_actual()
 
@@ -5813,6 +5139,11 @@ def main():
 
                 continue
 
+
+            # =================================================
+            # CAMBIO DE CONTRATO
+            # =================================================
+
             if (
                 ticker_anterior
                 and ticker
@@ -5828,6 +5159,11 @@ def main():
             ticker_anterior = ticker
 
             mercado_anterior = mercado
+
+
+            # =================================================
+            # YA EXISTE DECISION
+            # =================================================
 
             historial = cargar_historial()
 
@@ -5850,6 +5186,11 @@ def main():
 
                 continue
 
+
+            # =================================================
+            # ANALISIS
+            # =================================================
+
             analisis = analizar_mercado(
                 mercado
             )
@@ -5870,6 +5211,7 @@ def main():
                 analisis
             )
 
+
         except Exception as e:
 
             print(
@@ -5877,9 +5219,19 @@ def main():
                 f"Error general: {e}"
             )
 
+
+        # =====================================================
+        # ESPERA INTERRUPTIBLE
+        # =====================================================
+
         dormir_interrumpible(
             INTERVALO_REVISION
         )
+
+
+    # ========================================================
+    # SALIDA
+    # ========================================================
 
     print("")
     print(

@@ -3329,6 +3329,7 @@ def calcular_score(
     orderflow_bi,
     orderflow_bf,
     precios_fuentes,
+    tapesurf,
 ):
     razones = []
 

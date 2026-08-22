@@ -3684,13 +3684,70 @@ def calcular_score(
         razones.append(
             "OBI + order flow coinciden abajo"
         )
+            tapesurf_depth = safe_float(
+        tapesurf.get(
+            "imbalance_depth"
+        ),
+        0.0,
+    )
+
+    tapesurf_flow = safe_float(
+        tapesurf.get(
+            "imbalance_orderflow"
+        ),
+        0.0,
+    )
+
+    if (
+        tapesurf_depth >= 0.20
+        and tapesurf_flow >= 0.20
+    ):
+
+        micro += 4.0
+
+        razones.append(
+            "TapeSurf confirma presión compradora"
+        )
+
+    elif (
+        tapesurf_depth <= -0.20
+        and tapesurf_flow <= -0.20
+    ):
+
+        micro -= 4.0
+
+        razones.append(
+            "TapeSurf confirma presión vendedora"
+        )
+
+    elif (
+        tapesurf_depth >= 0.10
+        and tapesurf_flow >= 0.10
+    ):
+
+        micro += 2.0
+
+        razones.append(
+            "TapeSurf apoya subida"
+        )
+
+    elif (
+        tapesurf_depth <= -0.10
+        and tapesurf_flow <= -0.10
+    ):
+
+        micro -= 2.0
+
+        razones.append(
+            "TapeSurf apoya caída"
+        )
 
     familias[
         "microestructura"
     ] = limitar(
         micro,
-        -16.0,
-        16.0,
+        -20.0,
+        20.0,
     )
 
     rsi = indicadores[

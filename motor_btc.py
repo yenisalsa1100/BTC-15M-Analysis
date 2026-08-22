@@ -4700,13 +4700,14 @@ def analizar_mercado(
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
         orderflow_bi=flujo_bi,
-        orderflow_bf=flujo_bf,
+        orderflow_bf=flujo_bf,   
         precios_fuentes=[
             cb,
             kr,
             cmc,
             cf,
         ],
+        tapesurf=tapesurf,
     )
 
     score = calculo[

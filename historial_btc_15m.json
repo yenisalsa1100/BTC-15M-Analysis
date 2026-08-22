@@ -11938,10 +11938,10 @@
       "Precio acelerando abajo",
       "RSI favorable abajo 43.4"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-22T16:30:27.725858+00:00",
+    "evaluacion": "NO CONTABILIZA",
     "pnl_teorico_1_contrato": null,
     "roi_teorico_pct": null
   }

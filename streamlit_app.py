@@ -503,25 +503,28 @@ def eliminar_historial():
 
     try:
 
-        if os.path.exists(
-            HISTORIAL_FILE
-        ):
-            os.remove(
-                HISTORIAL_FILE
+        with open(
+            HISTORIAL_FILE,
+            "w",
+            encoding="utf-8",
+        ) as f:
+
+            json.dump(
+                [],
+                f,
+                ensure_ascii=False,
+                indent=2,
             )
 
-        st.success(
-            "Historial eliminado."
-        )
-
-        st.rerun()
+        st.session_state[
+            "historial_eliminado"
+        ] = True
 
     except Exception as e:
 
         st.error(
             f"Error eliminando historial: {e}"
         )
-
 
 def seccion(texto):
 

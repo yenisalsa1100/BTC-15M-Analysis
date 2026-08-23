@@ -15209,11 +15209,11 @@
       "RSI favorable abajo 38.1",
       "CMF vendedor -0.13"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ABAJO",
+    "resultado_kalshi": "no",
+    "resultado_actualizado": "2026-08-23T03:45:13.733037+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.32999999999999996,
+    "roi_teorico_pct": 49.253731343283576
   }
 ]

@@ -32,6 +32,8 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # - COINBASE
 # - KRAKEN
 # - COINMARKETCAP
+# - BITSTAMP PUBLIC DATA
+# - MEMPOOL.SPACE
 # - EMA / RSI / MACD
 # - MOMENTUM
 # - VELOCIDAD / ACELERACION
@@ -81,6 +83,14 @@ KRAKEN_BASE = (
 
 CMC_BASE = (
     "https://pro-api.coinmarketcap.com"
+)
+
+BITSTAMP_BASE = (
+    "https://www.bitstamp.net"
+)
+
+MEMPOOL_BASE = (
+    "https://mempool.space"
 )
 
 LOCAL_TZ = ZoneInfo(
@@ -180,6 +190,13 @@ ULTIMO_CMC = {
 ULTIMO_CF = {
     "precio": None,
     "timestamp": 0,
+}
+
+ULTIMO_MEMPOOL = {
+    "datos": None,
+    "timestamp": 0,
+    "count_anterior": None,
+    "vsize_anterior": None,
 }
 
 
@@ -1512,6 +1529,262 @@ def profundidad_kraken(
 
 
 # ============================================================
+# BITSTAMP PUBLIC DATA
+# ============================================================
+
+def obtener_bitstamp_ticker():
+    datos = http_get(
+        (
+            f"{BITSTAMP_BASE}"
+            "/api/v2/ticker/btcusd/"
+        )
+    )
+
+    if not datos:
+        return None
+
+    return safe_float(
+        datos.get(
+            "last"
+        )
+    )
+
+
+def obtener_bitstamp_book():
+    return http_get(
+        (
+            f"{BITSTAMP_BASE}"
+            "/api/v2/order_book/btcusd/"
+        ),
+        params={
+            "group":
+            1,
+        },
+    )
+
+
+def obtener_bitstamp_trades():
+    datos = http_get(
+        (
+            f"{BITSTAMP_BASE}"
+            "/api/v2/transactions/btcusd/"
+        ),
+        params={
+            "time":
+            "minute",
+        },
+    )
+
+    if not isinstance(
+        datos,
+        list,
+    ):
+        return []
+
+    return datos[
+        :TRADES_MAX
+    ]
+
+
+def obi_bitstamp(
+    book,
+):
+    if not book:
+        return 0.0
+
+    bids = book.get(
+        "bids",
+        [],
+    )
+
+    asks = book.get(
+        "asks",
+        [],
+    )
+
+    bid_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in bids[
+            :ORDERBOOK_NIVELES
+        ]
+        if len(x) >= 2
+    )
+
+    ask_qty = sum(
+        safe_float(
+            x[1],
+            0.0,
+        )
+        for x in asks[
+            :ORDERBOOK_NIVELES
+        ]
+        if len(x) >= 2
+    )
+
+    total = (
+        bid_qty
+        + ask_qty
+    )
+
+    if total <= 0:
+        return 0.0
+
+    return (
+        bid_qty
+        - ask_qty
+    ) / total
+
+
+def profundidad_bitstamp(
+    book,
+):
+    if not book:
+        return {
+            "bid": 0.0,
+            "ask": 0.0,
+            "total": 0.0,
+        }
+
+    bid_qty = sum(
+        safe_float(
+            x[1],
+            0,
+        )
+        for x in book.get(
+            "bids",
+            [],
+        )[:ORDERBOOK_NIVELES]
+        if len(x) >= 2
+    )
+
+    ask_qty = sum(
+        safe_float(
+            x[1],
+            0,
+        )
+        for x in book.get(
+            "asks",
+            [],
+        )[:ORDERBOOK_NIVELES]
+        if len(x) >= 2
+    )
+
+    return {
+        "bid":
+        bid_qty,
+
+        "ask":
+        ask_qty,
+
+        "total":
+        (
+            bid_qty
+            + ask_qty
+        ),
+    }
+
+
+def orderflow_bitstamp(
+    trades,
+):
+    if not trades:
+        return {
+            "imbalance": 0.0,
+            "buy_volume": 0.0,
+            "sell_volume": 0.0,
+            "trades": 0,
+        }
+
+    ahora_ts = time.time()
+
+    buy_volume = 0.0
+
+    sell_volume = 0.0
+
+    usados = 0
+
+    for trade in trades:
+        try:
+            timestamp = safe_float(
+                trade.get(
+                    "date"
+                ),
+                0,
+            )
+
+            if (
+                timestamp
+                and (
+                    ahora_ts
+                    - timestamp
+                )
+                > TRADES_WINDOW_SEGUNDOS
+            ):
+                continue
+
+            amount = safe_float(
+                trade.get(
+                    "amount"
+                ),
+                0,
+            )
+
+            tipo = str(
+                trade.get(
+                    "type",
+                    "",
+                )
+            ).lower()
+
+            if tipo in [
+                "0",
+                "buy",
+            ]:
+                buy_volume += amount
+
+            elif tipo in [
+                "1",
+                "sell",
+            ]:
+                sell_volume += amount
+
+            usados += 1
+
+        except Exception:
+            continue
+
+    total = (
+        buy_volume
+        + sell_volume
+    )
+
+    imbalance = 0.0
+
+    if total > 0:
+        imbalance = (
+            buy_volume
+            - sell_volume
+        ) / total
+
+    return {
+        "imbalance":
+        imbalance,
+
+        "buy_volume":
+        buy_volume,
+
+        "sell_volume":
+        sell_volume,
+
+        "trades":
+        usados,
+    }
+
+
+# ============================================================
 # ORDER FLOW COINBASE
 # ============================================================
 
@@ -1707,9 +1980,229 @@ def orderflow_kraken(
 
 
 # ============================================================
-# COINMARKETCAP
+# MEMPOOL.SPACE
 # ============================================================
- # ============================================================
+
+def obtener_mempool():
+    global ULTIMO_MEMPOOL
+
+    ahora = time.time()
+
+    if (
+        ULTIMO_MEMPOOL[
+            "datos"
+        ] is not None
+        and (
+            ahora
+            - ULTIMO_MEMPOOL[
+                "timestamp"
+            ]
+        ) < 30
+    ):
+        return ULTIMO_MEMPOOL[
+            "datos"
+        ]
+
+    stats = http_get(
+        (
+            f"{MEMPOOL_BASE}"
+            "/api/mempool"
+        )
+    )
+
+    recent = http_get(
+        (
+            f"{MEMPOOL_BASE}"
+            "/api/mempool/recent"
+        )
+    )
+
+    if not isinstance(
+        stats,
+        dict,
+    ):
+        return ULTIMO_MEMPOOL[
+            "datos"
+        ]
+
+    count = safe_float(
+        stats.get(
+            "count"
+        ),
+        0.0,
+    )
+
+    vsize = safe_float(
+        stats.get(
+            "vsize"
+        ),
+        0.0,
+    )
+
+    total_fee = safe_float(
+        stats.get(
+            "total_fee"
+        ),
+        0.0,
+    )
+
+    valor_reciente_btc = 0.0
+
+    fee_rate_promedio = 0.0
+
+    fee_rates = []
+
+    tx_recientes = 0
+
+    if isinstance(
+        recent,
+        list,
+    ):
+        for tx in recent:
+            if not isinstance(
+                tx,
+                dict,
+            ):
+                continue
+
+            valor_sats = safe_float(
+                tx.get(
+                    "value"
+                ),
+                0.0,
+            )
+
+            fee = safe_float(
+                tx.get(
+                    "fee"
+                ),
+                0.0,
+            )
+
+            tx_vsize = safe_float(
+                tx.get(
+                    "vsize"
+                ),
+                0.0,
+            )
+
+            valor_reciente_btc += (
+                valor_sats
+                / 100000000.0
+            )
+
+            if tx_vsize > 0:
+                fee_rates.append(
+                    fee
+                    / tx_vsize
+                )
+
+            tx_recientes += 1
+
+    if fee_rates:
+        fee_rate_promedio = (
+            statistics.mean(
+                fee_rates
+            )
+        )
+
+    count_anterior = (
+        ULTIMO_MEMPOOL.get(
+            "count_anterior"
+        )
+    )
+
+    vsize_anterior = (
+        ULTIMO_MEMPOOL.get(
+            "vsize_anterior"
+        )
+    )
+
+    cambio_count_pct = 0.0
+
+    cambio_vsize_pct = 0.0
+
+    if (
+        count_anterior is not None
+        and count_anterior > 0
+    ):
+        cambio_count_pct = (
+            (
+                count
+                - count_anterior
+            )
+            / count_anterior
+        ) * 100.0
+
+    if (
+        vsize_anterior is not None
+        and vsize_anterior > 0
+    ):
+        cambio_vsize_pct = (
+            (
+                vsize
+                - vsize_anterior
+            )
+            / vsize_anterior
+        ) * 100.0
+
+    actividad = (
+        abs(
+            cambio_count_pct
+        )
+        +
+        abs(
+            cambio_vsize_pct
+        )
+    )
+
+    datos = {
+        "count":
+        count,
+
+        "vsize":
+        vsize,
+
+        "total_fee":
+        total_fee,
+
+        "tx_recientes":
+        tx_recientes,
+
+        "valor_reciente_btc":
+        valor_reciente_btc,
+
+        "fee_rate_promedio":
+        fee_rate_promedio,
+
+        "cambio_count_pct":
+        cambio_count_pct,
+
+        "cambio_vsize_pct":
+        cambio_vsize_pct,
+
+        "actividad":
+        actividad,
+    }
+
+    ULTIMO_MEMPOOL = {
+        "datos":
+        datos,
+
+        "timestamp":
+        ahora,
+
+        "count_anterior":
+        count,
+
+        "vsize_anterior":
+        vsize,
+    }
+
+    return datos
+
+
+# ============================================================
 # COINMARKETCAP
 # ============================================================
 
@@ -1802,18 +2295,6 @@ def obtener_coinmarketcap():
             return ULTIMO_CMC["precio"]
 
 
-        # ====================================================
-        # FORMATO DICCIONARIO
-        #
-        # Ejemplo:
-        #
-        # "data": {
-        #     "1": {
-        #         ...
-        #     }
-        # }
-        # ====================================================
-
         btc = None
 
         if isinstance(
@@ -1851,19 +2332,6 @@ def obtener_coinmarketcap():
                             btc = valor
                             break
 
-
-        # ====================================================
-        # FORMATO LISTA
-        #
-        # Algunas respuestas pueden devolver:
-        #
-        # "data": [
-        #     {
-        #         "id": 1,
-        #         "symbol": "BTC"
-        #     }
-        # ]
-        # ====================================================
 
         elif isinstance(
             data,
@@ -1906,11 +2374,6 @@ def obtener_coinmarketcap():
             ):
                 btc = data[0]
 
-
-        # ====================================================
-        # FORMATO DESCONOCIDO
-        # ====================================================
-
         else:
 
             print(
@@ -1919,7 +2382,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
 
         if not isinstance(
             btc,
@@ -1932,11 +2394,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
-
-        # ====================================================
-        # QUOTE USD
-        # ====================================================
 
         quote = btc.get(
             "quote",
@@ -1954,7 +2411,6 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
-
         usd = quote.get(
             "USD"
         )
@@ -1964,11 +2420,6 @@ def obtener_coinmarketcap():
             usd = quote.get(
                 "usd"
             )
-
-
-        # ====================================================
-        # USD PUEDE SER DICT O LISTA
-        # ====================================================
 
         if isinstance(
             usd,
@@ -1984,7 +2435,6 @@ def obtener_coinmarketcap():
             ):
                 usd = usd[0]
 
-
         if not isinstance(
             usd,
             dict,
@@ -1995,11 +2445,6 @@ def obtener_coinmarketcap():
             )
 
             return ULTIMO_CMC["precio"]
-
-
-        # ====================================================
-        # PRECIO
-        # ====================================================
 
         precio = safe_float(
             usd.get(
@@ -2015,11 +2460,6 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
-
-        # ====================================================
-        # VALIDACION BASICA
-        # ====================================================
-
         if (
             not math.isfinite(
                 precio
@@ -2033,11 +2473,6 @@ def obtener_coinmarketcap():
 
             return ULTIMO_CMC["precio"]
 
-
-        # ====================================================
-        # ACTUALIZAR CACHE
-        # ====================================================
-
         ULTIMO_CMC = {
             "precio":
             precio,
@@ -2046,18 +2481,12 @@ def obtener_coinmarketcap():
             ahora,
         }
 
-
         print(
             "[CMC OK] BTC: "
             f"${precio:,.2f}"
         )
 
         return precio
-
-
-    # ========================================================
-    # ERROR DE PROCESAMIENTO
-    # ========================================================
 
     except Exception as e:
 
@@ -2067,6 +2496,8 @@ def obtener_coinmarketcap():
         )
 
         return ULTIMO_CMC["precio"]
+
+
 # ============================================================
 # CF BENCHMARKS / BRTI
 # ============================================================
@@ -2651,6 +3082,7 @@ def construir_precio_consenso(
     kraken,
     cmc,
     cf,
+    bitstamp,
 ):
     return mediana_valida(
         [
@@ -2658,6 +3090,7 @@ def construir_precio_consenso(
             kraken,
             cmc,
             cf,
+            bitstamp,
         ]
     )
 
@@ -2734,9 +3167,12 @@ def calcular_score(
     obi_cb,
     obi_kr,
     obi_ka,
+    obi_bs,
     orderflow_cb,
     orderflow_kr,
+    orderflow_bs,
     precios_fuentes,
+    mempool,
 ):
     razones = []
 
@@ -2757,6 +3193,9 @@ def calcular_score(
         0.0,
 
         "consenso":
+        0.0,
+
+        "mempool":
         0.0,
     }
 
@@ -3013,6 +3452,7 @@ def calcular_score(
             obi_cb,
             obi_kr,
             obi_ka,
+            obi_bs,
         ]
     )
 
@@ -3029,10 +3469,16 @@ def calcular_score(
         0.0,
     )
 
+    flujo_bs = orderflow_bs.get(
+        "imbalance",
+        0.0,
+    )
+
     orderflow_total = media_valida(
         [
             flujo_cb,
             flujo_kr,
+            flujo_bs,
         ]
     )
 
@@ -3292,6 +3738,121 @@ def calcular_score(
 
 
     # ========================================================
+    # MEMPOOL
+    # ========================================================
+
+    mempool_score = 0.0
+
+    if isinstance(
+        mempool,
+        dict,
+    ):
+
+        actividad = safe_float(
+            mempool.get(
+                "actividad"
+            ),
+            0.0,
+        )
+
+        cambio_count = safe_float(
+            mempool.get(
+                "cambio_count_pct"
+            ),
+            0.0,
+        )
+
+        cambio_vsize = safe_float(
+            mempool.get(
+                "cambio_vsize_pct"
+            ),
+            0.0,
+        )
+
+        fee_rate = safe_float(
+            mempool.get(
+                "fee_rate_promedio"
+            ),
+            0.0,
+        )
+
+        direccion_mercado = (
+            familias[
+                "tendencia"
+            ]
+            +
+            familias[
+                "momentum"
+            ]
+            +
+            familias[
+                "microestructura"
+            ]
+            +
+            familias[
+                "flujo_capital"
+            ]
+        )
+
+        actividad_creciendo = (
+            cambio_count > 0
+            or cambio_vsize > 0
+        )
+
+        if actividad >= 1.0:
+
+            if (
+                direccion_mercado > 0
+                and actividad_creciendo
+            ):
+
+                mempool_score += 2.0
+
+                razones.append(
+                    "Mempool confirma actividad alcista"
+                )
+
+            elif (
+                direccion_mercado < 0
+                and actividad_creciendo
+            ):
+
+                mempool_score -= 2.0
+
+                razones.append(
+                    "Mempool confirma actividad bajista"
+                )
+
+        if actividad >= 3.0:
+
+            if direccion_mercado > 0:
+
+                mempool_score += 2.0
+
+            elif direccion_mercado < 0:
+
+                mempool_score -= 2.0
+
+        if fee_rate >= 10.0:
+
+            if direccion_mercado > 0:
+
+                mempool_score += 1.0
+
+            elif direccion_mercado < 0:
+
+                mempool_score -= 1.0
+
+    familias[
+        "mempool"
+    ] = limitar(
+        mempool_score,
+        -5.0,
+        5.0,
+    )
+
+
+    # ========================================================
     # SCORE TOTAL
     # ========================================================
 
@@ -3327,9 +3888,7 @@ def calcular_score(
         "razones":
         razones,
     }
-
-
-# ============================================================
+    # ============================================================
 # SCORE -> PROBABILIDAD
 # ============================================================
 
@@ -4022,11 +4581,14 @@ def analizar_mercado(
 
     cf = obtener_cf_brti()
 
+    bs = obtener_bitstamp_ticker()
+
     precio = construir_precio_consenso(
         cb,
         kr,
         cmc,
         cf,
+        bs,
     )
 
     fuentes_disponibles = sum(
@@ -4036,6 +4598,7 @@ def analizar_mercado(
             kr,
             cmc,
             cf,
+            bs,
         ]
         if x is not None
     )
@@ -4085,6 +4648,8 @@ def analizar_mercado(
         ticker
     )
 
+    bs_book = obtener_bitstamp_book()
+
     obi_cb = obi_coinbase(
         cb_book
     )
@@ -4097,6 +4662,10 @@ def analizar_mercado(
         ka_book
     )
 
+    obi_bs = obi_bitstamp(
+        bs_book
+    )
+
     profundidad_cb = profundidad_coinbase(
         cb_book
     )
@@ -4107,6 +4676,10 @@ def analizar_mercado(
 
     profundidad_ka = profundidad_kalshi(
         ka_book
+    )
+
+    profundidad_bs = profundidad_bitstamp(
+        bs_book
     )
 
     spread_cb = spread_coinbase(
@@ -4122,6 +4695,8 @@ def analizar_mercado(
 
     trades_kr = obtener_kraken_trades()
 
+    trades_bs = obtener_bitstamp_trades()
+
     flujo_cb = orderflow_coinbase(
         trades_cb
     )
@@ -4129,6 +4704,31 @@ def analizar_mercado(
     flujo_kr = orderflow_kraken(
         trades_kr
     )
+
+    flujo_bs = orderflow_bitstamp(
+        trades_bs
+    )
+
+
+    # ========================================================
+    # MEMPOOL
+    # ========================================================
+
+    mempool = obtener_mempool()
+
+    if mempool is None:
+
+        mempool = {
+            "count": 0.0,
+            "vsize": 0.0,
+            "total_fee": 0.0,
+            "tx_recientes": 0,
+            "valor_reciente_btc": 0.0,
+            "fee_rate_promedio": 0.0,
+            "cambio_count_pct": 0.0,
+            "cambio_vsize_pct": 0.0,
+            "actividad": 0.0,
+        }
 
 
     # ========================================================
@@ -4162,14 +4762,18 @@ def analizar_mercado(
         obi_cb=obi_cb,
         obi_kr=obi_kr,
         obi_ka=obi_ka,
+        obi_bs=obi_bs,
         orderflow_cb=flujo_cb,
         orderflow_kr=flujo_kr,
+        orderflow_bs=flujo_bs,
         precios_fuentes=[
             cb,
             kr,
             cmc,
             cf,
+            bs,
         ],
+        mempool=mempool,
     )
 
     score = calculo[
@@ -4232,6 +4836,9 @@ def analizar_mercado(
 
         "precio_coinmarketcap":
         cmc,
+
+        "precio_bitstamp":
+        bs,
 
         "fuentes_disponibles":
         fuentes_disponibles,
@@ -4403,6 +5010,9 @@ def analizar_mercado(
         "obi_kalshi":
         obi_ka,
 
+        "obi_bitstamp":
+        obi_bs,
+
         "obi_promedio":
         calculo[
             "obi"
@@ -4413,6 +5023,9 @@ def analizar_mercado(
 
         "orderflow_kraken":
         flujo_kr,
+
+        "orderflow_bitstamp":
+        flujo_bs,
 
         "orderflow_promedio":
         calculo[
@@ -4428,6 +5041,9 @@ def analizar_mercado(
         "profundidad_kalshi":
         profundidad_ka,
 
+        "profundidad_bitstamp":
+        profundidad_bs,
+
         "spread_coinbase":
         spread_cb,
 
@@ -4435,6 +5051,51 @@ def analizar_mercado(
         calculo[
             "consenso"
         ],
+
+        "mempool_count":
+        mempool.get(
+            "count"
+        ),
+
+        "mempool_vsize":
+        mempool.get(
+            "vsize"
+        ),
+
+        "mempool_total_fee":
+        mempool.get(
+            "total_fee"
+        ),
+
+        "mempool_tx_recientes":
+        mempool.get(
+            "tx_recientes"
+        ),
+
+        "mempool_valor_reciente_btc":
+        mempool.get(
+            "valor_reciente_btc"
+        ),
+
+        "mempool_fee_rate_promedio":
+        mempool.get(
+            "fee_rate_promedio"
+        ),
+
+        "mempool_cambio_count_pct":
+        mempool.get(
+            "cambio_count_pct"
+        ),
+
+        "mempool_cambio_vsize_pct":
+        mempool.get(
+            "cambio_vsize_pct"
+        ),
+
+        "mempool_actividad":
+        mempool.get(
+            "actividad"
+        ),
 
         "razones":
         calculo[
@@ -4518,6 +5179,11 @@ def mostrar_analisis(a):
         f"{a['precio_coinmarketcap']}"
     )
 
+    print(
+        "Bitstamp: "
+        f"{a['precio_bitstamp']}"
+    )
+
     print("")
 
     print(
@@ -4578,6 +5244,11 @@ def mostrar_analisis(a):
     )
 
     print(
+        "OBI Bitstamp: "
+        f"{a['obi_bitstamp']:+.3f}"
+    )
+
+    print(
         "OBI promedio: "
         f"{a['obi_promedio']:+.3f}"
     )
@@ -4593,8 +5264,45 @@ def mostrar_analisis(a):
     )
 
     print(
+        "Order flow Bitstamp: "
+        f"{a['orderflow_bitstamp']['imbalance']:+.3f}"
+    )
+
+    print(
         "Order flow promedio: "
         f"{a['orderflow_promedio']:+.3f}"
+    )
+
+    print("")
+
+    print(
+        "Mempool transacciones: "
+        f"{a['mempool_count']}"
+    )
+
+    print(
+        "Mempool vsize: "
+        f"{a['mempool_vsize']}"
+    )
+
+    print(
+        "Mempool cambio TX: "
+        f"{a['mempool_cambio_count_pct']:+.3f}%"
+    )
+
+    print(
+        "Mempool cambio vsize: "
+        f"{a['mempool_cambio_vsize_pct']:+.3f}%"
+    )
+
+    print(
+        "Mempool fee rate: "
+        f"{a['mempool_fee_rate_promedio']:.2f}"
+    )
+
+    print(
+        "Mempool BTC reciente: "
+        f"{a['mempool_valor_reciente_btc']:.4f}"
     )
 
     print("")

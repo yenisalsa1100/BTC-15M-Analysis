@@ -15863,11 +15863,11 @@
       "Trades agresivos compradores",
       "OBI + order flow coinciden arriba"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-23T14:15:39.921684+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.29000000000000004,
+    "roi_teorico_pct": 40.845070422535215
   }
 ]

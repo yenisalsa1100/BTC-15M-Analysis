@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timezone
 
 import pandas as pd
+import requests
 import streamlit as st
 
 
@@ -18,7 +19,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-HISTORIAL_FILE = "historial_btc_15m.json"
+HISTORIAL_URL = (
+    "http://TU_IP_DE_OCEAN:8000/"
+    "historial_btc_15m.json"
+)
 
 RESET_FILE = ".historial_reset_btc_15m.json"
 
@@ -586,22 +590,20 @@ def guardar_reset(
 
 def cargar_historial():
 
-    if not os.path.exists(
-        HISTORIAL_FILE
-    ):
-        return []
-
     try:
 
-        with open(
-            HISTORIAL_FILE,
-            "r",
-            encoding="utf-8",
-        ) as f:
+        respuesta = requests.get(
+            HISTORIAL_URL,
+            timeout=5,
+            headers={
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+            },
+        )
 
-            datos = json.load(
-                f
-            )
+        respuesta.raise_for_status()
+
+        datos = respuesta.json()
 
         if not isinstance(
             datos,
@@ -638,11 +640,14 @@ def cargar_historial():
 
         return []
 
-    except Exception:
+    except Exception as e:
+
+        st.warning(
+            "No se pudo conectar con DigitalOcean: "
+            f"{e}"
+        )
 
         return []
-
-    return []
 
 
 def eliminar_historial():
@@ -876,7 +881,8 @@ st.html(
 
         <div class="hero-sub">
             Kalshi · CF Benchmarks BRTI · Coinbase · Kraken ·
-            CoinMarketCap · Order Flow · Microestructura
+            CoinMarketCap · Bitstamp · Mempool ·
+            Order Flow · Microestructura
         </div>
     </div>
     '''
@@ -1344,6 +1350,16 @@ def dashboard_en_vivo():
                 ),
             ),
             (
+                "Bitstamp BTCUSD",
+                numero(
+                    analisis.get(
+                        "precio_bitstamp"
+                    ),
+                    2,
+                    "$",
+                ),
+            ),
+            (
                 "Precio consenso",
                 numero(
                     analisis.get(
@@ -1703,6 +1719,17 @@ def dashboard_en_vivo():
     )
 
     escala(
+        "OBI BITSTAMP",
+        analisis.get(
+            "obi_bitstamp",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
+
+    escala(
         "OBI PROMEDIO",
         analisis.get(
             "obi_promedio",
@@ -1732,6 +1759,13 @@ def dashboard_en_vivo():
     of_kr = (
         analisis.get(
             "orderflow_kraken"
+        )
+        or {}
+    )
+
+    of_bs = (
+        analisis.get(
+            "orderflow_bitstamp"
         )
         or {}
     )
@@ -1836,6 +1870,55 @@ def dashboard_en_vivo():
 
 
     escala(
+        "ORDER FLOW BITSTAMP",
+        of_bs.get(
+            "imbalance",
+            0,
+        ),
+        -1,
+        1,
+        "{:+.4f}",
+    )
+
+
+    tabla_metricas(
+        [
+            (
+                "Compra agresiva Bitstamp",
+                numero(
+                    of_bs.get(
+                        "buy_volume"
+                    ),
+                    5,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Venta agresiva Bitstamp",
+                numero(
+                    of_bs.get(
+                        "sell_volume"
+                    ),
+                    5,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Trades Bitstamp",
+                str(
+                    of_bs.get(
+                        "trades",
+                        0,
+                    )
+                ),
+            ),
+        ]
+    )
+
+
+    escala(
         "ORDER FLOW PROMEDIO",
         analisis.get(
             "orderflow_promedio",
@@ -1844,6 +1927,107 @@ def dashboard_en_vivo():
         -1,
         1,
         "{:+.4f}",
+    )
+
+
+    # ========================================================
+    # MEMPOOL
+    # ========================================================
+
+    seccion(
+        "Mempool.space"
+    )
+
+    tabla_metricas(
+        [
+            (
+                "Transacciones mempool",
+                numero(
+                    analisis.get(
+                        "mempool_count"
+                    ),
+                    0,
+                ),
+            ),
+            (
+                "Mempool vsize",
+                numero(
+                    analisis.get(
+                        "mempool_vsize"
+                    ),
+                    0,
+                ),
+            ),
+            (
+                "Total fee",
+                numero(
+                    analisis.get(
+                        "mempool_total_fee"
+                    ),
+                    0,
+                ),
+            ),
+            (
+                "TX recientes",
+                numero(
+                    analisis.get(
+                        "mempool_tx_recientes"
+                    ),
+                    0,
+                ),
+            ),
+            (
+                "BTC reciente",
+                numero(
+                    analisis.get(
+                        "mempool_valor_reciente_btc"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Fee rate promedio",
+                numero(
+                    analisis.get(
+                        "mempool_fee_rate_promedio"
+                    ),
+                    2,
+                ),
+            ),
+            (
+                "Cambio TX",
+                numero(
+                    analisis.get(
+                        "mempool_cambio_count_pct"
+                    ),
+                    3,
+                    "",
+                    "%",
+                ),
+            ),
+            (
+                "Cambio vsize",
+                numero(
+                    analisis.get(
+                        "mempool_cambio_vsize_pct"
+                    ),
+                    3,
+                    "",
+                    "%",
+                ),
+            ),
+            (
+                "Actividad mempool",
+                numero(
+                    analisis.get(
+                        "mempool_actividad"
+                    ),
+                    3,
+                ),
+            ),
+        ]
     )
 
 
@@ -1872,6 +2056,13 @@ def dashboard_en_vivo():
     prof_ka = (
         analisis.get(
             "profundidad_kalshi"
+        )
+        or {}
+    )
+
+    prof_bs = (
+        analisis.get(
+            "profundidad_bitstamp"
         )
         or {}
     )
@@ -1916,6 +2107,28 @@ def dashboard_en_vivo():
                 "Kraken ASK depth",
                 numero(
                     prof_kr.get(
+                        "ask"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Bitstamp BID depth",
+                numero(
+                    prof_bs.get(
+                        "bid"
+                    ),
+                    4,
+                    "",
+                    " BTC",
+                ),
+            ),
+            (
+                "Bitstamp ASK depth",
+                numero(
+                    prof_bs.get(
                         "ask"
                     ),
                     4,
@@ -2052,6 +2265,17 @@ def dashboard_en_vivo():
         ),
         -10,
         10,
+        "{:+.2f}",
+    )
+
+    escala(
+        "MEMPOOL",
+        familias.get(
+            "mempool",
+            0,
+        ),
+        -5,
+        5,
         "{:+.2f}",
     )
 

@@ -14877,11 +14877,11 @@
       "OBI + order flow coinciden arriba",
       "Mayoría de fuentes arriba"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-23T02:45:06.497710+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.27,
+    "roi_teorico_pct": 36.986301369863014
   }
 ]

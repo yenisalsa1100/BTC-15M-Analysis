@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 HISTORIAL_URL = (
-    "http://TU_IP_DE_OCEAN:8000/"
+    "http://147.182.142.55:8000/"
     "historial_btc_15m.json"
 )
 

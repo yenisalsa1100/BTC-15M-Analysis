@@ -15319,11 +15319,11 @@
       "Volumen alto confirma subida",
       "Todas las fuentes sobre target"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-08-23T04:00:41.324533+00:00",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.20999999999999996,
+    "roi_teorico_pct": 26.58227848101265
   }
 ]

@@ -2450,7 +2450,7 @@ def dashboard_en_vivo():
     pnl = sum(
         float(
             x.get(
-                "pnl_teorico_1_contrato"
+                "pnl_teorico_total"
             )
             or 0
         )

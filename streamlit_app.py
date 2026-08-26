@@ -2447,13 +2447,10 @@ def dashboard_en_vivo():
         ) * 100.0
 
 
-    pnl = sum(
-        float(
-            x.get(
-                "pnl_teorico_total"
-            )
-            or 0
-        )
+        pnl = sum(
+        float(x.get("pnl_teorico_total"))
+        if x.get("pnl_teorico_total") is not None
+        else float(x.get("pnl_teorico_1_contrato") or 0) * 10
         for x in resueltas
     )
 

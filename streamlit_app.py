@@ -2531,7 +2531,7 @@ def dashboard_en_vivo():
             "score",
             "resultado",
             "evaluacion",
-            "pnl_teorico_1_contrato",
+            "pnl_teorico_total",
             "roi_teorico_pct",
         ]
 

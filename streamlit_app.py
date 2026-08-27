@@ -471,6 +471,123 @@ def numero(
         return str(valor)
 
 
+# ============================================================
+# ⭐ APUESTA ESTELAR
+#
+# SOLO MARCA OPERACIONES QUE MOTOR #1 YA APROBO
+#
+# ARRIBA:
+# - decision ARRIBA
+# - probabilidad arriba >= 84%
+# - CMF20 >= +0.10
+# - volumen relativo >= 0.60x
+#
+# ABAJO:
+# - decision ABAJO
+# - probabilidad abajo >= 84%
+# - CMF20 <= -0.10
+# - volumen relativo >= 0.60x
+#
+# NO MODIFICA LA DECISION NORMAL DEL MOTOR
+# ============================================================
+
+def detectar_apuesta_estelar(
+    registro,
+):
+
+    if not isinstance(
+        registro,
+        dict,
+    ):
+        return None
+
+    decision = str(
+        registro.get(
+            "decision",
+            "",
+        )
+    ).upper()
+
+    if decision not in [
+        "ARRIBA",
+        "ABAJO",
+    ]:
+        return None
+
+    try:
+
+        prob_arriba = float(
+            registro.get(
+                "probabilidad_arriba",
+                0,
+            )
+            or 0
+        )
+
+        prob_abajo = float(
+            registro.get(
+                "probabilidad_abajo",
+                0,
+            )
+            or 0
+        )
+
+        cmf20 = float(
+            registro.get(
+                "cmf20",
+                0,
+            )
+            or 0
+        )
+
+        volumen_relativo = float(
+            registro.get(
+                "volumen_relativo",
+                0,
+            )
+            or 0
+        )
+
+    except Exception:
+
+        return None
+
+
+    if (
+        decision == "ARRIBA"
+        and prob_arriba >= 84.0
+        and cmf20 >= 0.10
+        and volumen_relativo >= 0.60
+    ):
+
+        return {
+            "es_estelar": True,
+            "direccion": "ARRIBA",
+            "probabilidad": prob_arriba,
+            "cmf20": cmf20,
+            "volumen_relativo": volumen_relativo,
+        }
+
+
+    if (
+        decision == "ABAJO"
+        and prob_abajo >= 84.0
+        and cmf20 <= -0.10
+        and volumen_relativo >= 0.60
+    ):
+
+        return {
+            "es_estelar": True,
+            "direccion": "ABAJO",
+            "probabilidad": prob_abajo,
+            "cmf20": cmf20,
+            "volumen_relativo": volumen_relativo,
+        }
+
+
+    return None
+
+
 def timestamp_registro(
     registro,
 ):
@@ -1073,6 +1190,92 @@ def dashboard_en_vivo():
 
 
     # ========================================================
+    # ⭐ APUESTA ESTELAR ACTUAL
+    # ========================================================
+
+    apuesta_estelar = detectar_apuesta_estelar(
+        analisis
+    )
+
+    if apuesta_estelar is not None:
+
+        direccion_estelar = (
+            apuesta_estelar[
+                "direccion"
+            ]
+        )
+
+        prob_estelar = (
+            apuesta_estelar[
+                "probabilidad"
+            ]
+        )
+
+        cmf_estelar = (
+            apuesta_estelar[
+                "cmf20"
+            ]
+        )
+
+        vol_estelar = (
+            apuesta_estelar[
+                "volumen_relativo"
+            ]
+        )
+
+        if direccion_estelar == "ARRIBA":
+
+            clase_estelar = (
+                "decision decision-up"
+            )
+
+            icono_estelar = "⭐ ▲"
+
+        else:
+
+            clase_estelar = (
+                "decision decision-down"
+            )
+
+            icono_estelar = "⭐ ▼"
+
+
+        st.html(
+            f'''
+            <div class="{clase_estelar}">
+
+                <div class="decision-small">
+                    ⭐ APUESTA ESTELAR ⭐
+                </div>
+
+                <div class="decision-big">
+                    {icono_estelar}
+                    {direccion_estelar}
+                </div>
+
+                <div class="decision-meta">
+
+                    PROBABILIDAD
+                    <b>{prob_estelar:.1f}%</b>
+
+                    &nbsp;&nbsp;·&nbsp;&nbsp;
+
+                    CMF20
+                    <b>{cmf_estelar:+.3f}</b>
+
+                    &nbsp;&nbsp;·&nbsp;&nbsp;
+
+                    VOLUMEN
+                    <b>{vol_estelar:.2f}x</b>
+
+                </div>
+
+            </div>
+            '''
+        )
+
+
+    # ========================================================
     # CONTRATO
     # ========================================================
 
@@ -1611,9 +1814,7 @@ def dashboard_en_vivo():
         0.50,
         "{:+.5f}%",
     )
-
-
-    # ========================================================
+        # ========================================================
     # VOLATILIDAD / VOLUMEN
     # ========================================================
 
@@ -2386,6 +2587,221 @@ def dashboard_en_vivo():
 
 
     # ========================================================
+    # ⭐ HISTORIAL APUESTAS ESTELARES
+    # ========================================================
+
+    seccion(
+        "⭐ Historial Apuestas Estelares"
+    )
+
+    estelares = []
+
+    for registro in historial:
+
+        datos_estelar = detectar_apuesta_estelar(
+            registro
+        )
+
+        if datos_estelar is None:
+            continue
+
+        fila_estelar = dict(
+            registro
+        )
+
+        fila_estelar[
+            "apuesta_estelar"
+        ] = "⭐ SI"
+
+        fila_estelar[
+            "direccion_estelar"
+        ] = datos_estelar[
+            "direccion"
+        ]
+
+        fila_estelar[
+            "probabilidad_estelar"
+        ] = datos_estelar[
+            "probabilidad"
+        ]
+
+        estelares.append(
+            fila_estelar
+        )
+
+
+    estelares_resueltas = [
+        x
+        for x in estelares
+        if x.get(
+            "evaluacion"
+        )
+        in [
+            "ACIERTO",
+            "FALLO",
+        ]
+    ]
+
+
+    estelares_aciertos = sum(
+        1
+        for x in estelares_resueltas
+        if x.get(
+            "evaluacion"
+        )
+        == "ACIERTO"
+    )
+
+
+    estelares_fallos = sum(
+        1
+        for x in estelares_resueltas
+        if x.get(
+            "evaluacion"
+        )
+        == "FALLO"
+    )
+
+
+    precision_estelar = 0.0
+
+    if estelares_resueltas:
+
+        precision_estelar = (
+            estelares_aciertos
+            /
+            len(
+                estelares_resueltas
+            )
+        ) * 100.0
+
+
+    pnl_estelar = sum(
+        (
+            float(
+                x.get(
+                    "pnl_teorico_total"
+                )
+            )
+            if x.get(
+                "pnl_teorico_total"
+            ) is not None
+            else float(
+                x.get(
+                    "pnl_teorico_1_contrato"
+                )
+                or 0
+            ) * 10
+        )
+        for x in estelares_resueltas
+    )
+
+
+    es1, es2 = st.columns(
+        2
+    )
+
+    with es1:
+
+        tarjeta(
+            "⭐ ESTELARES",
+            str(
+                len(
+                    estelares
+                )
+            ),
+        )
+
+    with es2:
+
+        tarjeta(
+            "⭐ PRECISION ESTELAR",
+            f"{precision_estelar:.2f}%",
+        )
+
+
+    es3, es4, es5 = st.columns(
+        3
+    )
+
+    with es3:
+
+        tarjeta(
+            "⭐ ACIERTOS",
+            str(
+                estelares_aciertos
+            ),
+        )
+
+    with es4:
+
+        tarjeta(
+            "⭐ FALLOS",
+            str(
+                estelares_fallos
+            ),
+        )
+
+    with es5:
+
+        tarjeta(
+            "⭐ P&L ESTELAR",
+            f"${pnl_estelar:+.4f}",
+        )
+
+
+    if estelares:
+
+        columnas_estelares = [
+            "hora_local",
+            "ticker",
+            "apuesta_estelar",
+            "direccion_estelar",
+            "probabilidad_estelar",
+            "cmf20",
+            "volumen_relativo",
+            "target",
+            "precio_consenso",
+            "precio_entrada",
+            "resultado",
+            "evaluacion",
+            "pnl_teorico_total",
+            "roi_teorico_pct",
+        ]
+
+        df_estelar = pd.DataFrame(
+            estelares
+        )
+
+        columnas_estelares_existentes = [
+            columna
+            for columna in columnas_estelares
+            if columna in df_estelar.columns
+        ]
+
+        df_estelar = df_estelar[
+            columnas_estelares_existentes
+        ]
+
+        df_estelar = df_estelar.iloc[
+            ::-1
+        ]
+
+        st.dataframe(
+            df_estelar,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    else:
+
+        st.info(
+            "Todavía no hay "
+            "⭐ Apuestas Estelares."
+        )
+
+
+    # ========================================================
     # HISTORIAL / RENDIMIENTO
     # ========================================================
 
@@ -2447,10 +2863,21 @@ def dashboard_en_vivo():
         ) * 100.0
 
 
-        pnl = sum(
-        float(x.get("pnl_teorico_total"))
-        if x.get("pnl_teorico_total") is not None
-        else float(x.get("pnl_teorico_1_contrato") or 0) * 10
+    pnl = sum(
+        float(
+            x.get(
+                "pnl_teorico_total"
+            )
+        )
+        if x.get(
+            "pnl_teorico_total"
+        ) is not None
+        else float(
+            x.get(
+                "pnl_teorico_1_contrato"
+            )
+            or 0
+        ) * 10
         for x in resueltas
     )
 

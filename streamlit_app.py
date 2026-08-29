@@ -1099,10 +1099,6 @@ def dashboard_en_vivo():
             )
 
 
-    # ========================================================
-    # SI TODAVIA NO EXISTE NINGUN ANALISIS
-    # ========================================================
-
     if analisis is None:
 
         st.info(
@@ -1143,26 +1139,17 @@ def dashboard_en_vivo():
 
     if decision == "ARRIBA":
 
-        clase = (
-            "decision decision-up"
-        )
-
+        clase = "decision decision-up"
         icono = "▲"
 
     elif decision == "ABAJO":
 
-        clase = (
-            "decision decision-down"
-        )
-
+        clase = "decision decision-down"
         icono = "▼"
 
     else:
 
-        clase = (
-            "decision decision-no"
-        )
-
+        clase = "decision decision-no"
         icono = "●"
 
 
@@ -1461,6 +1448,193 @@ def dashboard_en_vivo():
         100,
         "{:+.2f}",
     )
+
+
+    # ========================================================
+    # 🎯 PROFIT +10%
+    # ========================================================
+
+    seccion(
+        "🎯 Seguimiento Profit +10%"
+    )
+
+    tp10_alcanzado = bool(
+        analisis.get(
+            "tp10_alcanzado",
+            False,
+        )
+    )
+
+    tp10_posible = analisis.get(
+        "tp10_posible"
+    )
+
+    precio_bid_actual = analisis.get(
+        "precio_salida_bid_actual"
+    )
+
+    precio_maximo = analisis.get(
+        "precio_maximo_observado"
+    )
+
+    objetivo_tp10 = analisis.get(
+        "tp10_objetivo_precio"
+    )
+
+    roi_actual = analisis.get(
+        "roi_actual_pct"
+    )
+
+    roi_maximo = analisis.get(
+        "roi_maximo_observado_pct"
+    )
+
+    segundos_tp10 = analisis.get(
+        "tp10_segundos_desde_entrada"
+    )
+
+
+    tp1, tp2 = st.columns(
+        2
+    )
+
+    with tp1:
+
+        tarjeta(
+            "🎯 OBJETIVO +10%",
+            (
+                numero(
+                    objetivo_tp10,
+                    3,
+                    "$",
+                )
+                if objetivo_tp10 is not None
+                else "ESPERANDO APUESTA"
+            ),
+        )
+
+    with tp2:
+
+        tarjeta(
+            "BID ACTUAL KALSHI",
+            (
+                numero(
+                    precio_bid_actual,
+                    3,
+                    "$",
+                )
+                if precio_bid_actual is not None
+                else "N/D"
+            ),
+        )
+
+
+    tp3, tp4 = st.columns(
+        2
+    )
+
+    with tp3:
+
+        tarjeta(
+            "ROI ACTUAL",
+            (
+                numero(
+                    roi_actual,
+                    2,
+                    "",
+                    "%",
+                )
+                if roi_actual is not None
+                else "N/D"
+            ),
+        )
+
+    with tp4:
+
+        tarjeta(
+            "ROI MÁXIMO",
+            (
+                numero(
+                    roi_maximo,
+                    2,
+                    "",
+                    "%",
+                )
+                if roi_maximo is not None
+                else "N/D"
+            ),
+        )
+
+
+    tp5, tp6 = st.columns(
+        2
+    )
+
+    with tp5:
+
+        tarjeta(
+            "PRECIO MÁXIMO",
+            (
+                numero(
+                    precio_maximo,
+                    3,
+                    "$",
+                )
+                if precio_maximo is not None
+                else "N/D"
+            ),
+        )
+
+    with tp6:
+
+        if tp10_alcanzado:
+
+            estado_tp10 = (
+                "✅ +10% ALCANZADO"
+            )
+
+        elif tp10_posible is False:
+
+            estado_tp10 = (
+                "⚠️ +10% NO POSIBLE"
+            )
+
+        elif decision in [
+            "ARRIBA",
+            "ABAJO",
+        ]:
+
+            estado_tp10 = (
+                "⏳ BUSCANDO +10%"
+            )
+
+        else:
+
+            estado_tp10 = (
+                "SIN OPERACIÓN"
+            )
+
+        tarjeta(
+            "ESTADO TP +10%",
+            estado_tp10,
+        )
+
+
+    if tp10_alcanzado:
+
+        tarjeta(
+            "⏱️ TIEMPO HASTA +10%",
+            (
+                numero(
+                    segundos_tp10,
+                    0,
+                    "",
+                    " s",
+                )
+                if segundos_tp10 is not None
+                else "N/D"
+            ),
+        )
 
 
     # ========================================================
@@ -1814,7 +1988,9 @@ def dashboard_en_vivo():
         0.50,
         "{:+.5f}%",
     )
-        # ========================================================
+
+
+    # ========================================================
     # VOLATILIDAD / VOLUMEN
     # ========================================================
 
@@ -1875,10 +2051,8 @@ def dashboard_en_vivo():
         0,
         3,
         "{:.2f}x",
-    )
-
-
-    # ========================================================
+        )
+        # ========================================================
     # OBI
     # ========================================================
 
@@ -2953,6 +3127,16 @@ def dashboard_en_vivo():
             "edge",
             "minuto_entrada",
             "score",
+
+            # PROFIT +10%
+            "tp10_objetivo_precio",
+            "precio_salida_bid_actual",
+            "precio_maximo_observado",
+            "roi_actual_pct",
+            "roi_maximo_observado_pct",
+            "tp10_alcanzado",
+            "tp10_segundos_desde_entrada",
+
             "resultado",
             "evaluacion",
             "pnl_teorico_total",

@@ -49,7 +49,8 @@ BITSTAMP_BASE = "https://www.bitstamp.net"
 MEMPOOL_BASE = "https://mempool.space"
 
 LOCAL_TZ = ZoneInfo("America/Chicago")
-HISTORIAL_FILE = "historial_btc_15m_v2.json"
+HISTORIAL_FILE = "historial_btc_15m.json"
+
 
 
 # ============================================================

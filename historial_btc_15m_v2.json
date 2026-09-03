@@ -1,1 +1,15 @@
-[]
+import requests
+
+def cargar_historial_github():
+    url = "https://raw.githubusercontent.com/yenisalsa1100/BTC-15M-Analysis/main/historial_btc_15m_v2.json"
+    try:
+        respuesta = requests.get(url, timeout=5)
+        if respuesta.status_code == 404:
+            # El archivo aún no existe en GitHub, retornamos vacío sin romper la app
+            return []
+        respuesta.raise_for_status()
+        return respuesta.json()
+    except Exception as e:
+        # Manejo opcional de otros errores de red
+        return []
+

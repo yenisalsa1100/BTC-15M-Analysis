@@ -1,5 +1,5 @@
 # ============================================================
-# MOTOR KALSHI BTC 15M - VERSIÓN AVANZADA (PROFIT ENGINE V2)
+# MOTOR KALSHI BTC 15M - VERSIÓN AVANZADA (PROFIT ENGINE V2 - CORREGIDO)
 # ============================================================
 # MEJORAS PRINCIPALES DE CERTEZA Y SOFISTICACIÓN:
 # 1. FILTRO DE RÉGIMEN DE MERCADO (ATR & ADX): Evita operar en
@@ -37,7 +37,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # CONFIGURACION GENERAL Y VERSIONES
 # ============================================================
 
-VERSION_MOTOR = "BTC_15M_PROFIT_ENGINE_V2_PRO"
+VERSION_MOTOR = "BTC_15M_PROFIT_ENGINE_V2_PRO_FIXED"
 
 SERIES_TICKER = "KXBTC15M"
 
@@ -52,12 +52,11 @@ LOCAL_TZ = ZoneInfo("America/Chicago")
 HISTORIAL_FILE = "historial_btc_15m.json"
 
 
-
 # ============================================================
 # INTERVALOS Y CONTROL DE TIEMPO
 # ============================================================
 
-INTERVALO_REVISION = 5        # Escaneo más ágil (cada 5 segundos)
+INTERVALO_REVISION = 5        
 INTERVALO_RESULTADOS = 30
 TIMEOUT_HTTP = 8
 
@@ -66,17 +65,17 @@ MIN_SEGUNDOS_RESTANTES = 90
 
 
 # ============================================================
-# UMBRALES DE ALTA CERTEZA
+# UMBRALES DE ALTA CERTEZA (Ajustados para evitar ruido)
 # ============================================================
 
-PROBABILIDAD_MEDIA = 58.0
-PROBABILIDAD_FUERTE = 66.0
+PROBABILIDAD_MEDIA = 62.0
+PROBABILIDAD_FUERTE = 70.0
 
-SCORE_MEDIO = 32.0
-SCORE_FUERTE = 48.0
+SCORE_MEDIO = 40.0
+SCORE_FUERTE = 60.0
 
-EDGE_MINIMO_MEDIO = 0.020
-EDGE_MINIMO_FUERTE = 0.040
+EDGE_MINIMO_MEDIO = 0.035
+EDGE_MINIMO_FUERTE = 0.060
 
 TARGET_ZONA_MUERTA_PCT = 0.008
 TARGET_DISTANCIA_FUERTE_PCT = 0.040
@@ -142,7 +141,6 @@ def limitar(valor, minimo, maximo):
     return max(minimo, min(maximo, valor))
 
 def media_ponderada_robusta(valores_con_pesos):
-    """Calcula la media descartando outliers extremos mediante desviación absoluta mediana."""
     validos = [(v, p) for v, p in valores_con_pesos if v is not None and math.isfinite(v)]
     if not validos:
         return None
@@ -150,10 +148,9 @@ def media_ponderada_robusta(valores_con_pesos):
     precios = [v for v, p in validos]
     med = statistics.median(precios)
     
-    # Filtrar desviaciones mayores al 1.5% del precio mediano
     filtrados = [(v, p) for v, p in validos if abs(v - med) / med < 0.015]
     if not filtrados:
-        filtrados = validos # Fallback si todos se desvían
+        filtrados = validos
 
     suma_pv = sum(v * p for v, p in filtrados)
     suma_p = sum(p for v, p in filtrados)
@@ -370,7 +367,7 @@ def precio_no_ask(mercado):
 
 
 # ============================================================
-# LIBRERÍA DE EXCHANGES Y LIBROS DE ÓRDENES (CONFIABILIDAD V2)
+# LIBRERÍA DE EXCHANGES Y LIBROS DE ÓRDENES
 # ============================================================
 
 def obtener_orderbook_kalshi(ticker):
@@ -535,7 +532,7 @@ def obi_bitstamp(book):
 
 
 # ============================================================
-# ORDER FLOW AGRESIVO (V2)
+# ORDER FLOW AGRESIVO (V2 - CORREGIDO)
 # ============================================================
 
 def orderflow_bitstamp(trades):
@@ -577,9 +574,10 @@ def orderflow_coinbase(trades):
                 continue
             size = safe_float(trade.get("size"), 0)
             side = str(trade.get("side", "")).lower()
-            if side == "sell":
+            # CORREGIDO: 'buy' suma a compras, 'sell' suma a ventas de forma estricta
+            if side == "buy":
                 buy_volume += size
-            elif side == "buy":
+            elif side == "sell":
                 sell_volume += size
             usados += 1
         except Exception:
@@ -650,7 +648,6 @@ def obtener_cf_brti():
     if not datos:
         return ULTIMO_CF["precio"]
     try:
-        # Búsqueda recursiva optimizada del valor BRTI
         def buscar_val(obj):
             if isinstance(obj, dict):
                 for k, v in obj.items():
@@ -708,7 +705,6 @@ def construir_indicadores(df):
     x["rsi14"] = calcular_rsi(x["close"], 14)
     x["stoch_rsi"] = calcular_stoch_rsi(x["rsi14"], 14)
     
-    # ATR para medir régimen de volatilidad
     x["tr"] = pd.concat([
         x["high"] - x["low"],
         (x["high"] - x["close"].shift()).abs(),
@@ -743,13 +739,12 @@ def construir_indicadores(df):
 # ============================================================
 
 def construir_precio_consenso(cb, kr, cmc, cf, bs):
-    # Ponderación robusta por fiabilidad histórica de fuentes institucionales
     fuentes_pesos = [
-        (cf, 2.5),       # CF BRTI (Índice institucional oficial de liquidación)
-        (cb, 2.0),       # Coinbase (Alta liquidez spot USD)
-        (kr, 1.5),       # Kraken
-        (bs, 1.0),       # Bitstamp
-        (cmc, 0.8)       # CoinMarketCap (Agregador)
+        (cf, 2.5),       
+        (cb, 2.0),       
+        (kr, 1.5),       
+        (bs, 1.0),       
+        (cmc, 0.8)       
     ]
     return media_ponderada_robusta(fuentes_pesos)
 
@@ -764,7 +759,6 @@ def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_to
         "flujo_capital": 0.0
     }
 
-    # 1. Distancia al Target Kalshi
     distancia_pct = ((precio - target) / target) * 100.0
     abs_dist = abs(distancia_pct)
     puntos_target = limitar((abs_dist / TARGET_DISTANCIA_FUERTE_PCT) * 22.0, 0.0, 22.0)
@@ -776,7 +770,6 @@ def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_to
         familias["target"] = -puntos_target
         razones.append(f"BTC bajo target en {distancia_pct:+.3f}%")
 
-    # 2. Tendencia Estructural (EMAs)
     ema9, ema21, ema50 = indicadores["ema9"], indicadores["ema21"], indicadores["ema50"]
     tendencia = 0.0
     if precio > ema9 > ema21 > ema50:
@@ -791,7 +784,6 @@ def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_to
         tendencia -= 6.0
     familias["tendencia"] = limitar(tendencia, -14.0, 14.0)
 
-    # 3. Momentum & Stoch RSI
     mom1, mom3 = indicadores["mom1"], indicadores["mom3"]
     stoch = indicadores["stoch_rsi"]
     mom_score = 0.0
@@ -803,12 +795,11 @@ def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_to
         razones.append("Momentum multidireccional negativo")
     
     if stoch > 80:
-        mom_score += 4.0 # Presión compradora en extremo superior
+        mom_score += 4.0
     elif stoch < 20:
         mom_score -= 4.0
     familias["momentum"] = limitar(mom_score, -12.0, 12.0)
 
-    # 4. Microestructura (Order Books & Order Flow Agresivo)
     micro = 0.0
     if obi_total >= 0.15:
         micro += 8.0
@@ -825,7 +816,6 @@ def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_to
         razones.append("Trades agresivos vendiendo volumen")
     familias["microestructura"] = limitar(micro, -16.0, 16.0)
 
-    # 5. Flujo de Capital (RSI)
     rsi = indicadores["rsi14"]
     flujo = 0.0
     if 52 <= rsi <= 75:
@@ -846,7 +836,8 @@ def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_to
 
 
 def score_a_prob_arriba(score):
-    prob = 1.0 / (1.0 + math.exp(-score / 16.0))
+    # CORREGIDO: Divisor ajustado de 16.0 a 22.0 para amortiguar saltos falsos
+    prob = 1.0 / (1.0 + math.exp(-score / 22.0))
     return limitar(prob, 0.01, 0.99)
 
 
@@ -966,7 +957,6 @@ def analizar_mercado(mercado):
     segundos_restantes = (close_time - ahora).total_seconds() if close_time else None
     minuto_entrada = ((ahora - open_time).total_seconds() / 60.0) if open_time else None
 
-    # Recolección Multifuente Robusta
     cb = obtener_coinbase_ticker()
     kr = obtener_kraken_ticker()
     cmc = obtener_coinmarketcap()
@@ -982,7 +972,6 @@ def analizar_mercado(mercado):
     if indicadores is None:
         return None
 
-    # Order Books & OBI
     cb_book = obtener_coinbase_book()
     kr_book = obtener_kraken_book()
     ka_book = obtener_orderbook_kalshi(ticker)
@@ -995,7 +984,6 @@ def analizar_mercado(mercado):
         (obi_bitstamp(bs_book), 1.0)
     ]) or 0.0
 
-    # Order Flow
     trades_cb = obtener_coinbase_trades()
     trades_bs = obtener_bitstamp_trades()
     flow_cb = orderflow_coinbase(trades_cb)
@@ -1007,12 +995,10 @@ def analizar_mercado(mercado):
 
     mempool = obtener_mempool() or {"count": 0}
 
-    # Precios Kalshi Opciones
     mercado_actual = obtener_mercado_por_ticker(ticker) or mercado
     yes_ask = precio_yes_ask(mercado_actual)
     no_ask = precio_no_ask(mercado_actual)
 
-    # Cálculo Avanzado de Score y Probabilidad
     calculo = calcular_score_avanzado(
         target=target,
         precio=precio,
@@ -1054,7 +1040,7 @@ def analizar_mercado(mercado):
 
 def mostrar_analisis(a):
     print("\n========================================")
-    print(" MOTOR KALSHI BTC 15M - PRO V2 (AVANZADO)")
+    print(" MOTOR KALSHI BTC 15M - PRO V2 (FIXED)")
     print("========================================")
     print(f"Ticker: {a['ticker']}")
     print(f"Target Kalshi: ${a['target']:,.2f}")
@@ -1105,7 +1091,7 @@ def guardar_si_corresponde(analisis):
 
 def main():
     print("\n========================================")
-    print(" MOTOR BTC 15M INICIADO (VERSIÓN V2 PRO)")
+    print(" MOTOR BTC 15M INICIADO (VERSIÓN V2 FIXED)")
     print(" Alta Certeza - Filtros de Régimen Activos")
     print("========================================")
 
@@ -1131,7 +1117,7 @@ def main():
                 continue
 
             if ticker_anterior and ticker != ticker_anterior and mercado_anterior:
-                pass # Transición limpia de mercado
+                pass 
 
             ticker_anterior = ticker
             mercado_anterior = mercado

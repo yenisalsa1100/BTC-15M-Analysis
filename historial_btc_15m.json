@@ -16508,11 +16508,11 @@
       "RSI favorable abajo 43.8",
       "CMF comprador +0.18"
     ],
-    "resultado": null,
-    "resultado_kalshi": null,
-    "resultado_actualizado": null,
-    "evaluacion": null,
-    "pnl_teorico_1_contrato": null,
-    "roi_teorico_pct": null
+    "resultado": "ARRIBA",
+    "resultado_kalshi": "yes",
+    "resultado_actualizado": "2026-09-03T14:49:29.578602+00:00",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.57,
+    "roi_teorico_pct": -100.0
   }
 ]

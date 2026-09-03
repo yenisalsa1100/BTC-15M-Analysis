@@ -19,8 +19,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# Cambiado para leer directamente desde el enlace RAW de GitHub
 HISTORIAL_URL = (
-    "http://147.182.142.55:8000/"
+    "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/"
     "historial_btc_15m.json"
 )
 
@@ -518,7 +519,21 @@ def cargar_historial():
             },
         )
         respuesta.raise_for_status()
-        datos = respuesta.json()
+        
+        # GitHub RAW devuelve texto plano que puede ser una lista JSON o un objeto con saltos de línea.
+        # Intentamos decodificar directamente como JSON. Si falla, parseamos línea por línea.
+        try:
+            datos = respuesta.json()
+        except json.JSONDecodeError:
+            datos = []
+            for linea in respuesta.text.splitlines():
+                linea = linea.strip()
+                if linea:
+                    try:
+                        datos.append(json.loads(linea))
+                    except Exception:
+                        pass
+
         if not isinstance(datos, list):
             return []
 
@@ -532,10 +547,8 @@ def cargar_historial():
             if registro_timestamp > reset_timestamp:
                 nuevos.append(registro)
         return nuevos
-    except json.JSONDecodeError:
-        return []
     except Exception as e:
-        st.warning(f"No se pudo conectar con DigitalOcean: {e}")
+        st.warning(f"No se pudo conectar con GitHub: {e}")
         return []
 
 

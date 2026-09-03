@@ -22,7 +22,7 @@ st.set_page_config(
 # Enlace corregido con el repositorio correcto de GitHub
 HISTORIAL_URL = (
     "https://raw.githubusercontent.com/yenisalsa1100/BTC-15M-Analysis/main/"
-    "historial_btc_15m.json"
+    "historial_btc_15m_v2.json"
 )
 
 RESET_FILE = ".historial_reset_btc_15m.json"

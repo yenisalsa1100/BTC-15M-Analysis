@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V2_PRO_FIXED",
+    "ticker": "KXBTC15M-26SEP032000-00",
+    "timestamp": "2026-09-03T23:58:57.228117+00:00",
+    "target": 81240.13,
+    "precio_consenso": 81228.52926744215,
+    "yes_ask": 0.967,
+    "no_ask": 0.036,
+    "segundos_restantes": 65.350185,
+    "minuto_entrada": 13.91083025,
+    "distancia_target_pct": -0.014279559323518948,
+    "score": -17.853757627935423,
+    "probabilidad_arriba": 30.756361276244782,
+    "probabilidad_abajo": 69.24363872375523,
+    "decision": "NO APOSTAR",
+    "fuerza": "SIN VENTAJA",
+    "probabilidad": 69.24363872375523,
+    "edge": null,
+    "precio_entrada": null,
+    "lado_contrato": null,
+    "razones": [
+      "BTC bajo target en -0.014%",
+      "Momentum multidireccional negativo",
+      "Trades agresivos vendiendo volumen"
+    ],
+    "resultado": null
+  }
+]

@@ -19,9 +19,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Cambiado para leer directamente desde el enlace RAW de GitHub
+# Enlace corregido con tu cuenta de GitHub
 HISTORIAL_URL = (
-    "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/"
+    "https://raw.githubusercontent.com/yenisalsa1100/streamlit_app.py/main/"
     "historial_btc_15m.json"
 )
 
@@ -520,8 +520,6 @@ def cargar_historial():
         )
         respuesta.raise_for_status()
         
-        # GitHub RAW devuelve texto plano que puede ser una lista JSON o un objeto con saltos de línea.
-        # Intentamos decodificar directamente como JSON. Si falla, parseamos línea por línea.
         try:
             datos = respuesta.json()
         except json.JSONDecodeError:

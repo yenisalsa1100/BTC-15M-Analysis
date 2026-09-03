@@ -354,18 +354,6 @@ html, body {
     margin-bottom: 5px;
 }
 
-.good {
-    color: #34d399;
-}
-
-.bad {
-    color: #fb7185;
-}
-
-.neutral {
-    color: #cbd5e1;
-}
-
 .live {
     display: inline-flex;
     align-items: center;
@@ -396,51 +384,30 @@ div.stButton > button {
 }
 
 @media (max-width: 700px) {
-
     .block-container {
         padding-left: .72rem;
         padding-right: .72rem;
         padding-top: .45rem;
     }
-
     .hero-title {
         font-size: 1.75rem;
     }
-
     .hero-sub {
         font-size: .78rem;
     }
-
     .decision-big {
         font-size: 2rem;
     }
-
     .decision {
         padding: 20px 10px;
     }
-
     .card {
         min-height: 80px;
         padding: 13px;
     }
-
     .card-value {
         font-size: 1.22rem;
     }
-
-    .scale-top {
-        align-items: flex-start;
-    }
-
-    .scale-name {
-        max-width: 62%;
-    }
-
-    .metric-key,
-    .metric-val {
-        font-size: .72rem;
-    }
-
 }
 </style>
 """
@@ -451,115 +418,32 @@ div.stButton > button {
 # UTILIDADES
 # ============================================================
 
-def numero(
-    valor,
-    decimales=2,
-    prefijo="",
-    sufijo="",
-):
+def numero(valor, decimales=2, prefijo="", sufijo=""):
     if valor is None:
         return "N/D"
-
     try:
-        return (
-            f"{prefijo}"
-            f"{float(valor):,.{decimales}f}"
-            f"{sufijo}"
-        )
-
+        return f"{prefijo}{float(valor):,.{decimales}f}{sufijo}"
     except Exception:
         return str(valor)
 
 
-# ============================================================
-# ⭐ APUESTA ESTELAR
-#
-# SOLO MARCA OPERACIONES QUE MOTOR #1 YA APROBO
-#
-# ARRIBA:
-# - decision ARRIBA
-# - probabilidad arriba >= 84%
-# - CMF20 >= +0.10
-# - volumen relativo >= 0.60x
-#
-# ABAJO:
-# - decision ABAJO
-# - probabilidad abajo >= 84%
-# - CMF20 <= -0.10
-# - volumen relativo >= 0.60x
-#
-# NO MODIFICA LA DECISION NORMAL DEL MOTOR
-# ============================================================
-
-def detectar_apuesta_estelar(
-    registro,
-):
-
-    if not isinstance(
-        registro,
-        dict,
-    ):
+def detectar_apuesta_estelar(registro):
+    if not isinstance(registro, dict):
         return None
 
-    decision = str(
-        registro.get(
-            "decision",
-            "",
-        )
-    ).upper()
-
-    if decision not in [
-        "ARRIBA",
-        "ABAJO",
-    ]:
+    decision = str(registro.get("decision", "")).upper()
+    if decision not in ["ARRIBA", "ABAJO"]:
         return None
 
     try:
-
-        prob_arriba = float(
-            registro.get(
-                "probabilidad_arriba",
-                0,
-            )
-            or 0
-        )
-
-        prob_abajo = float(
-            registro.get(
-                "probabilidad_abajo",
-                0,
-            )
-            or 0
-        )
-
-        cmf20 = float(
-            registro.get(
-                "cmf20",
-                0,
-            )
-            or 0
-        )
-
-        volumen_relativo = float(
-            registro.get(
-                "volumen_relativo",
-                0,
-            )
-            or 0
-        )
-
+        prob_arriba = float(registro.get("probabilidad_arriba", 0) or 0)
+        prob_abajo = float(registro.get("probabilidad_abajo", 0) or 0)
+        cmf20 = float(registro.get("cmf20", 0) or 0)
+        volumen_relativo = float(registro.get("volumen_relativo", 0) or 0)
     except Exception:
-
         return None
 
-
-    if (
-        decision == "ARRIBA"
-        and prob_arriba >= 84.0
-        and cmf20 >= 0.10
-        and volumen_relativo >= 0.60
-    ):
-
+    if decision == "ARRIBA" and prob_arriba >= 84.0 and cmf20 >= 0.10 and volumen_relativo >= 0.60:
         return {
             "es_estelar": True,
             "direccion": "ARRIBA",
@@ -568,14 +452,7 @@ def detectar_apuesta_estelar(
             "volumen_relativo": volumen_relativo,
         }
 
-
-    if (
-        decision == "ABAJO"
-        and prob_abajo >= 84.0
-        and cmf20 <= -0.10
-        and volumen_relativo >= 0.60
-    ):
-
+    if decision == "ABAJO" and prob_abajo >= 84.0 and cmf20 <= -0.10 and volumen_relativo >= 0.60:
         return {
             "es_estelar": True,
             "direccion": "ABAJO",
@@ -584,58 +461,28 @@ def detectar_apuesta_estelar(
             "volumen_relativo": volumen_relativo,
         }
 
-
     return None
 
 
-def timestamp_registro(
-    registro,
-):
-
-    if not isinstance(
-        registro,
-        dict,
-    ):
+def timestamp_registro(registro):
+    if not isinstance(registro, dict):
         return 0.0
 
     valores = [
-        registro.get(
-            "timestamp"
-        ),
-        registro.get(
-            "hora_local"
-        ),
-        registro.get(
-            "resultado_actualizado"
-        ),
+        registro.get("timestamp"),
+        registro.get("hora_local"),
+        registro.get("resultado_actualizado"),
     ]
 
     for valor in valores:
-
         if not valor:
             continue
-
         try:
-
-            texto = str(
-                valor
-            ).strip()
-
-            fecha = datetime.fromisoformat(
-                texto.replace(
-                    "Z",
-                    "+00:00",
-                )
-            )
-
+            texto = str(valor).strip()
+            fecha = datetime.fromisoformat(texto.replace("Z", "+00:00"))
             if fecha.tzinfo is None:
-
-                fecha = fecha.replace(
-                    tzinfo=timezone.utc
-                )
-
+                fecha = fecha.replace(tzinfo=timezone.utc)
             return fecha.timestamp()
-
         except Exception:
             continue
 
@@ -643,72 +490,25 @@ def timestamp_registro(
 
 
 def cargar_reset():
-
-    if not os.path.exists(
-        RESET_FILE
-    ):
+    if not os.path.exists(RESET_FILE):
         return 0.0
-
     try:
-
-        with open(
-            RESET_FILE,
-            "r",
-            encoding="utf-8",
-        ) as f:
-
-            datos = json.load(
-                f
-            )
-
-        return float(
-            datos.get(
-                "reset_timestamp",
-                0.0,
-            )
-        )
-
+        with open(RESET_FILE, "r", encoding="utf-8") as f:
+            datos = json.load(f)
+        return float(datos.get("reset_timestamp", 0.0))
     except Exception:
         return 0.0
 
 
-def guardar_reset(
-    reset_timestamp,
-):
-
-    temporal = (
-        RESET_FILE
-        + ".tmp"
-    )
-
-    with open(
-        temporal,
-        "w",
-        encoding="utf-8",
-    ) as f:
-
-        json.dump(
-            {
-                "reset_timestamp":
-                float(
-                    reset_timestamp
-                )
-            },
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
-
-    os.replace(
-        temporal,
-        RESET_FILE,
-    )
+def guardar_reset(reset_timestamp):
+    temporal = RESET_FILE + ".tmp"
+    with open(temporal, "w", encoding="utf-8") as f:
+        json.dump({"reset_timestamp": float(reset_timestamp)}, f, ensure_ascii=False, indent=2)
+    os.replace(temporal, RESET_FILE)
 
 
 def cargar_historial():
-
     try:
-
         respuesta = requests.get(
             HISTORIAL_URL,
             timeout=5,
@@ -717,111 +517,47 @@ def cargar_historial():
                 "Pragma": "no-cache",
             },
         )
-
         respuesta.raise_for_status()
-
         datos = respuesta.json()
-
-        if not isinstance(
-            datos,
-            list,
-        ):
+        if not isinstance(datos, list):
             return []
 
         reset_timestamp = cargar_reset()
-
         if reset_timestamp <= 0:
             return datos
 
         nuevos = []
-
         for registro in datos:
-
-            registro_timestamp = (
-                timestamp_registro(
-                    registro
-                )
-            )
-
-            if (
-                registro_timestamp
-                > reset_timestamp
-            ):
-                nuevos.append(
-                    registro
-                )
-
+            registro_timestamp = timestamp_registro(registro)
+            if registro_timestamp > reset_timestamp:
+                nuevos.append(registro)
         return nuevos
-
     except json.JSONDecodeError:
-
         return []
-
     except Exception as e:
-
-        st.warning(
-            "No se pudo conectar con DigitalOcean: "
-            f"{e}"
-        )
-
+        st.warning(f"No se pudo conectar con DigitalOcean: {e}")
         return []
 
 
 def eliminar_historial():
-
     try:
-
         ahora_reset = time.time()
-
-        guardar_reset(
-            ahora_reset
-        )
-
-        st.session_state[
-            "historial_eliminado"
-        ] = True
-
-        st.session_state[
-            "reset_timestamp"
-        ] = ahora_reset
-
-        st.toast(
-            "Historial eliminado."
-        )
-
+        guardar_reset(ahora_reset)
+        st.session_state["historial_eliminado"] = True
+        st.session_state["reset_timestamp"] = ahora_reset
+        st.toast("Historial eliminado.")
         return True
-
     except Exception as e:
-
-        st.error(
-            f"Error eliminando historial: {e}"
-        )
-
+        st.error(f"Error eliminando historial: {e}")
         return False
 
 
 def seccion(texto):
-
-    st.html(
-        f'<div class="section">{texto}</div>'
-    )
+    st.html(f'<div class="section">{texto}</div>')
 
 
-def tarjeta(
-    titulo,
-    valor,
-    detalle="",
-):
-
-    detalle_html = ""
-
-    if detalle:
-        detalle_html = (
-            f'<div class="card-detail">'
-            f'{detalle}'
-            f'</div>'
-        )
-
+def tarjeta(titulo, valor, detalle=""):
+    detalle_html = f'<div class="card-detail">{detalle}</div>' if detalle else ""
     st.html(
         f'''
         <div class="card">
@@ -834,152 +570,79 @@ def tarjeta(
 
 
 def tabla_metricas(datos):
-
     filas = ""
-
     for nombre, valor in datos:
-
         filas += (
             '<div class="metric-row">'
             f'<div class="metric-key">{nombre}</div>'
             f'<div class="metric-val">{valor}</div>'
             '</div>'
         )
-
-    st.html(
-        f'<div class="metric-box">{filas}</div>'
-    )
+    st.html(f'<div class="metric-box">{filas}</div>')
 
 
-def escala(
-    nombre,
-    valor,
-    minimo,
-    maximo,
-    formato="{:.3f}",
-):
-
+def escala(nombre, valor, minimo, maximo, formato="{:.3f}"):
     try:
-        n = float(
-            valor
-        )
-
+        n = float(valor)
     except Exception:
         n = 0.0
 
     if maximo == minimo:
         pos = 50.0
-
     else:
-        pos = (
-            (
-                n
-                - minimo
-            )
-            /
-            (
-                maximo
-                - minimo
-            )
-        ) * 100.0
+        pos = ((n - minimo) / (maximo - minimo)) * 100.0
 
-    pos = max(
-        0.0,
-        min(
-            100.0,
-            pos,
-        ),
-    )
+    pos = max(0.0, min(100.0, pos))
 
     try:
-        texto = formato.format(
-            n
-        )
-
+        texto = formato.format(n)
     except Exception:
-        texto = str(
-            n
-        )
+        texto = str(n)
 
     st.html(
         f'''
         <div class="scale">
-
             <div class="scale-top">
                 <div class="scale-name">{nombre}</div>
                 <div class="scale-value">{texto}</div>
             </div>
-
             <div class="scale-bar">
-                <div
-                    class="scale-pointer"
-                    style="left:{pos:.2f}%;">
-                </div>
+                <div class="scale-pointer" style="left:{pos:.2f}%;"></div>
             </div>
-
             <div class="scale-foot">
                 <span>{minimo}</span>
                 <span>NEUTRO</span>
                 <span>{maximo}</span>
             </div>
-
         </div>
         '''
     )
 
 
-def escala_probabilidad(
-    prob_arriba,
-):
-
+def escala_probabilidad(prob_arriba):
     try:
-        p = float(
-            prob_arriba
-        )
-
+        p = float(prob_arriba)
     except Exception:
         p = 50.0
 
-    p = max(
-        0.0,
-        min(
-            100.0,
-            p,
-        ),
-    )
-
-    abajo = (
-        100.0
-        - p
-    )
+    p = max(0.0, min(100.0, p))
+    abajo = 100.0 - p
 
     st.html(
         f'''
         <div class="scale">
-
             <div class="scale-top">
-                <div class="scale-name">
-                    PROBABILIDAD DIRECCIONAL
-                </div>
-
-                <div class="scale-value">
-                    ABAJO {abajo:.1f}% · ARRIBA {p:.1f}%
-                </div>
+                <div class="scale-name">PROBABILIDAD DIRECCIONAL</div>
+                <div class="scale-value">ABAJO {abajo:.1f}% · ARRIBA {p:.1f}%</div>
             </div>
-
             <div class="prob-bar">
-                <div
-                    class="prob-pointer"
-                    style="left:{p:.2f}%;">
-                </div>
+                <div class="prob-pointer" style="left:{p:.2f}%;"></div>
             </div>
-
             <div class="scale-foot">
                 <span>ABAJO</span>
                 <span>50 / 50</span>
                 <span>ARRIBA</span>
             </div>
-
         </div>
         '''
     )
@@ -992,10 +655,7 @@ def escala_probabilidad(
 st.html(
     '''
     <div class="hero">
-        <div class="hero-title">
-            ₿ BTC 15M PROFIT ENGINE
-        </div>
-
+        <div class="hero-title">₿ BTC 15M PROFIT ENGINE V2 PRO</div>
         <div class="hero-sub">
             Kalshi · CF Benchmarks BRTI · Coinbase · Kraken ·
             CoinMarketCap · Bitstamp · Mempool ·
@@ -1005,13 +665,11 @@ st.html(
     '''
 )
 
-
 st.html(
     f'''
     <div class="live">
         <span class="live-dot"></span>
-        ACTUALIZACIÓN AUTOMÁTICA CADA
-        {AUTO_REFRESH_SEGUNDOS} SEGUNDOS
+        ACTUALIZACIÓN AUTOMÁTICA CADA {AUTO_REFRESH_SEGUNDOS} SEGUNDOS
     </div>
     '''
 )
@@ -1021,2162 +679,135 @@ st.html(
 # DASHBOARD EN VIVO
 # ============================================================
 
-@st.fragment(
-    run_every=f"{AUTO_REFRESH_SEGUNDOS}s"
-)
+@st.fragment(run_every=f"{AUTO_REFRESH_SEGUNDOS}s")
 def dashboard_en_vivo():
-
     historial = cargar_historial()
-
-    analisis = None
+    analisis = historial[-1] if historial else st.session_state.get("ultimo_analisis")
 
     if historial:
+        st.session_state["ultimo_analisis"] = analisis
 
-        analisis = historial[
-            -1
-        ]
-
-        st.session_state[
-            "ultimo_analisis"
-        ] = analisis
-
-    else:
-
-        analisis = st.session_state.get(
-            "ultimo_analisis"
-        )
-
-
-    # ========================================================
-    # BOTON + ESTADO
-    # ========================================================
-
-    b1, b2 = st.columns(
-        [
-            1.15,
-            1.85,
-        ]
-    )
+    b1, b2 = st.columns([1.15, 1.85])
 
     with b1:
-
-        if st.button(
-            "🗑️ ELIMINAR HISTORIAL",
-            use_container_width=True,
-            key="eliminar_historial_btn",
-        ):
-
+        if st.button("🗑️ ELIMINAR HISTORIAL", use_container_width=True, key="eliminar_historial_btn"):
             if eliminar_historial():
-
                 historial = []
 
-
     with b2:
-
         if analisis is not None:
-
-            hora_motor = (
-                analisis.get(
-                    "hora_local"
-                )
-                or analisis.get(
-                    "timestamp"
-                )
-                or "N/D"
-            )
-
-            st.caption(
-                "Última actualización del motor: "
-                + str(
-                    hora_motor
-                )
-            )
-
+            hora_motor = analisis.get("hora_local") or analisis.get("timestamp") or "N/D"
+            st.caption("Última actualización del motor: " + str(hora_motor))
         else:
-
-            st.caption(
-                "Esperando datos del motor."
-            )
-
+            st.caption("Esperando datos del motor.")
 
     if analisis is None:
-
-        st.info(
-            "Esperando el primer análisis del motor."
-        )
-
+        st.info("Esperando el primer análisis del motor.")
         return
 
-
-    # ========================================================
-    # DECISION
-    # ========================================================
-
-    decision = analisis.get(
-        "decision",
-        "NO APOSTAR",
-    )
-
-    fuerza = analisis.get(
-        "fuerza",
-        "DEBIL",
-    )
-
+    # Decision
+    decision = analisis.get("decision", "NO APOSTAR")
+    fuerza = analisis.get("fuerza", "DEBIL")
     try:
-
-        probabilidad = float(
-            analisis.get(
-                "probabilidad",
-                0,
-            )
-            or 0
-        )
-
+        probabilidad = float(analisis.get("probabilidad", 0) or 0)
     except Exception:
-
         probabilidad = 0.0
 
-
     if decision == "ARRIBA":
-
         clase = "decision decision-up"
         icono = "▲"
-
     elif decision == "ABAJO":
-
         clase = "decision decision-down"
         icono = "▼"
-
     else:
-
         clase = "decision decision-no"
         icono = "●"
-
 
     st.html(
         f'''
         <div class="{clase}">
-
-            <div class="decision-small">
-                ULTIMA DECISION DEL MOTOR
-            </div>
-
-            <div class="decision-big">
-                {icono} {decision}
-            </div>
-
+            <div class="decision-small">ULTIMA DECISION DEL MOTOR</div>
+            <div class="decision-big">{icono} {decision}</div>
             <div class="decision-meta">
-                FUERZA <b>{fuerza}</b>
-                &nbsp;&nbsp;·&nbsp;&nbsp;
-                PROBABILIDAD <b>{probabilidad:.1f}%</b>
+                FUERZA <b>{fuerza}</b> &nbsp;&nbsp;·&nbsp;&nbsp; PROBABILIDAD <b>{probabilidad:.1f}%</b>
             </div>
-
         </div>
         '''
     )
 
-
-    # ========================================================
-    # ⭐ APUESTA ESTELAR ACTUAL
-    # ========================================================
-
-    apuesta_estelar = detectar_apuesta_estelar(
-        analisis
-    )
-
-    if apuesta_estelar is not None:
-
-        direccion_estelar = (
-            apuesta_estelar[
-                "direccion"
-            ]
-        )
-
-        prob_estelar = (
-            apuesta_estelar[
-                "probabilidad"
-            ]
-        )
-
-        cmf_estelar = (
-            apuesta_estelar[
-                "cmf20"
-            ]
-        )
-
-        vol_estelar = (
-            apuesta_estelar[
-                "volumen_relativo"
-            ]
-        )
-
-        if direccion_estelar == "ARRIBA":
-
-            clase_estelar = (
-                "decision decision-up"
-            )
-
-            icono_estelar = "⭐ ▲"
-
-        else:
-
-            clase_estelar = (
-                "decision decision-down"
-            )
-
-            icono_estelar = "⭐ ▼"
-
-
-        st.html(
-            f'''
-            <div class="{clase_estelar}">
-
-                <div class="decision-small">
-                    ⭐ APUESTA ESTELAR ⭐
-                </div>
-
-                <div class="decision-big">
-                    {icono_estelar}
-                    {direccion_estelar}
-                </div>
-
-                <div class="decision-meta">
-
-                    PROBABILIDAD
-                    <b>{prob_estelar:.1f}%</b>
-
-                    &nbsp;&nbsp;·&nbsp;&nbsp;
-
-                    CMF20
-                    <b>{cmf_estelar:+.3f}</b>
-
-                    &nbsp;&nbsp;·&nbsp;&nbsp;
-
-                    VOLUMEN
-                    <b>{vol_estelar:.2f}x</b>
-
-                </div>
-
-            </div>
-            '''
-        )
-
-
-    # ========================================================
-    # CONTRATO
-    # ========================================================
-
-    seccion(
-        "Contrato"
-    )
-
-    c1, c2 = st.columns(
-        2
-    )
-
+    # Contrato
+    seccion("Contrato")
+    c1, c2 = st.columns(2)
     with c1:
-
-        tarjeta(
-            "TARGET KALSHI",
-            numero(
-                analisis.get(
-                    "target"
-                ),
-                2,
-                "$",
-            ),
-        )
-
+        tarjeta("TARGET KALSHI", numero(analisis.get("target"), 2, "$"))
     with c2:
+        tarjeta("BTC CONSENSO", numero(analisis.get("precio_consenso"), 2, "$"))
 
-        tarjeta(
-            "BTC CONSENSO",
-            numero(
-                analisis.get(
-                    "precio_consenso"
-                ),
-                2,
-                "$",
-            ),
-        )
-
-
-    c3, c4 = st.columns(
-        2
-    )
-
+    c3, c4 = st.columns(2)
     with c3:
-
-        tarjeta(
-            "TIEMPO RESTANTE AL ANALIZAR",
-            numero(
-                analisis.get(
-                    "segundos_restantes"
-                ),
-                0,
-                "",
-                " s",
-            ),
-        )
-
+        tarjeta("TIEMPO RESTANTE", numero(analisis.get("segundos_restantes"), 0, "", " s"))
     with c4:
+        tarjeta("MINUTO DE ENTRADA", numero(analisis.get("minuto_entrada"), 2))
 
-        tarjeta(
-            "MINUTO DE ENTRADA",
-            numero(
-                analisis.get(
-                    "minuto_entrada"
-                ),
-                2,
-            ),
-        )
+    tarjeta("SCORE TOTAL", numero(analisis.get("score"), 2))
 
+    # Probabilidad y valor
+    seccion("Probabilidad y valor")
+    escala_probabilidad(analisis.get("probabilidad_arriba", 50))
 
-    tarjeta(
-        "SCORE TOTAL",
-        numero(
-            analisis.get(
-                "score"
-            ),
-            2,
-        ),
-    )
-
-
-    # ========================================================
-    # PROBABILIDAD
-    # ========================================================
-
-    seccion(
-        "Probabilidad y valor"
-    )
-
-    escala_probabilidad(
-        analisis.get(
-            "probabilidad_arriba",
-            50,
-        )
-    )
-
-    p1, p2 = st.columns(
-        2
-    )
-
+    p1, p2 = st.columns(2)
     with p1:
-
-        tarjeta(
-            "PROB. ARRIBA",
-            numero(
-                analisis.get(
-                    "probabilidad_arriba"
-                ),
-                1,
-                "",
-                "%",
-            ),
-        )
-
+        tarjeta("PROB. ARRIBA", numero(analisis.get("probabilidad_arriba"), 1, "", "%"))
     with p2:
+        tarjeta("PROB. ABAJO", numero(analisis.get("probabilidad_abajo"), 1, "", "%"))
 
-        tarjeta(
-            "PROB. ABAJO",
-            numero(
-                analisis.get(
-                    "probabilidad_abajo"
-                ),
-                1,
-                "",
-                "%",
-            ),
-        )
-
-
-    edge = analisis.get(
-        "edge"
-    )
-
-    p3, p4 = st.columns(
-        2
-    )
-
+    edge = analisis.get("edge")
+    p3, p4 = st.columns(2)
     with p3:
-
-        tarjeta(
-            "EDGE",
-            (
-                numero(
-                    edge
-                    * 100,
-                    2,
-                    "",
-                    "%",
-                )
-                if edge is not None
-                else "SIN EDGE"
-            ),
-        )
-
+        tarjeta("EDGE", numero(edge * 100, 2, "", "%") if edge is not None else "SIN EDGE")
     with p4:
-
-        precio_entrada = (
-            analisis.get(
-                "precio_entrada"
-            )
-        )
-
-        tarjeta(
-            "PRECIO ENTRADA",
-            (
-                numero(
-                    precio_entrada,
-                    3,
-                    "$",
-                )
-                if precio_entrada is not None
-                else "NO ENTRA"
-            ),
-        )
-
-
-    escala(
-        "SCORE TOTAL",
-        analisis.get(
-            "score",
-            0,
-        ),
-        -100,
-        100,
-        "{:+.2f}",
-    )
-
-
-    # ========================================================
-    # 🎯 PROFIT +10%
-    # ========================================================
-
-    seccion(
-        "🎯 Seguimiento Profit +10%"
-    )
-
-    tp10_alcanzado = bool(
-        analisis.get(
-            "tp10_alcanzado",
-            False,
-        )
-    )
-
-    tp10_posible = analisis.get(
-        "tp10_posible"
-    )
-
-    precio_bid_actual = analisis.get(
-        "precio_salida_bid_actual"
-    )
-
-    precio_maximo = analisis.get(
-        "precio_maximo_observado"
-    )
-
-    objetivo_tp10 = analisis.get(
-        "tp10_objetivo_precio"
-    )
-
-    roi_actual = analisis.get(
-        "roi_actual_pct"
-    )
-
-    roi_maximo = analisis.get(
-        "roi_maximo_observado_pct"
-    )
-
-    segundos_tp10 = analisis.get(
-        "tp10_segundos_desde_entrada"
-    )
-
-
-    tp1, tp2 = st.columns(
-        2
-    )
-
-    with tp1:
-
-        tarjeta(
-            "🎯 OBJETIVO +10%",
-            (
-                numero(
-                    objetivo_tp10,
-                    3,
-                    "$",
-                )
-                if objetivo_tp10 is not None
-                else "ESPERANDO APUESTA"
-            ),
-        )
-
-    with tp2:
-
-        tarjeta(
-            "BID ACTUAL KALSHI",
-            (
-                numero(
-                    precio_bid_actual,
-                    3,
-                    "$",
-                )
-                if precio_bid_actual is not None
-                else "N/D"
-            ),
-        )
-
-
-    tp3, tp4 = st.columns(
-        2
-    )
-
-    with tp3:
-
-        tarjeta(
-            "ROI ACTUAL",
-            (
-                numero(
-                    roi_actual,
-                    2,
-                    "",
-                    "%",
-                )
-                if roi_actual is not None
-                else "N/D"
-            ),
-        )
-
-    with tp4:
-
-        tarjeta(
-            "ROI MÁXIMO",
-            (
-                numero(
-                    roi_maximo,
-                    2,
-                    "",
-                    "%",
-                )
-                if roi_maximo is not None
-                else "N/D"
-            ),
-        )
-
-
-    tp5, tp6 = st.columns(
-        2
-    )
-
-    with tp5:
-
-        tarjeta(
-            "PRECIO MÁXIMO",
-            (
-                numero(
-                    precio_maximo,
-                    3,
-                    "$",
-                )
-                if precio_maximo is not None
-                else "N/D"
-            ),
-        )
-
-    with tp6:
-
-        if tp10_alcanzado:
-
-            estado_tp10 = (
-                "✅ +10% ALCANZADO"
-            )
-
-        elif tp10_posible is False:
-
-            estado_tp10 = (
-                "⚠️ +10% NO POSIBLE"
-            )
-
-        elif decision in [
-            "ARRIBA",
-            "ABAJO",
-        ]:
-
-            estado_tp10 = (
-                "⏳ BUSCANDO +10%"
-            )
-
-        else:
-
-            estado_tp10 = (
-                "SIN OPERACIÓN"
-            )
-
-        tarjeta(
-            "ESTADO TP +10%",
-            estado_tp10,
-        )
-
-
-    if tp10_alcanzado:
-
-        tarjeta(
-            "⏱️ TIEMPO HASTA +10%",
-            (
-                numero(
-                    segundos_tp10,
-                    0,
-                    "",
-                    " s",
-                )
-                if segundos_tp10 is not None
-                else "N/D"
-            ),
-        )
-
-
-    # ========================================================
-    # TARGET
-    # ========================================================
-
-    seccion(
-        "Distancia al Target"
-    )
-
-    try:
-
-        dist_target = float(
-            analisis.get(
-                "distancia_target_pct",
-                0,
-            )
-            or 0
-        )
-
-    except Exception:
-
-        dist_target = 0.0
-
-    limite_target = max(
-        0.15,
-        abs(
-            dist_target
-        )
-        * 1.20,
-    )
-
-    escala(
-        "BTC ↔ TARGET",
-        dist_target,
-        -limite_target,
-        limite_target,
-        "{:+.4f}%",
-    )
-
-
-    # ========================================================
-    # FUENTES
-    # ========================================================
-
-    seccion(
-        "Precios de fuentes"
-    )
-
-    tabla_metricas(
-        [
-            (
-                "CF Benchmarks / BRTI",
-                numero(
-                    analisis.get(
-                        "precio_cf_brti"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "Coinbase BTC-USD",
-                numero(
-                    analisis.get(
-                        "precio_coinbase"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "Kraken XBTUSD",
-                numero(
-                    analisis.get(
-                        "precio_kraken"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "CoinMarketCap",
-                numero(
-                    analisis.get(
-                        "precio_coinmarketcap"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "Bitstamp BTCUSD",
-                numero(
-                    analisis.get(
-                        "precio_bitstamp"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "Precio consenso",
-                numero(
-                    analisis.get(
-                        "precio_consenso"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-        ]
-    )
-
-
-    tabla_metricas(
-        [
-            (
-                "Kalshi YES ask",
-                numero(
-                    analisis.get(
-                        "yes_ask"
-                    ),
-                    3,
-                    "$",
-                ),
-            ),
-            (
-                "Kalshi NO ask",
-                numero(
-                    analisis.get(
-                        "no_ask"
-                    ),
-                    3,
-                    "$",
-                ),
-            ),
-            (
-                "Fuentes disponibles",
-                str(
-                    analisis.get(
-                        "fuentes_disponibles",
-                        "N/D",
-                    )
-                ),
-            ),
-            (
-                "Ticker",
-                str(
-                    analisis.get(
-                        "ticker",
-                        "N/D",
-                    )
-                ),
-            ),
-        ]
-    )
-
-
-    # ========================================================
-    # TENDENCIA
-    # ========================================================
-
-    seccion(
-        "Tendencia técnica"
-    )
-
-    tabla_metricas(
-        [
-            (
-                "EMA 9",
-                numero(
-                    analisis.get(
-                        "ema9"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "EMA 21",
-                numero(
-                    analisis.get(
-                        "ema21"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "EMA 50",
-                numero(
-                    analisis.get(
-                        "ema50"
-                    ),
-                    2,
-                    "$",
-                ),
-            ),
-            (
-                "MACD",
-                numero(
-                    analisis.get(
-                        "macd"
-                    ),
-                    4,
-                ),
-            ),
-            (
-                "MACD Signal",
-                numero(
-                    analisis.get(
-                        "macd_signal"
-                    ),
-                    4,
-                ),
-            ),
-        ]
-    )
-
-
-    escala(
-        "RSI 14",
-        analisis.get(
-            "rsi14",
-            50,
-        ),
-        0,
-        100,
-        "{:.2f}",
-    )
-
-
-    escala(
-        "CMF 20",
-        analisis.get(
-            "cmf20",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-
-    # ========================================================
-    # MOMENTUM
-    # ========================================================
-
-    seccion(
-        "Momentum"
-    )
-
-    tabla_metricas(
-        [
-            (
-                "Momentum 1 minuto",
-                numero(
-                    (
-                        analisis.get(
-                            "momentum_1m",
-                            0,
-                        )
-                        or 0
-                    )
-                    * 100,
-                    4,
-                    "",
-                    "%",
-                ),
-            ),
-            (
-                "Momentum 3 minutos",
-                numero(
-                    (
-                        analisis.get(
-                            "momentum_3m",
-                            0,
-                        )
-                        or 0
-                    )
-                    * 100,
-                    4,
-                    "",
-                    "%",
-                ),
-            ),
-            (
-                "Momentum 5 minutos",
-                numero(
-                    (
-                        analisis.get(
-                            "momentum_5m",
-                            0,
-                        )
-                        or 0
-                    )
-                    * 100,
-                    4,
-                    "",
-                    "%",
-                ),
-            ),
-            (
-                "Momentum 10 minutos",
-                numero(
-                    (
-                        analisis.get(
-                            "momentum_10m",
-                            0,
-                        )
-                        or 0
-                    )
-                    * 100,
-                    4,
-                    "",
-                    "%",
-                ),
-            ),
-        ]
-    )
-
-
-    escala(
-        "VELOCIDAD",
-        (
-            analisis.get(
-                "velocidad",
-                0,
-            )
-            or 0
-        )
-        * 100,
-        -0.50,
-        0.50,
-        "{:+.5f}%",
-    )
-
-
-    escala(
-        "ACELERACION",
-        (
-            analisis.get(
-                "aceleracion",
-                0,
-            )
-            or 0
-        )
-        * 100,
-        -0.50,
-        0.50,
-        "{:+.5f}%",
-    )
-
-
-    # ========================================================
-    # VOLATILIDAD / VOLUMEN
-    # ========================================================
-
-    seccion(
-        "Volatilidad y volumen"
-    )
-
-    tabla_metricas(
-        [
-            (
-                "Volatilidad 20",
-                numero(
-                    (
-                        analisis.get(
-                            "volatilidad20",
-                            0,
-                        )
-                        or 0
-                    )
-                    * 100,
-                    5,
-                    "",
-                    "%",
-                ),
-            ),
-            (
-                "Volumen actual",
-                numero(
-                    analisis.get(
-                        "volumen"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Volumen promedio 20",
-                numero(
-                    analisis.get(
-                        "volumen_promedio20"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-        ]
-    )
-
-
-    escala(
-        "VOLUMEN RELATIVO",
-        analisis.get(
-            "volumen_relativo",
-            1,
-        ),
-        0,
-        3,
-        "{:.2f}x",
-        )
-        # ========================================================
-    # OBI
-    # ========================================================
-
-    seccion(
-        "Order Book Imbalance"
-    )
-
-    escala(
-        "OBI COINBASE",
-        analisis.get(
-            "obi_coinbase",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    escala(
-        "OBI KRAKEN",
-        analisis.get(
-            "obi_kraken",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    escala(
-        "OBI KALSHI",
-        analisis.get(
-            "obi_kalshi",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    escala(
-        "OBI BITSTAMP",
-        analisis.get(
-            "obi_bitstamp",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-    escala(
-        "OBI PROMEDIO",
-        analisis.get(
-            "obi_promedio",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-
-    # ========================================================
-    # ORDER FLOW
-    # ========================================================
-
-    seccion(
-        "Trades agresivos / Order Flow"
-    )
-
-    of_cb = (
-        analisis.get(
-            "orderflow_coinbase"
-        )
-        or {}
-    )
-
-    of_kr = (
-        analisis.get(
-            "orderflow_kraken"
-        )
-        or {}
-    )
-
-    of_bs = (
-        analisis.get(
-            "orderflow_bitstamp"
-        )
-        or {}
-    )
-
-
-    escala(
-        "ORDER FLOW COINBASE",
-        of_cb.get(
-            "imbalance",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-
-    tabla_metricas(
-        [
-            (
-                "Compra agresiva Coinbase",
-                numero(
-                    of_cb.get(
-                        "buy_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Venta agresiva Coinbase",
-                numero(
-                    of_cb.get(
-                        "sell_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Trades Coinbase",
-                str(
-                    of_cb.get(
-                        "trades",
-                        0,
-                    )
-                ),
-            ),
-        ]
-    )
-
-
-    escala(
-        "ORDER FLOW KRAKEN",
-        of_kr.get(
-            "imbalance",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-
-    tabla_metricas(
-        [
-            (
-                "Compra agresiva Kraken",
-                numero(
-                    of_kr.get(
-                        "buy_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Venta agresiva Kraken",
-                numero(
-                    of_kr.get(
-                        "sell_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Trades Kraken",
-                str(
-                    of_kr.get(
-                        "trades",
-                        0,
-                    )
-                ),
-            ),
-        ]
-    )
-
-
-    escala(
-        "ORDER FLOW BITSTAMP",
-        of_bs.get(
-            "imbalance",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-
-    tabla_metricas(
-        [
-            (
-                "Compra agresiva Bitstamp",
-                numero(
-                    of_bs.get(
-                        "buy_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Venta agresiva Bitstamp",
-                numero(
-                    of_bs.get(
-                        "sell_volume"
-                    ),
-                    5,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Trades Bitstamp",
-                str(
-                    of_bs.get(
-                        "trades",
-                        0,
-                    )
-                ),
-            ),
-        ]
-    )
-
-
-    escala(
-        "ORDER FLOW PROMEDIO",
-        analisis.get(
-            "orderflow_promedio",
-            0,
-        ),
-        -1,
-        1,
-        "{:+.4f}",
-    )
-
-
-    # ========================================================
-    # MEMPOOL
-    # ========================================================
-
-    seccion(
-        "Mempool.space"
-    )
-
-    tabla_metricas(
-        [
-            (
-                "Transacciones mempool",
-                numero(
-                    analisis.get(
-                        "mempool_count"
-                    ),
-                    0,
-                ),
-            ),
-            (
-                "Mempool vsize",
-                numero(
-                    analisis.get(
-                        "mempool_vsize"
-                    ),
-                    0,
-                ),
-            ),
-            (
-                "Total fee",
-                numero(
-                    analisis.get(
-                        "mempool_total_fee"
-                    ),
-                    0,
-                ),
-            ),
-            (
-                "TX recientes",
-                numero(
-                    analisis.get(
-                        "mempool_tx_recientes"
-                    ),
-                    0,
-                ),
-            ),
-            (
-                "BTC reciente",
-                numero(
-                    analisis.get(
-                        "mempool_valor_reciente_btc"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Fee rate promedio",
-                numero(
-                    analisis.get(
-                        "mempool_fee_rate_promedio"
-                    ),
-                    2,
-                ),
-            ),
-            (
-                "Cambio TX",
-                numero(
-                    analisis.get(
-                        "mempool_cambio_count_pct"
-                    ),
-                    3,
-                    "",
-                    "%",
-                ),
-            ),
-            (
-                "Cambio vsize",
-                numero(
-                    analisis.get(
-                        "mempool_cambio_vsize_pct"
-                    ),
-                    3,
-                    "",
-                    "%",
-                ),
-            ),
-            (
-                "Actividad mempool",
-                numero(
-                    analisis.get(
-                        "mempool_actividad"
-                    ),
-                    3,
-                ),
-            ),
-        ]
-    )
-
-
-    # ========================================================
-    # PROFUNDIDAD
-    # ========================================================
-
-    seccion(
-        "Profundidad de mercado"
-    )
-
-    prof_cb = (
-        analisis.get(
-            "profundidad_coinbase"
-        )
-        or {}
-    )
-
-    prof_kr = (
-        analisis.get(
-            "profundidad_kraken"
-        )
-        or {}
-    )
-
-    prof_ka = (
-        analisis.get(
-            "profundidad_kalshi"
-        )
-        or {}
-    )
-
-    prof_bs = (
-        analisis.get(
-            "profundidad_bitstamp"
-        )
-        or {}
-    )
-
-
-    tabla_metricas(
-        [
-            (
-                "Coinbase BID depth",
-                numero(
-                    prof_cb.get(
-                        "bid"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Coinbase ASK depth",
-                numero(
-                    prof_cb.get(
-                        "ask"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Kraken BID depth",
-                numero(
-                    prof_kr.get(
-                        "bid"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Kraken ASK depth",
-                numero(
-                    prof_kr.get(
-                        "ask"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Bitstamp BID depth",
-                numero(
-                    prof_bs.get(
-                        "bid"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Bitstamp ASK depth",
-                numero(
-                    prof_bs.get(
-                        "ask"
-                    ),
-                    4,
-                    "",
-                    " BTC",
-                ),
-            ),
-            (
-                "Kalshi YES depth",
-                numero(
-                    prof_ka.get(
-                        "yes"
-                    ),
-                    2,
-                ),
-            ),
-            (
-                "Kalshi NO depth",
-                numero(
-                    prof_ka.get(
-                        "no"
-                    ),
-                    2,
-                ),
-            ),
-        ]
-    )
-
-
-    # ========================================================
-    # SPREAD
-    # ========================================================
-
-    seccion(
-        "Spread"
-    )
-
-    spread = analisis.get(
-        "spread_coinbase"
-    )
-
-    tarjeta(
-        "COINBASE BID / ASK SPREAD",
-        (
-            numero(
-                spread
-                * 100,
-                5,
-                "",
-                "%",
-            )
-            if spread is not None
-            else "N/D"
-        ),
-    )
-
-
-    # ========================================================
-    # SCORE FAMILIAS
-    # ========================================================
-
-    seccion(
-        "Score por familias"
-    )
-
-    familias = (
-        analisis.get(
-            "score_familias"
-        )
-        or {}
-    )
-
-
-    escala(
-        "TARGET",
-        familias.get(
-            "target",
-            0,
-        ),
-        -18,
-        18,
-        "{:+.2f}",
-    )
-
-    escala(
-        "TENDENCIA",
-        familias.get(
-            "tendencia",
-            0,
-        ),
-        -14,
-        14,
-        "{:+.2f}",
-    )
-
-    escala(
-        "MOMENTUM",
-        familias.get(
-            "momentum",
-            0,
-        ),
-        -13,
-        13,
-        "{:+.2f}",
-    )
-
-    escala(
-        "MICROESTRUCTURA",
-        familias.get(
-            "microestructura",
-            0,
-        ),
-        -16,
-        16,
-        "{:+.2f}",
-    )
-
-    escala(
-        "FLUJO CAPITAL",
-        familias.get(
-            "flujo_capital",
-            0,
-        ),
-        -10,
-        10,
-        "{:+.2f}",
-    )
-
-    escala(
-        "CONSENSO",
-        familias.get(
-            "consenso",
-            0,
-        ),
-        -10,
-        10,
-        "{:+.2f}",
-    )
-
-    escala(
-        "MEMPOOL",
-        familias.get(
-            "mempool",
-            0,
-        ),
-        -5,
-        5,
-        "{:+.2f}",
-    )
-
-
-    # ========================================================
-    # CONSENSO
-    # ========================================================
-
-    seccion(
-        "Consenso de fuentes"
-    )
-
-    consenso = (
-        analisis.get(
-            "consenso_fuentes"
-        )
-        or {}
-    )
-
-
-    cc1, cc2 = st.columns(
-        2
-    )
-
-    with cc1:
-
-        tarjeta(
-            "FUENTES ARRIBA",
-            str(
-                consenso.get(
-                    "arriba",
-                    0,
-                )
-            ),
-        )
-
-    with cc2:
-
-        tarjeta(
-            "FUENTES ABAJO",
-            str(
-                consenso.get(
-                    "abajo",
-                    0,
-                )
-            ),
-        )
-
-
-    cc3, cc4 = st.columns(
-        2
-    )
-
-    with cc3:
-
-        tarjeta(
-            "TOTAL FUENTES",
-            str(
-                consenso.get(
-                    "total",
-                    0,
-                )
-            ),
-        )
-
-    with cc4:
-
-        tarjeta(
-            "RATIO CONSENSO",
-            numero(
-                consenso.get(
-                    "ratio",
-                    0,
-                ),
-                3,
-            ),
-        )
-
-
-    # ========================================================
-    # RAZONES
-    # ========================================================
-
-    seccion(
-        "Razones de la decisión"
-    )
-
-    razones = (
-        analisis.get(
-            "razones"
-        )
-        or []
-    )
-
+        precio_entrada = analisis.get("precio_entrada")
+        tarjeta("PRECIO ENTRADA", numero(precio_entrada, 3, "$") if precio_entrada is not None else "NO ENTRA")
+
+    escala("SCORE TOTAL", analisis.get("score", 0), -100, 100, "{:+.2f}")
+
+    # Fuentes
+    seccion("Precios de fuentes")
+    tabla_metricas([
+        ("CF Benchmarks / BRTI", numero(analisis.get("precio_cf_brti"), 2, "$")),
+        ("Coinbase BTC-USD", numero(analisis.get("precio_coinbase"), 2, "$")),
+        ("Kraken XBTUSD", numero(analisis.get("precio_kraken"), 2, "$")),
+        ("CoinMarketCap", numero(analisis.get("precio_coinmarketcap"), 2, "$")),
+        ("Bitstamp BTCUSD", numero(analisis.get("precio_bitstamp"), 2, "$")),
+        ("Precio consenso", numero(analisis.get("precio_consenso"), 2, "$")),
+    ])
+
+    # Razones
+    seccion("Razones de la decisión")
+    razones = analisis.get("razones") or []
     if razones:
-
         for razon in razones:
-
-            st.html(
-                f'<div class="reason">{razon}</div>'
-            )
-
+            st.html(f'<div class="reason">{razon}</div>')
     else:
+        st.caption("No hay razones registradas.")
 
-        st.caption(
-            "No hay razones registradas."
-        )
-
-
-    # ========================================================
-    # ⭐ HISTORIAL APUESTAS ESTELARES
-    # ========================================================
-
-    seccion(
-        "⭐ Historial Apuestas Estelares"
-    )
-
-    estelares = []
-
-    for registro in historial:
-
-        datos_estelar = detectar_apuesta_estelar(
-            registro
-        )
-
-        if datos_estelar is None:
-            continue
-
-        fila_estelar = dict(
-            registro
-        )
-
-        fila_estelar[
-            "apuesta_estelar"
-        ] = "⭐ SI"
-
-        fila_estelar[
-            "direccion_estelar"
-        ] = datos_estelar[
-            "direccion"
-        ]
-
-        fila_estelar[
-            "probabilidad_estelar"
-        ] = datos_estelar[
-            "probabilidad"
-        ]
-
-        estelares.append(
-            fila_estelar
-        )
-
-
-    estelares_resueltas = [
-        x
-        for x in estelares
-        if x.get(
-            "evaluacion"
-        )
-        in [
-            "ACIERTO",
-            "FALLO",
-        ]
-    ]
-
-
-    estelares_aciertos = sum(
-        1
-        for x in estelares_resueltas
-        if x.get(
-            "evaluacion"
-        )
-        == "ACIERTO"
-    )
-
-
-    estelares_fallos = sum(
-        1
-        for x in estelares_resueltas
-        if x.get(
-            "evaluacion"
-        )
-        == "FALLO"
-    )
-
-
-    precision_estelar = 0.0
-
-    if estelares_resueltas:
-
-        precision_estelar = (
-            estelares_aciertos
-            /
-            len(
-                estelares_resueltas
-            )
-        ) * 100.0
-
-
-    pnl_estelar = sum(
-        (
-            float(
-                x.get(
-                    "pnl_teorico_total"
-                )
-            )
-            if x.get(
-                "pnl_teorico_total"
-            ) is not None
-            else float(
-                x.get(
-                    "pnl_teorico_1_contrato"
-                )
-                or 0
-            ) * 10
-        )
-        for x in estelares_resueltas
-    )
-
-
-    es1, es2 = st.columns(
-        2
-    )
-
-    with es1:
-
-        tarjeta(
-            "⭐ ESTELARES",
-            str(
-                len(
-                    estelares
-                )
-            ),
-        )
-
-    with es2:
-
-        tarjeta(
-            "⭐ PRECISION ESTELAR",
-            f"{precision_estelar:.2f}%",
-        )
-
-
-    es3, es4, es5 = st.columns(
-        3
-    )
-
-    with es3:
-
-        tarjeta(
-            "⭐ ACIERTOS",
-            str(
-                estelares_aciertos
-            ),
-        )
-
-    with es4:
-
-        tarjeta(
-            "⭐ FALLOS",
-            str(
-                estelares_fallos
-            ),
-        )
-
-    with es5:
-
-        tarjeta(
-            "⭐ P&L ESTELAR",
-            f"${pnl_estelar:+.4f}",
-        )
-
-
-    if estelares:
-
-        columnas_estelares = [
-            "hora_local",
-            "ticker",
-            "apuesta_estelar",
-            "direccion_estelar",
-            "probabilidad_estelar",
-            "cmf20",
-            "volumen_relativo",
-            "target",
-            "precio_consenso",
-            "precio_entrada",
-            "resultado",
-            "evaluacion",
-            "pnl_teorico_total",
-            "roi_teorico_pct",
-        ]
-
-        df_estelar = pd.DataFrame(
-            estelares
-        )
-
-        columnas_estelares_existentes = [
-            columna
-            for columna in columnas_estelares
-            if columna in df_estelar.columns
-        ]
-
-        df_estelar = df_estelar[
-            columnas_estelares_existentes
-        ]
-
-        df_estelar = df_estelar.iloc[
-            ::-1
-        ]
-
-        st.dataframe(
-            df_estelar,
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    else:
-
-        st.info(
-            "Todavía no hay "
-            "⭐ Apuestas Estelares."
-        )
-
-
-    # ========================================================
-    # HISTORIAL / RENDIMIENTO
-    # ========================================================
-
-    seccion(
-        "Historial y rendimiento"
-    )
-
-    operaciones = [
-        x
-        for x in historial
-        if x.get(
-            "decision"
-        )
-        in [
-            "ARRIBA",
-            "ABAJO",
-        ]
-    ]
-
-    resueltas = [
-        x
-        for x in operaciones
-        if x.get(
-            "evaluacion"
-        )
-        in [
-            "ACIERTO",
-            "FALLO",
-        ]
-    ]
-
-    aciertos = sum(
-        1
-        for x in resueltas
-        if x.get(
-            "evaluacion"
-        )
-        == "ACIERTO"
-    )
-
-    fallos = sum(
-        1
-        for x in resueltas
-        if x.get(
-            "evaluacion"
-        )
-        == "FALLO"
-    )
-
-    precision = 0.0
-
-    if resueltas:
-
-        precision = (
-            aciertos
-            / len(
-                resueltas
-            )
-        ) * 100.0
-
-
-    pnl = sum(
-        float(
-            x.get(
-                "pnl_teorico_total"
-            )
-        )
-        if x.get(
-            "pnl_teorico_total"
-        ) is not None
-        else float(
-            x.get(
-                "pnl_teorico_1_contrato"
-            )
-            or 0
-        ) * 10
-        for x in resueltas
-    )
-
-
-    r1, r2 = st.columns(
-        2
-    )
-
-    with r1:
-
-        tarjeta(
-            "OPERACIONES",
-            str(
-                len(
-                    operaciones
-                )
-            ),
-        )
-
-    with r2:
-
-        tarjeta(
-            "PRECISION",
-            f"{precision:.2f}%",
-        )
-
-
-    r3, r4, r5 = st.columns(
-        3
-    )
-
-    with r3:
-
-        tarjeta(
-            "ACIERTOS",
-            str(
-                aciertos
-            ),
-        )
-
-    with r4:
-
-        tarjeta(
-            "FALLOS",
-            str(
-                fallos
-            ),
-        )
-
-    with r5:
-
-        tarjeta(
-            "P&L",
-            f"${pnl:+.4f}",
-        )
-
-
-    # ========================================================
-    # HISTORIAL
-    # ========================================================
-
+    # Historial
+    seccion("Historial y rendimiento")
     if historial:
-
         columnas = [
-            "hora_local",
-            "ticker",
-            "decision",
-            "fuerza",
-            "probabilidad",
-            "target",
-            "precio_consenso",
-            "precio_entrada",
-            "edge",
-            "minuto_entrada",
-            "score",
-
-            # PROFIT +10%
-            "tp10_objetivo_precio",
-            "precio_salida_bid_actual",
-            "precio_maximo_observado",
-            "roi_actual_pct",
-            "roi_maximo_observado_pct",
-            "tp10_alcanzado",
-            "tp10_segundos_desde_entrada",
-
-            "resultado",
-            "evaluacion",
-            "pnl_teorico_total",
-            "roi_teorico_pct",
+            "hora_local", "ticker", "decision", "fuerza", "probabilidad",
+            "target", "precio_consenso", "precio_entrada", "edge", "minuto_entrada",
+            "score", "resultado", "evaluacion", "pnl_teorico_total", "roi_teorico_pct"
         ]
-
-        df = pd.DataFrame(
-            historial
-        )
-
-        columnas_existentes = [
-            columna
-            for columna in columnas
-            if columna in df.columns
-        ]
-
-        df = df[
-            columnas_existentes
-        ]
-
-        df = df.iloc[
-            ::-1
-        ]
-
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True,
-        )
-
+        df = pd.DataFrame(historial)
+        columnas_existentes = [col for col in columnas if col in df.columns]
+        df = df[columnas_existentes].iloc[::-1]
+        st.dataframe(df, use_container_width=True, hide_index=True)
     else:
-
-        st.info(
-            "Historial eliminado. "
-            "Las nuevas operaciones aparecerán aquí."
-        )
+        st.info("Historial vacío.")
 
 
 # ============================================================
 # INICIAR DASHBOARD EN VIVO
 # ============================================================
-
 dashboard_en_vivo()

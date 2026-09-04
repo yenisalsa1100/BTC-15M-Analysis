@@ -403,6 +403,8 @@
       "BTC sobre target en +0.077%",
       "Libros con fuerte sesgo comprador (OBI: +0.40)"
     ],
-    "resultado": null
+    "resultado": "ARRIBA",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.36
   }
 ]

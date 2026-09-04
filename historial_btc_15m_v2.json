@@ -582,5 +582,33 @@
     "resultado": "ABAJO",
     "evaluacion": "ACIERTO",
     "pnl_teorico_1_contrato": 0.22999999999999998
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V2_PRO_FIXED",
+    "ticker": "KXBTC15M-26SEP041315-15",
+    "timestamp": "2026-09-04T17:00:48.559465+00:00",
+    "target": 79763.15,
+    "precio_consenso": 79642.3667900536,
+    "yes_ask": 0.44,
+    "no_ask": 0.57,
+    "segundos_restantes": 857.710059,
+    "minuto_entrada": 0.70483235,
+    "distancia_target_pct": -0.1514273319777359,
+    "score": -44.0,
+    "probabilidad_arriba": 11.920292202211755,
+    "probabilidad_abajo": 88.07970779778825,
+    "decision": "ABAJO",
+    "fuerza": "MEDIA",
+    "probabilidad": 88.07970779778825,
+    "edge": 0.3107970779778825,
+    "precio_entrada": 0.57,
+    "lado_contrato": "NO",
+    "razones": [
+      "BTC bajo target en -0.151%",
+      "Momentum multidireccional negativo",
+      "Libros con fuerte sesgo vendedor (OBI: -0.21)",
+      "Trades agresivos vendiendo volumen"
+    ],
+    "resultado": null
   }
 ]

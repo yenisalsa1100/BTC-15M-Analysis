@@ -724,6 +724,8 @@
       "Momentum multidireccional positivo",
       "Libros con fuerte sesgo comprador (OBI: +0.31)"
     ],
-    "resultado": null
+    "resultado": "ARRIBA",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.31000000000000005
   }
 ]

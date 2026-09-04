@@ -375,7 +375,9 @@
       "Libros con fuerte sesgo vendedor (OBI: -0.35)",
       "Trades agresivos vendiendo volumen"
     ],
-    "resultado": null
+    "resultado": "ARRIBA",
+    "evaluacion": "FALLO",
+    "pnl_teorico_1_contrato": -0.72
   },
   {
     "version": "BTC_15M_PROFIT_ENGINE_V2_PRO_FIXED",

@@ -140,6 +140,8 @@
       "Momentum multidireccional negativo",
       "Libros con fuerte sesgo vendedor (OBI: -0.50)"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.39
   }
 ]

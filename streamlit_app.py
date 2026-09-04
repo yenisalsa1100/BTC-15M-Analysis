@@ -427,43 +427,6 @@ def numero(valor, decimales=2, prefijo="", sufijo=""):
         return str(valor)
 
 
-def detectar_apuesta_estelar(registro):
-    if not isinstance(registro, dict):
-        return None
-
-    decision = str(registro.get("decision", "")).upper()
-    if decision not in ["ARRIBA", "ABAJO"]:
-        return None
-
-    try:
-        prob_arriba = float(registro.get("probabilidad_arriba", 0) or 0)
-        prob_abajo = float(registro.get("probabilidad_abajo", 0) or 0)
-        cmf20 = float(registro.get("cmf20", 0) or 0)
-        volumen_relativo = float(registro.get("volumen_relativo", 0) or 0)
-    except Exception:
-        return None
-
-    if decision == "ARRIBA" and prob_arriba >= 84.0 and cmf20 >= 0.10 and volumen_relativo >= 0.60:
-        return {
-            "es_estelar": True,
-            "direccion": "ARRIBA",
-            "probabilidad": prob_arriba,
-            "cmf20": cmf20,
-            "volumen_relativo": volumen_relativo,
-        }
-
-    if decision == "ABAJO" and prob_abajo >= 84.0 and cmf20 <= -0.10 and volumen_relativo >= 0.60:
-        return {
-            "es_estelar": True,
-            "direccion": "ABAJO",
-            "probabilidad": prob_abajo,
-            "cmf20": cmf20,
-            "volumen_relativo": volumen_relativo,
-        }
-
-    return None
-
-
 def timestamp_registro(registro):
     if not isinstance(registro, dict):
         return 0.0
@@ -824,6 +787,13 @@ def dashboard_en_vivo():
                 tarjeta("PERDIDAS", str(perdidas))
             with m4:
                 tarjeta("EFECTIVIDAD", f"{win_rate:.1f}%")
+
+        # Limpiar evaluaciones en filas donde no se apostó para que no muestren fallos o aciertos teóricos
+        if "decision" in df.columns:
+            mask_no_apostar = df["decision"].astype(str).str.upper() == "NO APOSTAR"
+            for col in ["evaluacion", "resultado", "pnl_teorico_total", "roi_teorico_pct"]:
+                if col in df.columns:
+                    df.loc[mask_no_apostar, col] = "-"
 
         columnas = [
             "hora_local", "ticker", "decision", "fuerza", "probabilidad",

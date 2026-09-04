@@ -227,6 +227,7 @@
       "Momentum multidireccional negativo",
       "Trades agresivos vendiendo volumen"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "FALLO"
   }
 ]

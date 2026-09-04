@@ -774,8 +774,12 @@ def dashboard_en_vivo():
         
         if not df_operados.empty and "evaluacion" in df_operados.columns:
             total_operados = len(df_operados)
-            ganadas = len(df_operados[df_operados["evaluacion"].astype(str).str.upper() == "GANADA"])
-            perdidas = len(df_operados[df_operados["evaluacion"].astype(str).str.upper() == "PERDIDA"])
+            
+            # Contar aciertos ("GANADA" o "ACIERTO") y fallos ("PERDIDA" o "FALLO")
+            evaluaciones_upper = df_operados["evaluacion"].astype(str).str.upper()
+            ganadas = len(df_operados[evaluaciones_upper.isin(["GANADA", "ACIERTO"])])
+            perdidas = len(df_operados[evaluaciones_upper.isin(["PERDIDA", "FALLO"])])
+            
             win_rate = (ganadas / total_operados * 100) if total_operados > 0 else 0
             
             m1, m2, m3, m4 = st.columns(4)

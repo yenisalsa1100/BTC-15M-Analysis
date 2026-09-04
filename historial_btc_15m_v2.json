@@ -376,5 +376,31 @@
       "Trades agresivos vendiendo volumen"
     ],
     "resultado": null
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V2_PRO_FIXED",
+    "ticker": "KXBTC15M-26SEP032315-15",
+    "timestamp": "2026-09-04T03:00:53.355274+00:00",
+    "target": 80824.03,
+    "precio_consenso": 80886.60461938735,
+    "yes_ask": 0.64,
+    "no_ask": 0.37,
+    "segundos_restantes": 847.414782,
+    "minuto_entrada": 0.8764202999999999,
+    "distancia_target_pct": 0.07742081084963127,
+    "score": 46.0,
+    "probabilidad_arriba": 89.00164455326725,
+    "probabilidad_abajo": 10.998355446732743,
+    "decision": "ARRIBA",
+    "fuerza": "MEDIA",
+    "probabilidad": 89.00164455326725,
+    "edge": 0.25001644553267255,
+    "precio_entrada": 0.64,
+    "lado_contrato": "YES",
+    "razones": [
+      "BTC sobre target en +0.077%",
+      "Libros con fuerte sesgo comprador (OBI: +0.40)"
+    ],
+    "resultado": null
   }
 ]

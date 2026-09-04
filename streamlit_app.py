@@ -19,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Enlace corregido con el repositorio correcto de GitHub
 HISTORIAL_URL = (
     "https://raw.githubusercontent.com/yenisalsa1100/BTC-15M-Analysis/main/"
     "historial_btc_15m_v2.json"
@@ -802,15 +801,35 @@ def dashboard_en_vivo():
     else:
         st.caption("No hay razones registradas.")
 
-    # Historial
+    # Historial y rendimiento
     seccion("Historial y rendimiento")
     if historial:
+        df = pd.DataFrame(historial)
+        
+        # Filtrar operaciones reales para calcular estadísticas de efectividad (excluyendo NO APOSTAR)
+        df_operados = df[df["decision"] != "NO APOSTAR"].copy()
+        
+        if not df_operados.empty and "evaluacion" in df_operados.columns:
+            total_operados = len(df_operados)
+            ganadas = len(df_operados[df_operados["evaluacion"].astype(str).str.upper() == "GANADA"])
+            perdidas = len(df_operados[df_operados["evaluacion"].astype(str).str.upper() == "PERDIDA"])
+            win_rate = (ganadas / total_operados * 100) if total_operados > 0 else 0
+            
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                tarjeta("OPERACIONES", str(total_operados))
+            with m2:
+                tarjeta("GANADAS", str(ganadas))
+            with m3:
+                tarjeta("PERDIDAS", str(perdidas))
+            with m4:
+                tarjeta("EFECTIVIDAD", f"{win_rate:.1f}%")
+
         columnas = [
             "hora_local", "ticker", "decision", "fuerza", "probabilidad",
             "target", "precio_consenso", "precio_entrada", "edge", "minuto_entrada",
             "score", "resultado", "evaluacion", "pnl_teorico_total", "roi_teorico_pct"
         ]
-        df = pd.DataFrame(historial)
         columnas_existentes = [col for col in columnas if col in df.columns]
         df = df[columnas_existentes].iloc[::-1]
         st.dataframe(df, use_container_width=True, hide_index=True)

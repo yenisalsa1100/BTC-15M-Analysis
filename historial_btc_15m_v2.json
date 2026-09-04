@@ -609,6 +609,8 @@
       "Libros con fuerte sesgo vendedor (OBI: -0.21)",
       "Trades agresivos vendiendo volumen"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.43000000000000005
   }
 ]

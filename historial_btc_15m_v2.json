@@ -285,6 +285,8 @@
       "Momentum multidireccional negativo",
       "Trades agresivos vendiendo volumen"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "ACIERTO",
+    "pnl_teorico_1_contrato": 0.19999999999999996
   }
 ]

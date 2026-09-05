@@ -754,7 +754,10 @@
       "Momentum multidireccional positivo",
       "Trades agresivos vendiendo volumen"
     ],
-    "resultado": null
+    "resultado": "ARRIBA",
+    "evaluacion": "ACIERTO",
+    "resultado_actualizado_en": "2026-09-05T19:04:33.409596+00:00",
+    "pnl_bruto_teorico_1_contrato": 0.30000000000000004
   },
   {
     "version": "BTC_15M_PROFIT_ENGINE_V2_REAL_FIXED",

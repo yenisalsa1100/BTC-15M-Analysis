@@ -949,6 +949,9 @@
       "Ventas agresivas: flujo -0.29",
       "Ventas agresivas absorbidas por bids"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "ACIERTO",
+    "resultado_actualizado_en": "2026-09-05T19:15:11.465065+00:00",
+    "pnl_bruto_teorico_1_contrato": 0.22999999999999998
   }
 ]

@@ -2,15 +2,13 @@ name: Prueba Motor BTC 15M
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/15 * * * *'
-
+  
 permissions:
   contents: write
 
 concurrency:
   group: prueba-motor-btc-15m
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   probar-motor:

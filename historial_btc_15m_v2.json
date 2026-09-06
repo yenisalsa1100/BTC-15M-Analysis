@@ -953,5 +953,197 @@
     "evaluacion": "ACIERTO",
     "resultado_actualizado_en": "2026-09-05T19:15:11.465065+00:00",
     "pnl_bruto_teorico_1_contrato": 0.22999999999999998
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V2_REAL_FIXED",
+    "ticker": "KXBTC15M-26SEP052330-30",
+    "timestamp": "2026-09-06T03:15:30.211480+00:00",
+    "timestamp_local": "2026-09-05T22:15:30.211496-05:00",
+    "target": 79939.69,
+    "precio_consenso": 79957.89948271227,
+    "yes_bid": 0.57,
+    "yes_ask": 0.58,
+    "no_bid": 0.42,
+    "no_ask": 0.43,
+    "inicio_contrato": "2026-09-06T03:15:00+00:00",
+    "close_time": "2026-09-06T03:30:00+00:00",
+    "segundos_restantes": 869.785369,
+    "segundos_desde_inicio": 30.214631,
+    "minuto_entrada": 0.5035771833333333,
+    "ventana_entrada": "0:00-5:00",
+    "distancia_target_pct": 0.022779025928501482,
+    "score": 53.52846426067582,
+    "familias_score": {
+      "target": 12.528464260675815,
+      "tendencia_adx": 6.0,
+      "momentum_stoch": 13.0,
+      "bollinger": 3.0,
+      "microestructura": 14.0,
+      "rsi": 5.0
+    },
+    "probabilidad_arriba": 90.29422711921438,
+    "probabilidad_abajo": 9.705772880785624,
+    "decision": "ARRIBA",
+    "fuerza": "MEDIA",
+    "probabilidad": 90.29422711921438,
+    "edge": 0.3029422711921438,
+    "edge_bruto": 0.3229422711921438,
+    "spread_kalshi": 0.010000000000000009,
+    "precio_entrada": 0.58,
+    "lado_contrato": "YES",
+    "motivo_bloqueo": null,
+    "regimen": {
+      "bloqueado": false,
+      "razones": [
+        "Regimen valido: ATR 0.012% / ADX 16.3"
+      ],
+      "atr_relativo": 0.000120935839473487,
+      "adx": 16.298732355912108
+    },
+    "indicadores": {
+      "close": 79931.66,
+      "vela_timestamp": 1788664440,
+      "ema9": 79917.98561578098,
+      "ema21": 79912.18907137285,
+      "ema50": 79915.78323018012,
+      "rsi14": 63.00737419017189,
+      "stoch_k": 66.66666666666667,
+      "stoch_d": 47.4029252704077,
+      "stoch_k_anterior": 40.04944119757346,
+      "stoch_d_anterior": 45.540578315040705,
+      "atr14": 9.666602402609342,
+      "atr_relativo": 0.000120935839473487,
+      "atr_percentil": 12.0,
+      "adx14": 16.298732355912108,
+      "plus_di": 35.34832877927646,
+      "minus_di": 26.73922095183253,
+      "bb_mid": 79909.448,
+      "bb_upper": 79933.56218553518,
+      "bb_lower": 79885.33381446483,
+      "bb_posicion": 0.9605587853589299,
+      "mom1": 1.2510688840450257e-07,
+      "mom3": 0.00027143046105515545,
+      "mom5": 0.0002457702858718047
+    },
+    "calidad_consenso": {
+      "fuentes_validas": 5,
+      "dispersion_pct": 0.07846566502390925,
+      "salud": [
+        {
+          "nombre": "COINBASE",
+          "precio": 79940.66,
+          "peso_base": 2.0,
+          "latencia_ms": 173.69860100006917,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.001401019592002259,
+          "peso_final": 2.0,
+          "estado": "OK"
+        },
+        {
+          "nombre": "KRAKEN",
+          "precio": 79948.0,
+          "peso_base": 1.5,
+          "latencia_ms": 90.00708100006705,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.007780662377046351,
+          "peso_final": 1.5,
+          "estado": "OK"
+        },
+        {
+          "nombre": "CMC",
+          "precio": 79933.71315069105,
+          "peso_base": 0.8,
+          "latencia_ms": 265.1130900001135,
+          "edad_segundos": 0.26511335372924805,
+          "desviacion_pct": 0.010090905292510355,
+          "peso_final": 0.8,
+          "estado": "OK"
+        },
+        {
+          "nombre": "CF_BRTI",
+          "precio": 79996.44,
+          "peso_base": 2.5,
+          "latencia_ms": 705.4068110001026,
+          "edad_segundos": 0.7054083347320557,
+          "desviacion_pct": 0.0683747597313989,
+          "peso_final": 2.2001971895984465,
+          "estado": "OK"
+        },
+        {
+          "nombre": "BITSTAMP",
+          "precio": 79941.78,
+          "peso_base": 1.0,
+          "latencia_ms": 190.37651700000424,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.0,
+          "peso_final": 1.0,
+          "estado": "OK"
+        }
+      ],
+      "bloqueado": false,
+      "motivo": "Consenso saludable"
+    },
+    "microestructura": {
+      "calidad": {
+        "books_validos": 3,
+        "flujos_validos": 3
+      },
+      "obi_total": 0.469837074835054,
+      "orderflow_total": 0.5883956695389401,
+      "absorcion": 0.0,
+      "razon_absorcion": "Sin absorcion confirmada",
+      "coinbase_book": {
+        "obi": 0.8904785378550746,
+        "bid_depth": 4.15253035500686,
+        "ask_depth": 0.24056935160847723,
+        "spread_bps": 0.0012509279551578887
+      },
+      "kraken_book": {
+        "obi": -0.0521828927450386,
+        "bid_depth": 3.785860246261181,
+        "ask_depth": 4.202727883838459,
+        "spread_bps": 0.012506886605164564
+      },
+      "bitstamp_book": {
+        "obi": 0.4115841001651519,
+        "bid_depth": 4.794915995059455,
+        "ask_depth": 1.9987507719414792,
+        "spread_bps": 0.0012508290644844672
+      },
+      "kalshi_obi": null,
+      "coinbase_flow": {
+        "imbalance": 0.4624986603880081,
+        "buy_volume": 0.51775439,
+        "sell_volume": 0.19028645000000005,
+        "trades": 117
+      },
+      "kraken_flow": {
+        "imbalance": 0.4818554614328096,
+        "buy_volume": 0.04821645,
+        "sell_volume": 0.01685933,
+        "trades": 30
+      },
+      "bitstamp_flow": {
+        "imbalance": 1.0,
+        "buy_volume": 0.4618393400000001,
+        "sell_volume": 0.0,
+        "trades": 30
+      }
+    },
+    "mempool": {
+      "count": 78523.0,
+      "vsize": 40670742.0,
+      "cambio_count_pct": 1.829805996472663,
+      "cambio_vsize_pct": 0.5035315461411524
+    },
+    "razones": [
+      "BTC frente al target: +0.023%",
+      "Momentum 1/3/5 positivo",
+      "Stochastic RSI cruza al alza",
+      "Libros compradores: OBI +0.47",
+      "Compras agresivas: flujo +0.59",
+      "Sin absorcion confirmada"
+    ],
+    "resultado": null
   }
 ]

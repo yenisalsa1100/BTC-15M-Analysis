@@ -1924,5 +1924,187 @@
     "evaluacion": "ACIERTO",
     "resultado_actualizado_en": "2026-09-06T17:45:25.299714+00:00",
     "pnl_bruto_teorico_1_contrato": 0.42000000000000004
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V2_REAL_FIXED",
+    "ticker": "KXBTC15M-26SEP061530-30",
+    "timestamp": "2026-09-06T19:15:30.634606+00:00",
+    "timestamp_local": "2026-09-06T14:15:30.634619-05:00",
+    "target": 79867.4,
+    "precio_consenso": 79851.95578904232,
+    "yes_bid": 0.48,
+    "yes_ask": 0.49,
+    "no_bid": 0.51,
+    "no_ask": 0.52,
+    "inicio_contrato": "2026-09-06T19:15:00+00:00",
+    "close_time": "2026-09-06T19:30:00+00:00",
+    "segundos_restantes": 869.363237,
+    "segundos_desde_inicio": 30.636763,
+    "minuto_entrada": 0.5106127166666666,
+    "ventana_entrada": "0:00-5:00",
+    "distancia_target_pct": -0.019337315297202076,
+    "score": -56.635523413461144,
+    "familias_score": {
+      "target": -10.635523413461142,
+      "tendencia_adx": -16.0,
+      "momentum_stoch": -8.0,
+      "bollinger": -3.0,
+      "microestructura": -14.0,
+      "rsi": -5.0
+    },
+    "probabilidad_arriba": 8.628889953086126,
+    "probabilidad_abajo": 91.37111004691387,
+    "decision": "ABAJO",
+    "fuerza": "MEDIA",
+    "probabilidad": 91.37111004691387,
+    "edge": 0.3737111004691387,
+    "edge_bruto": 0.3937111004691387,
+    "spread_kalshi": 0.010000000000000009,
+    "precio_entrada": 0.52,
+    "lado_contrato": "NO",
+    "motivo_bloqueo": null,
+    "regimen": {
+      "bloqueado": false,
+      "razones": [
+        "Regimen valido: ATR 0.016% / ADX 30.4"
+      ],
+      "atr_relativo": 0.00016389449979395054,
+      "adx": 30.39553729379622
+    },
+    "indicadores": {
+      "close": 79855.15,
+      "vela_timestamp": 1788722040,
+      "ema9": 79867.7799144992,
+      "ema21": 79884.0831761266,
+      "ema50": 79885.57593831858,
+      "rsi14": 34.83624940598726,
+      "stoch_k": 9.024193123260916,
+      "stoch_d": 10.733943498473721,
+      "stoch_k_anterior": 13.650192751392751,
+      "stoch_d_anterior": 10.29253300486924,
+      "atr14": 13.087819865220888,
+      "atr_relativo": 0.00016389449979395054,
+      "atr_percentil": 2.0,
+      "adx14": 30.39553729379622,
+      "plus_di": 15.163951185296577,
+      "minus_di": 38.93461098869839,
+      "bb_mid": 79890.7175,
+      "bb_upper": 79948.77274330296,
+      "bb_lower": 79832.66225669703,
+      "bb_posicion": 0.19367538592170996,
+      "mom1": -7.851100068101413e-05,
+      "mom3": -0.0001543807316820578,
+      "mom5": -0.00015801117271718734
+    },
+    "calidad_consenso": {
+      "fuentes_validas": 4,
+      "dispersion_pct": 0.04323091594030401,
+      "salud": [
+        {
+          "nombre": "COINBASE",
+          "precio": 79858.73,
+          "peso_base": 2.0,
+          "latencia_ms": 165.7159970000066,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.004689311219079919,
+          "peso_final": 2.0,
+          "estado": "OK"
+        },
+        {
+          "nombre": "CMC",
+          "precio": 79869.50527943509,
+          "peso_base": 0.8,
+          "latencia_ms": 264.44203200026095,
+          "edad_segundos": 0.26444339752197266,
+          "desviacion_pct": 0.008802982170395312,
+          "peso_final": 0.8,
+          "estado": "OK"
+        },
+        {
+          "nombre": "CF_BRTI",
+          "precio": 79834.98,
+          "peso_base": 2.5,
+          "latencia_ms": 551.340429999982,
+          "edad_segundos": 0.5513415336608887,
+          "desviacion_pct": 0.0344279337699087,
+          "peso_final": 2.4654067674225884,
+          "estado": "OK"
+        },
+        {
+          "nombre": "BITSTAMP",
+          "precio": 79866.22,
+          "peso_base": 1.0,
+          "latencia_ms": 164.80711700023676,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.004689311219061697,
+          "peso_final": 1.0,
+          "estado": "OK"
+        }
+      ],
+      "bloqueado": false,
+      "motivo": "Consenso saludable"
+    },
+    "microestructura": {
+      "calidad": {
+        "books_validos": 2,
+        "flujos_validos": 2
+      },
+      "obi_total": -0.13937436274755194,
+      "orderflow_total": -0.5464040975852823,
+      "absorcion": 0.0,
+      "razon_absorcion": "Sin absorcion confirmada",
+      "coinbase_book": {
+        "obi": null,
+        "bid_depth": 0.0,
+        "ask_depth": 0.0,
+        "spread_bps": null
+      },
+      "kraken_book": {
+        "obi": -0.37637550145187315,
+        "bid_depth": 4.505391965196277,
+        "ask_depth": 9.943661834599508,
+        "spread_bps": 0.012521638958051978
+      },
+      "bitstamp_book": {
+        "obi": 0.21612734530892985,
+        "bid_depth": 3.1384048327753935,
+        "ask_depth": 2.022904704225688,
+        "spread_bps": 0.001252093734837387
+      },
+      "kalshi_obi": null,
+      "coinbase_flow": {
+        "imbalance": -0.3196061463779235,
+        "buy_volume": 0.05795966000000001,
+        "sell_volume": 0.11241125000000007,
+        "trades": 157
+      },
+      "kraken_flow": {
+        "imbalance": null,
+        "buy_volume": 0.0,
+        "sell_volume": 0.0,
+        "trades": 0
+      },
+      "bitstamp_flow": {
+        "imbalance": -1.0,
+        "buy_volume": 0.0,
+        "sell_volume": 0.00205465,
+        "trades": 4
+      }
+    },
+    "mempool": {
+      "count": 82483.0,
+      "vsize": 42171155.0,
+      "cambio_count_pct": 0.06429697925512556,
+      "cambio_vsize_pct": -0.1390011876668769
+    },
+    "razones": [
+      "BTC frente al target: -0.019%",
+      "EMAs y DI alineados a la baja",
+      "Momentum 1/3/5 negativo",
+      "Libros vendedores: OBI -0.14",
+      "Ventas agresivas: flujo -0.55",
+      "Sin absorcion confirmada"
+    ],
+    "resultado": null
   }
 ]

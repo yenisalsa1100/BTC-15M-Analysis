@@ -1532,6 +1532,9 @@
       "Ventas agresivas: flujo -0.39",
       "Sin absorcion confirmada"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "ACIERTO",
+    "resultado_actualizado_en": "2026-09-06T04:20:04.019965+00:00",
+    "pnl_bruto_teorico_1_contrato": 0.29000000000000004
   }
 ]

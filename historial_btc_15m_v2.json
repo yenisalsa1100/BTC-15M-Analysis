@@ -1342,5 +1342,196 @@
     "evaluacion": "ACIERTO",
     "resultado_actualizado_en": "2026-09-06T03:50:01.548482+00:00",
     "pnl_bruto_teorico_1_contrato": 0.29000000000000004
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V2_REAL_FIXED",
+    "ticker": "KXBTC15M-26SEP060015-15",
+    "timestamp": "2026-09-06T04:04:48.601715+00:00",
+    "timestamp_local": "2026-09-05T23:04:48.601728-05:00",
+    "target": 80042.95,
+    "precio_consenso": 79977.93445604593,
+    "yes_bid": 0.29,
+    "yes_ask": 0.3,
+    "no_bid": 0.7,
+    "no_ask": 0.71,
+    "inicio_contrato": "2026-09-06T04:00:00+00:00",
+    "close_time": "2026-09-06T04:15:00+00:00",
+    "segundos_restantes": 611.394432,
+    "segundos_desde_inicio": 288.605568,
+    "minuto_entrada": 4.8100928000000005,
+    "ventana_entrada": "0:00-5:00",
+    "distancia_target_pct": -0.081225821829491,
+    "score": -52.0,
+    "familias_score": {
+      "target": -22.0,
+      "tendencia_adx": 0.0,
+      "momentum_stoch": -8.0,
+      "bollinger": -3.0,
+      "microestructura": -14.0,
+      "rsi": -5.0
+    },
+    "probabilidad_arriba": 10.278402491725178,
+    "probabilidad_abajo": 89.72159750827483,
+    "decision": "ABAJO",
+    "fuerza": "MEDIA",
+    "probabilidad": 89.72159750827483,
+    "edge": 0.1672159750827482,
+    "edge_bruto": 0.18721597508274823,
+    "spread_kalshi": 0.010000000000000009,
+    "precio_entrada": 0.71,
+    "lado_contrato": "NO",
+    "motivo_bloqueo": null,
+    "regimen": {
+      "bloqueado": false,
+      "razones": [
+        "Regimen valido: ATR 0.021% / ADX 28.7"
+      ],
+      "atr_relativo": 0.00020990925507532,
+      "adx": 28.70280947568243
+    },
+    "indicadores": {
+      "close": 80000.69,
+      "vela_timestamp": 1788667380,
+      "ema9": 80021.82295889361,
+      "ema21": 80024.31725835659,
+      "ema50": 79999.87545095281,
+      "rsi14": 44.25892321841408,
+      "stoch_k": 0.0,
+      "stoch_d": 1.3483435664146934,
+      "stoch_k_anterior": 0.0,
+      "stoch_d_anterior": 3.152441732298462,
+      "atr14": 16.792885243411604,
+      "atr_relativo": 0.00020990925507532,
+      "atr_percentil": 52.0,
+      "adx14": 28.70280947568243,
+      "plus_di": 38.13831931298972,
+      "minus_di": 32.076212077793286,
+      "bb_mid": 80039.8455,
+      "bb_upper": 80099.21503746713,
+      "bb_lower": 79980.47596253286,
+      "bb_posicion": 0.17023913550221478,
+      "mom1": -1.2499890622574839e-07,
+      "mom3": -0.0003037800687284431,
+      "mom5": -0.00036973505528148376
+    },
+    "calidad_consenso": {
+      "fuentes_validas": 5,
+      "dispersion_pct": 0.09840990443876532,
+      "salud": [
+        {
+          "nombre": "COINBASE",
+          "precio": 79992.84,
+          "peso_base": 2.0,
+          "latencia_ms": 15.270492000126978,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.011587194387753116,
+          "peso_final": 2.0,
+          "estado": "OK"
+        },
+        {
+          "nombre": "KRAKEN",
+          "precio": 80005.5,
+          "peso_base": 1.5,
+          "latencia_ms": 31.04063600039808,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.004237388238884472,
+          "peso_final": 1.5,
+          "estado": "OK"
+        },
+        {
+          "nombre": "CMC",
+          "precio": 80002.66661934598,
+          "peso_base": 0.8,
+          "latencia_ms": 0.0025339995772810653,
+          "edad_segundos": 28.32043957710266,
+          "desviacion_pct": 0.0006957558319171133,
+          "peso_final": 0.27999999999999997,
+          "estado": "OK"
+        },
+        {
+          "nombre": "CF_BRTI",
+          "precio": 79926.77,
+          "peso_base": 2.5,
+          "latencia_ms": 291.6076620003878,
+          "edad_segundos": 0.2916088104248047,
+          "desviacion_pct": 0.09417251619988086,
+          "peso_final": 1.9986522171884307,
+          "estado": "OK"
+        },
+        {
+          "nombre": "BITSTAMP",
+          "precio": 80002.11,
+          "peso_base": 1.0,
+          "latencia_ms": 28.287052999985463,
+          "edad_segundos": 0.0,
+          "desviacion_pct": 0.0,
+          "peso_final": 1.0,
+          "estado": "OK"
+        }
+      ],
+      "bloqueado": false,
+      "motivo": "Consenso saludable"
+    },
+    "microestructura": {
+      "calidad": {
+        "books_validos": 3,
+        "flujos_validos": 3
+      },
+      "obi_total": -0.16434671480285104,
+      "orderflow_total": -0.38860625729477316,
+      "absorcion": 0.0,
+      "razon_absorcion": "Sin absorcion confirmada",
+      "coinbase_book": {
+        "obi": 0.04896308710672967,
+        "bid_depth": 1.4589400510991988,
+        "ask_depth": 1.3227403893885128,
+        "spread_bps": 0.0012501119624978051
+      },
+      "kraken_book": {
+        "obi": -0.5310669784583385,
+        "bid_depth": 1.2952138233364436,
+        "ask_depth": 4.228874964773664,
+        "spread_bps": 0.01249914849623629
+      },
+      "bitstamp_book": {
+        "obi": -0.040885923138781304,
+        "bid_depth": 2.455519892732345,
+        "ask_depth": 2.6648718353679035,
+        "spread_bps": 0.0012499669533438348
+      },
+      "kalshi_obi": null,
+      "coinbase_flow": {
+        "imbalance": -0.27069010135731686,
+        "buy_volume": 0.33356018000000004,
+        "sell_volume": 0.5811680600000002,
+        "trades": 212
+      },
+      "kraken_flow": {
+        "imbalance": -0.13901546378663865,
+        "buy_volume": 0.05086137,
+        "sell_volume": 0.06728563,
+        "trades": 23
+      },
+      "bitstamp_flow": {
+        "imbalance": -0.9988247594318876,
+        "buy_volume": 6.31e-05,
+        "sell_volume": 0.10731916999999999,
+        "trades": 5
+      }
+    },
+    "mempool": {
+      "count": 79593.0,
+      "vsize": 40963303.0,
+      "cambio_count_pct": 0.04776569668782603,
+      "cambio_vsize_pct": 0.04310591896043275
+    },
+    "razones": [
+      "BTC frente al target: -0.081%",
+      "Momentum 1/3/5 negativo",
+      "Libros vendedores: OBI -0.16",
+      "Ventas agresivas: flujo -0.39",
+      "Sin absorcion confirmada"
+    ],
+    "resultado": null
   }
 ]

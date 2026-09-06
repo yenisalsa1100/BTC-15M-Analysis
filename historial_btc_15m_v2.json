@@ -1725,6 +1725,9 @@
       "Libros compradores: OBI +0.54",
       "Sin absorcion confirmada"
     ],
-    "resultado": null
+    "resultado": "ARRIBA",
+    "evaluacion": "ACIERTO",
+    "resultado_actualizado_en": "2026-09-06T05:50:04.326840+00:00",
+    "pnl_bruto_teorico_1_contrato": 0.5
   }
 ]

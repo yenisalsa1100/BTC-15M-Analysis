@@ -1144,7 +1144,10 @@
       "Compras agresivas: flujo +0.59",
       "Sin absorcion confirmada"
     ],
-    "resultado": null
+    "resultado": "ABAJO",
+    "evaluacion": "FALLO",
+    "resultado_actualizado_en": "2026-09-06T03:34:55.275004+00:00",
+    "pnl_bruto_teorico_1_contrato": -0.58
   },
   {
     "version": "BTC_15M_PROFIT_ENGINE_V2_REAL_FIXED",

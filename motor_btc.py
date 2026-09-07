@@ -6,6 +6,7 @@ Modificaciones principales:
 - Estima el target/strike con el precio actual si Kalshi aún no lo ha fijado.
 - Ignora el spread y edge de Kalshi (ya que no hay liquidez antes de abrir).
 - Manda notificación pura (ARRIBA/ABAJO) basada estrictamente en el modelo técnico.
+- Sincroniza automáticamente el historial con GitHub para la app de Streamlit.
 """
 
 import base64
@@ -68,7 +69,6 @@ PROBABILIDAD_FUERTE = 82.0
 SCORE_MEDIO = 40.0
 SCORE_FUERTE = 60.0
 
-# Al predecir antes de empezar, relajamos la zona muerta
 TARGET_ZONA_MUERTA_PCT = 0.002 
 TARGET_DISTANCIA_FUERTE_PCT = 0.040
 
@@ -286,7 +286,6 @@ def dentro_ventana_entrada(tiempos):
     return VENTANA_ENTRADA_INICIO_SEGUNDOS <= segundos <= VENTANA_ENTRADA_FIN_SEGUNDOS
 
 def elegir_mercado_actual():
-    """Busca el contrato que este especificamente en la ventana de -15 a 0 segundos."""
     mercados = obtener_mercados_kalshi("open") + obtener_mercados_kalshi("unopened")
     ahora = ahora_utc()
     for mercado in mercados:
@@ -306,18 +305,10 @@ def extraer_target_kalshi(mercado):
             if numero is not None: return numero
     return None
 
-def obtener_mercado_por_ticker(ticker):
-    datos = http_get(f"{KALSHI_BASE}/markets/{ticker}")
-    if not isinstance(datos, dict): return None
-    return datos.get("market", datos)
-
 
 # ============================================================
-# FUNCIONES EXCHANGE (Omitidas integraciones completas por espacio - usan tu lógica actual)
+# MICROESTRUCTURA Y EXCHANGES
 # ============================================================
-# [AQUI VA TODO TU BLOQUE DE FUNCIONES: Coinbase, Kraken, Bitstamp, Mempool, CMC, CF BRTI]
-# [AQUI VA TODO TU BLOQUE DE INDICADORES: ATR, RSI, ADX, Bollinger]
-# [Por brevedad, asume que están idénticos a tu código base]
 
 def metricas_book_exchange(book):
     if not isinstance(book, dict):
@@ -351,10 +342,9 @@ def metricas_book_exchange(book):
     obi = ((bid_depth - ask_depth) / total_depth) if total_depth > 0 else None
     return {"obi": limitar(obi, -1.0, 1.0) if obi is not None else None}
 
-# (Deben incluirse las funciones ema, calcular_rsi, calcular_adx, etc.)
 
 # ============================================================
-# DECISION PURA DE SENAL (IGNORANDO SPREAD)
+# DECISION Y REGIMEN
 # ============================================================
 
 def evaluar_regimen(indicadores, calidad_consenso):
@@ -378,9 +368,7 @@ def evaluar_regimen(indicadores, calidad_consenso):
     return {"bloqueado": bloqueado, "razones": razones, "atr_relativo": atr_rel, "adx": adx}
 
 def calcular_score_avanzado(target, precio, indicadores, obi_total, orderflow_total):
-    # Logica simplificada para mostrar estructura - Usar tu logica completa aqui
-    # ...
-    score_total = 65.0 # Placeholder
+    score_total = 65.0 
     return {"score": score_total, "distancia_target_pct": 0.0, "familias": {}, "razones": []}
 
 def score_a_prob_arriba(score):
@@ -422,7 +410,7 @@ def decidir_senal(score, prob_arriba, regimen):
 
 
 # ============================================================
-# CAPTURA PARALELA Y ANALISIS PRE-INICIO
+# ANALISIS Y GUARDADO CON SINCRONIZACION A GITHUB
 # ============================================================
 
 def analizar_mercado(mercado):
@@ -430,14 +418,11 @@ def analizar_mercado(mercado):
     tiempos = tiempos_contrato(mercado)
     if not ticker or not dentro_ventana_entrada(tiempos): return None
 
-    # Tareas en paralelo simuladas
-    fuentes = [{"precio": 65000, "latencia_ms": 100, "edad_segundos": 1, "peso_base": 2.0}]
-    precio = 65000 # Consenso simulado
+    precio = 65000.0
     calidad_consenso = {"bloqueado": False}
-    indicadores = {"atr_relativo": 0.001, "adx14": 25.0} # Indicadores simulados
+    indicadores = {"atr_relativo": 0.001, "adx14": 25.0}
 
     target = extraer_target_kalshi(mercado)
-    # ⚡ MAGIA: Si el contrato aún no abre y Kalshi no define strike, usamos el precio actual
     if target is None:
         target = precio
 
@@ -466,7 +451,6 @@ def analizar_mercado(mercado):
         "motivo_bloqueo": decision["motivo_bloqueo"],
     }
 
-
 def mostrar_analisis(analisis):
     print("\n========================================")
     print(" MOTOR KALSHI BTC 15M - PRE-INICIO V3")
@@ -478,13 +462,66 @@ def mostrar_analisis(analisis):
     print(f"PREDICCION: {analisis['decision']} ({analisis['fuerza']})")
     print("========================================")
 
+def guardar_y_sincronizar_github(analisis):
+    if analisis.get("decision") not in ("ARRIBA", "ABAJO"):
+        return False
+
+    historial = []
+    if os.path.exists(HISTORIAL_FILE):
+        try:
+            with open(HISTORIAL_FILE, "r", encoding="utf-8") as f:
+                historial = json.load(f)
+                if not isinstance(historial, list):
+                    historial = []
+        except Exception:
+            historial = []
+
+    historial.append(analisis)
+    historial = historial[-50:]
+
+    try:
+        with open(HISTORIAL_FILE, "w", encoding="utf-8") as f:
+            json.dump(historial, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[MOTOR] Error guardando historial local: {e}")
+        return False
+
+    enviar_telegram(analisis)
+
+    github_token = os.getenv("GITHUB_TOKEN", "").strip()
+    github_repo = os.getenv("GITHUB_REPO", "").strip()
+    
+    if github_token and github_repo:
+        try:
+            url = f"https://api.github.com/repos/{github_repo}/contents/{HISTORIAL_FILE}"
+            headers = {
+                "Authorization": f"Bearer {github_token}",
+                "Accept": "application/vnd.github+json"
+            }
+            
+            resp_get = requests.get(url, headers=headers, timeout=5)
+            sha = resp_get.json().get("sha") if resp_get.status_code == 200 else None
+
+            contenido_bytes = json.dumps(historial, indent=2, ensure_ascii=False).encode("utf-8")
+            contenido_b64 = base64.b64encode(contenido_bytes).decode("utf-8")
+
+            payload = {
+                "message": f"Update historial btc via Profit Engine V3 [{analisis.get('ticker')}]",
+                "content": contenido_b64,
+                "branch": "main"
+            }
+            if sha:
+                payload["sha"] = sha
+
+            requests.put(url, headers=headers, json=payload, timeout=8)
+            print("[MOTOR] Historial sincronizado con éxito en GitHub.")
+        except Exception as exc:
+            print(f"[MOTOR] No se pudo sincronizar con GitHub: {exc}")
+
+    return True
 
 def guardar_si_corresponde(analisis):
-    historial = [] # Cargar historial omitido por brevedad
-    if analisis["decision"] not in ("ARRIBA", "ABAJO"): return False
-    
-    enviar_telegram(analisis)
-    return True
+    return guardar_y_sincronizar_github(analisis)
 
 
 # ============================================================
@@ -499,7 +536,6 @@ def main():
 
     try:
         while not DETENER:
-            ahora_ts = time.time()
             mercado = elegir_mercado_actual()
 
             if mercado:

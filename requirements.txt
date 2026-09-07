@@ -2,3 +2,4 @@ requests
 pandas
 cryptography
 streamlit
+streamlit-autorefresh

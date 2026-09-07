@@ -1,5 +1,5 @@
 """
-STREAMLIT APP - KALSHI BTC 15M (DISEÑO PROFESIONAL AVANZADO)
+STREAMLIT APP - KALSHI BTC 15M (RESETEO DE HISTORIAL)
 """
 
 import json
@@ -30,20 +30,45 @@ def cargar_historial_github():
         pass
     return []
 
+# Botón para limpiar el historial en GitHub vía token si está disponible
+github_token = st.secrets.get("GITHUB_TOKEN", "") if hasattr(st, "secrets") else ""
+github_repo = st.secrets.get("GITHUB_REPO", "yenisalsa1100/BTC-15M-Analysis") if hasattr(st, "secrets") else "yenisalsa1100/BTC-15M-Analysis"
+
+if st.button("🗑️ ELIMINAR HISTORIAL Y EMPEZAR DE 0", use_container_width=True):
+    if github_token:
+        try:
+            url = f"https://api.github.com/repos/{github_repo}/contents/historial_btc_15m_v2.json"
+            headers = {
+                "Authorization": f"Bearer {github_token}",
+                "Accept": "application/vnd.github+json"
+            }
+            resp_get = requests.get(url, headers=headers, timeout=5)
+            if resp_get.status_code == 200:
+                sha = resp_get.json().get("sha")
+                import base64
+                contenido_vacio = base64.b64encode(json.dumps([], indent=2).encode("utf-8")).decode("utf-8")
+                payload = {
+                    "message": "Reset historial v2 a cero",
+                    "content": contenido_vacio,
+                    "branch": "main",
+                    "sha": sha
+                }
+                requests.put(url, headers=headers, json=payload, timeout=8)
+                st.success("¡Historial borrado con éxito! El sistema comienza de 0.")
+                st.rerun()
+        except Exception as e:
+            st.error(f"No se pudo limpiar automáticamente en GitHub: {e}")
+    else:
+        st.warning("Para borrar directamente desde la web, asegúrate de configurar tu GITHUB_TOKEN en los Secrets de Streamlit Cloud. De lo contrario, puedes vaciar el archivo `historial_btc_15m_v2.json` manualmente en tu repositorio de GitHub dejando solo `[]` dentro.")
+
 historial = cargar_historial_github()
 
-# Botón superior de eliminar historial (simulado visualmente o funcional)
-if st.button("🗑️ ELIMINAR HISTORIAL", use_container_width=True):
-    st.warning("Función de limpieza de historial conectada al motor.")
-
-# Banner principal de última predicción
 if historial:
     ultimo = historial[-1]
     decision = ultimo.get("decision", "N/A")
     prob = float(ultimo.get("probabilidad", 0))
     score = float(ultimo.get("score", 0))
     
-    # Color del banner según decisión
     color_banner = "#1e293b"
     if decision == "ARRIBA":
         color_banner = "#064e3b"
@@ -61,27 +86,25 @@ if historial:
         unsafe_allow_html=True
     )
     
-    # Métricas Operación
     st.markdown("### 🎯 Operación")
     c1, c2, c3 = st.columns(3)
     c1.metric("Ticker", ultimo.get("ticker", "N/D"))
     c2.metric("Entrada", f"Objetivo: {ultimo.get('minuto_entrada', 'N/D')}")
     c3.metric("Hora", str(ultimo.get("timestamp", "N/D")))
     
-    # Métricas Profit Máximo
     st.markdown("### 💰 Profit máximo")
     p1, p2, p3 = st.columns(3)
     p1.metric("Entrada", "N/D")
     p2.metric("Máximo Alcanzado", "N/D")
     p3.metric("Profit Máximo", "⏳ PENDIENTE")
 
-    # Métricas Resultado
     st.markdown("### 🏁 Resultado")
     r1, r2 = st.columns(2)
     r1.metric("Resultado Final", "⏳ PENDIENTE")
     r2.metric("Llegó a +15%", "⏳ PENDIENTE")
+else:
+    st.info("El historial está vacío. Esperando nuevas ejecuciones del motor...")
 
-# Resumen Global Cálculos
 total_reg = len(historial)
 operadas = [h for h in historial if h.get("decision") in ("ARRIBA", "ABAJO")]
 ganadas = sum(1 for h in operadas if h.get("resultado") == "GANADA")
@@ -96,7 +119,6 @@ s2.metric("Ganadas", ganadas)
 s3.metric("Perdidas", perdidas)
 s4.metric("Precisión", f"{precision:.1f}%")
 
-# Métricas Profit +15%
 con_profit = sum(1 for h in operadas if h.get("profit_15_alcanzado", False))
 sin_profit = len(operadas) - con_profit
 efectividad_profit = (con_profit / len(operadas) * 100) if operadas else 0.0
@@ -108,7 +130,6 @@ f2.metric("Sin Profit +15%", sin_profit)
 f3.metric("Pendientes", len(historial) - len(operadas))
 f4.metric("Efectividad Profit", f"{efectividad_profit:.1f}%")
 
-# Historial Tabla Inferior
 st.markdown("---")
 st.markdown("### 📜 Historial")
 if historial:
@@ -127,4 +148,4 @@ if historial:
         })
     st.dataframe(datos_tabla, use_container_width=True)
 else:
-    st.info("Cargando historial de datos...")
+    st.write("Sin registros en el historial.")

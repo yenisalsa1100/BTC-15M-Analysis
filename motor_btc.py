@@ -1,5 +1,5 @@
 """
-MOTOR KALSHI BTC 15M - PROFIT ENGINE V3 (COMPLETO & TRACKING)
+MOTOR KALSHI BTC 15M - PROFIT ENGINE V3 (COMPLETO & TRACKING OPTIMIZADO)
 Configurado para apuntar al archivo historial_btc_15m_v2.json
 """
 
@@ -49,7 +49,7 @@ VENTANA_ENTRADA_FIN_SEGUNDOS = 0
 
 INTERVALO_REVISION = 2
 INTERVALO_RESULTADOS = 30
-TIMEOUT_HTTP = 8
+TIMEOUT_HTTP = 10
 MAX_WORKERS = 12
 
 
@@ -210,7 +210,7 @@ def http_post(url, data=None, headers=None, timeout=TIMEOUT_HTTP):
 
 
 # ============================================================
-# TELEGRAM (CONTROL ESTRICTO: 1 SOLA NOTIFICACION)
+# TELEGRAM (CONTROL ESTRICTO: 1 SOLA NOTIFICACION + TIMEOUT AMPLIADO)
 # ============================================================
 
 def enviar_telegram(analisis):
@@ -243,14 +243,17 @@ def enviar_telegram(analisis):
         f"Momento: {minuto*60:.0f}s para iniciar\n"
     )
 
-    respuesta = http_post(
-        f"https://api.telegram.org/bot{token}/sendMessage",
-        data={"chat_id": chat_id, "text": texto},
-    )
-    
-    if respuesta and respuesta.status_code == 200:
-        ULTIMO_TICKER_NOTIFICADO = ticker
-        return True
+    try:
+        respuesta = http_post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data={"chat_id": chat_id, "text": texto},
+            timeout=15
+        )
+        if respuesta and respuesta.status_code == 200:
+            ULTIMO_TICKER_NOTIFICADO = ticker
+            return True
+    except Exception as exc:
+        print(f"[TELEGRAM] Error de conexión: {exc}")
     return False
 
 
@@ -351,7 +354,7 @@ def metricas_book_exchange(book):
 
 
 # ============================================================
-# DECISION Y REGIMEN
+# DECISION Y REGIMEN (INTACTO)
 # ============================================================
 
 def evaluar_regimen(indicadores, calidad_consenso):
@@ -417,7 +420,7 @@ def decidir_senal(score, prob_arriba, regimen):
 
 
 # ============================================================
-# ANALISIS Y GUARDADO CON SINCRONIZACION A GITHUB (V2)
+# ANALISIS Y GUARDADO CON API DE GITHUB ROBUSTA (SIN CONFLICTOS)
 # ============================================================
 
 def analizar_mercado(mercado):
@@ -512,7 +515,7 @@ def guardar_y_sincronizar_github(analisis):
                 "Accept": "application/vnd.github+json"
             }
             
-            resp_get = requests.get(url, headers=headers, timeout=5)
+            resp_get = requests.get(url, headers=headers, timeout=10)
             sha = resp_get.json().get("sha") if resp_get.status_code == 200 else None
 
             contenido_bytes = json.dumps(historial, indent=2, ensure_ascii=False).encode("utf-8")
@@ -526,7 +529,7 @@ def guardar_y_sincronizar_github(analisis):
             if sha:
                 payload["sha"] = sha
 
-            requests.put(url, headers=headers, json=payload, timeout=8)
+            requests.put(url, headers=headers, json=payload, timeout=15)
             print("[MOTOR] Historial v2 sincronizado con éxito en GitHub.")
         except Exception as exc:
             print(f"[MOTOR] No se pudo sincronizar con GitHub: {exc}")

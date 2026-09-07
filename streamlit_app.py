@@ -1,21 +1,13 @@
 """
-STREAMLIT APP - KALSHI BTC 15M (LECTURA DIRECTA DE GITHUB)
-Descarga el historial directamente desde el repositorio público.
+STREAMLIT APP - KALSHI BTC 15M (MUESTRA TODO EL HISTORIAL)
 """
 
 import json
-import math
-import os
-from datetime import datetime, timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
-
 import requests
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
-
-# ============================================================
-# CONFIGURACION
-# ============================================================
 
 st.set_page_config(
     page_title="Kalshi BTC 15M - Profit Engine V3",
@@ -23,20 +15,12 @@ st.set_page_config(
     layout="wide",
 )
 
-# URL RAW del archivo historial en tu GitHub para que Streamlit lo lea en tiempo real
-GITHUB_RAW_URL = "https://raw.githubusercontent.com/yenisalsa1100/BTC-15M-Analysis/main/historial_btc_15m_v3.json"
-LOCAL_TZ = ZoneInfo("America/Chicago")
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/yenisalsa1100/BTC-15M-Analysis/main/historial_btc_15m_v2.json"
 
-# Auto-refresco de Streamlit cada 3 segundos para buscar datos nuevos
 st_autorefresh(interval=3000, key="autorefresh_historial_github")
-
-# ============================================================
-# FUNCIONES PARA DESCARGAR EL HISTORIAL DESDE GITHUB
-# ============================================================
 
 def cargar_historial_github():
     try:
-        # Añadimos un parámetro de tiempo aleatorio para evitar que Streamlit guarde en caché la respuesta vieja
         url_con_cache_bypass = f"{GITHUB_RAW_URL}?t={datetime.now().timestamp()}"
         respuesta = requests.get(url_con_cache_bypass, timeout=5)
         if respuesta.status_code == 200:
@@ -46,18 +30,13 @@ def cargar_historial_github():
         pass
     return []
 
-# ============================================================
-# DISEÑO DE LA INTERFAZ (UI)
-# ============================================================
-
 st.title("📈 Kalshi BTC 15M - Historial Real del Motor V3")
 st.markdown("Monitoreo en tiempo real conectado al repositorio de GitHub.")
 
 historial = cargar_historial_github()
 
-# Mostrar la última predicción real si existe
 if historial:
-    ultimo = historial[-1]  # Toma la predicción más reciente
+    ultimo = historial[-1]  
     st.subheader("🔍 Última Predicción Registrada por el Motor")
     
     m1, m2, m3, m4 = st.columns(4)
@@ -67,19 +46,20 @@ if historial:
     m4.metric("BTC Consenso", f"${float(ultimo.get('precio_consenso', 0)):,.2f}")
     
     st.write(f"**Ticker del Contrato:** `{ultimo.get('ticker', 'N/A')}`")
-    minuto_val = float(ultimo.get('minuto_entrada', 0)) * 60
-    st.write(f"**Momento de Entrada:** {minuto_val:.0f}s")
+    minuto_val = float(ultimo.get('minuto_entrada', 0))
+    st.write(f"**Minuto de Entrada:** {minuto_val:.2f}")
 else:
-    st.info("Esperando a que el motor ejecute predicciones y actualice GitHub...")
+    st.info("Esperando datos...")
 
 st.markdown("---")
 st.subheader("📜 Registro Completo de Predicciones Guardadas")
 
 if historial:
-    for item in reversed(historial[-15:]):
+    for item in reversed(historial[-20:]):
         decision_txt = item.get("decision", "N/A")
+        fuerza_txt = item.get("fuerza", "N/A")
         ticker_txt = item.get("ticker", "N/A")
         prob_txt = float(item.get("probabilidad", 0))
-        st.text(f"Ticker: {ticker_txt} | Señal: {decision_txt} | Prob: {prob_txt:.1f}%")
+        st.text(f"Ticker: {ticker_txt} | Decisión: {decision_txt} ({fuerza_txt}) | Prob: {prob_txt:.1f}%")
 else:
     st.write("Aún no hay registros disponibles en línea.")

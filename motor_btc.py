@@ -1,5 +1,5 @@
 """
-MOTOR KALSHI BTC 15M - PROFIT ENGINE V3 (PRE-INICIO)
+MOTOR KALSHI BTC 15M - PROFIT ENGINE V3 (COMPLETO & TRACKING)
 Configurado para apuntar al archivo historial_btc_15m_v2.json
 """
 
@@ -25,7 +25,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 # CONFIGURACION GENERAL
 # ============================================================
 
-VERSION_MOTOR = "BTC_15M_PROFIT_ENGINE_V3_PRE_INICIO"
+VERSION_MOTOR = "BTC_15M_PROFIT_ENGINE_V3_FULL"
 
 SERIES_TICKER = "KXBTC15M"
 KALSHI_BASE = "https://external-api.kalshi.com/trade-api/v2"
@@ -210,7 +210,7 @@ def http_post(url, data=None, headers=None, timeout=TIMEOUT_HTTP):
 
 
 # ============================================================
-# TELEGRAM
+# TELEGRAM (CONTROL ESTRICTO: 1 SOLA NOTIFICACION)
 # ============================================================
 
 def enviar_telegram(analisis):
@@ -456,6 +456,8 @@ def analizar_mercado(mercado):
         "fuerza": decision["fuerza"],
         "probabilidad": decision["probabilidad"],
         "motivo_bloqueo": decision["motivo_bloqueo"],
+        "resultado": "PENDIENTE",
+        "profit_15_alcanzado": False
     }
 
 def mostrar_analisis(analisis):
@@ -482,6 +484,10 @@ def guardar_y_sincronizar_github(analisis):
                     historial = []
         except Exception:
             historial = []
+
+    # Evitar duplicar el mismo ticker en el historial local
+    if any(h.get("ticker") == analisis["ticker"] for h in historial):
+        return False
 
     historial.append(analisis)
     historial = historial[-50:]

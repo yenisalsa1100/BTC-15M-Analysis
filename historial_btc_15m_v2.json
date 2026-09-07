@@ -2289,6 +2289,9 @@
       "Compras agresivas: flujo +0.26",
       "Sin absorcion confirmada"
     ],
-    "resultado": null
+    "resultado": "ARRIBA",
+    "evaluacion": "ACIERTO",
+    "resultado_actualizado_en": "2026-09-07T16:37:57.137753+00:00",
+    "pnl_bruto_teorico_1_contrato": 0.48
   }
 ]

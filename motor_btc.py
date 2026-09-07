@@ -109,6 +109,8 @@ ULTIMO_MEMPOOL = {
     "vsize_anterior": None,
 }
 
+ULTIMO_TICKER_NOTIFICADO = None
+
 THREAD_LOCAL = threading.local()
 EXECUTOR = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
@@ -212,12 +214,18 @@ def http_post(url, data=None, headers=None, timeout=TIMEOUT_HTTP):
 # ============================================================
 
 def enviar_telegram(analisis):
+    global ULTIMO_TICKER_NOTIFICADO
+    
     decision = analisis.get("decision")
-    if decision not in ("ARRIBA", "ABAJO"): return
+    ticker = analisis.get("ticker")
+    if decision not in ("ARRIBA", "ABAJO"): return False
+
+    if ticker == ULTIMO_TICKER_NOTIFICADO:
+        return False
 
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-    if not token or not chat_id: return
+    if not token or not chat_id: return False
 
     icono = "🟢" if decision == "ARRIBA" else "🔴"
     target = safe_float(analisis.get("target"), 0.0)
@@ -235,10 +243,15 @@ def enviar_telegram(analisis):
         f"Momento: {minuto*60:.0f}s para iniciar\n"
     )
 
-    http_post(
+    respuesta = http_post(
         f"https://api.telegram.org/bot{token}/sendMessage",
         data={"chat_id": chat_id, "text": texto},
     )
+    
+    if respuesta and respuesta.status_code == 200:
+        ULTIMO_TICKER_NOTIFICADO = ticker
+        return True
+    return False
 
 
 # ============================================================

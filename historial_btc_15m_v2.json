@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V3_PRE_INICIO",
+    "ticker": "KXBTC15M-26SEP071430-30",
+    "target": 65000.0,
+    "precio_consenso": 65000.0,
+    "minuto_entrada": -0.2252986,
+    "score": 65.0,
+    "probabilidad_arriba": 93.75165877243293,
+    "probabilidad_abajo": 6.248341227567067,
+    "decision": "ARRIBA",
+    "fuerza": "FUERTE",
+    "probabilidad": 93.75165877243293,
+    "motivo_bloqueo": null
+  },
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V3_PRE_INICIO",
+    "ticker": "KXBTC15M-26SEP071430-30",
+    "target": 65000.0,
+    "precio_consenso": 65000.0,
+    "minuto_entrada": -0.1839768,
+    "score": 65.0,
+    "probabilidad_arriba": 93.75165877243293,
+    "probabilidad_abajo": 6.248341227567067,
+    "decision": "ARRIBA",
+    "fuerza": "FUERTE",
+    "probabilidad": 93.75165877243293,
+    "motivo_bloqueo": null
+  }
+]

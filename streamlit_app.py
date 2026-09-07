@@ -1,5 +1,5 @@
 """
-STREAMLIT APP - KALSHI BTC 15M (PANEL DE RENDIMIENTO Y EFECTIVIDAD)
+STREAMLIT APP - KALSHI BTC 15M (TRACKING DE PROFIT 15% EN CONTRATOS)
 """
 
 import json
@@ -30,42 +30,40 @@ def cargar_historial_github():
         pass
     return []
 
-st.title("📈 Kalshi BTC 15M - Rendimiento y Profit Engine")
-st.markdown("Monitoreo dinámico de señales, decisiones y efectividad.")
+st.title("📈 Kalshi BTC 15M - Control de Profit (Meta 15%)")
+st.markdown("Seguimiento de contratos que lograron el objetivo de 15% de ganancia en su valor.")
 
 historial = cargar_historial_github()
 
 if historial:
-    # Métricas de resumen global
     total_registros = len(historial)
-    apuestas = [h for h in historial if h.get("decision") in ("ARRIBA", "ABAJO")]
-    total_apostados = len(apuestas)
+    operaciones_validas = [h for h in historial if h.get("decision") in ("ARRIBA", "ABAJO")]
+    total_operados = len(operaciones_validas)
     
-    # Calcular métricas rápidas de porcentaje de señales operables
-    pct_operable = (total_apostados / total_registros * 100) if total_registros > 0 else 0
+    # Contabilizamos los que marcaron éxito en el profit del contrato
+    profit_logrado = sum(1 for h in operaciones_validas if h.get("profit_15_alcanzado", False) == True)
+    efectividad_profit = (profit_logrado / total_operados * 100) if total_operados > 0 else 0.0
 
-    st.subheader("📊 Resumen General del Sistema")
+    st.subheader("🎯 Rendimiento de Captura de Profit")
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Registros", total_registros)
-    c2.metric("Señales de Operación", total_apostados)
-    c3.metric("% de Filtrado (Activas)", f"{pct_operable:.1f}%")
-    c4.metric("Meta de Profit Objetivo", "15.0%")
+    c1.metric("Señales Operadas", total_operados)
+    c2.metric("Tocaron 15% Profit", profit_logrado)
+    c3.metric("Efectividad de Profit", f"{efectividad_profit:.1f}%")
+    c4.metric("Meta por Contrato", "15.0%")
 
     ultimo = historial[-1]  
-    st.subheader("🔍 Última Predicción en Vivo")
+    st.subheader("🔍 Última Operación en Curso / Registrada")
     
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Decisión", ultimo.get("decision", "N/A"), ultimo.get("fuerza", ""))
     m2.metric("Probabilidad", f"{float(ultimo.get('probabilidad', 0)):.1f}%")
     m3.metric("Strike / Target", f"${float(ultimo.get('target', 0)):,.2f}")
     m4.metric("BTC Consenso", f"${float(ultimo.get('precio_consenso', 0)):,.2f}")
-    
-    st.write(f"**Ticker:** `{ultimo.get('ticker', 'N/A')}` | **Minuto de Entrada:** {float(ultimo.get('minuto_entrada', 0)):.2f}")
 else:
     st.info("Esperando datos en el repositorio...")
 
 st.markdown("---")
-st.subheader("📜 Historial Detallado de Decisiones")
+st.subheader("📜 Historial y Estado del 15% Profit")
 
 if historial:
     for item in reversed(historial[-25:]):
@@ -76,12 +74,15 @@ if historial:
         target = float(item.get("target", 0))
         precio = float(item.get("precio_consenso", 0))
         
-        # Color visual según la decisión
+        # Validación del objetivo de profit en el contrato
+        alcanzo_15 = item.get("profit_15_alcanzado", False)
+        etiqueta_estado = "🚀 +15% Profit Logrado" if alcanzo_15 else "⏳ Monitoreando / Sin 15%"
+        
         if decision == "ARRIBA":
-            st.success(f"🟢 **{ticker}** | Decisión: **{decision}** ({fuerza}) | Prob: {prob:.1f}% | Strike: ${target:,.2f} | BTC: ${precio:,.2f}")
+            st.success(f"🟢 **{ticker}** | **{decision}** ({fuerza}) | Prob: {prob:.1f}% | Estado: **{etiqueta_estado}**")
         elif decision == "ABAJO":
-            st.error(f"🔴 **{ticker}** | Decisión: **{decision}** ({fuerza}) | Prob: {prob:.1f}% | Strike: ${target:,.2f} | BTC: ${precio:,.2f}")
+            st.error(f"🔴 **{ticker}** | **{decision}** ({fuerza}) | Prob: {prob:.1f}% | Estado: **{etiqueta_estado}**")
         else:
-            st.info(f"⚪ **{ticker}** | Decisión: **{decision}** ({fuerza}) | Prob: {prob:.1f}% | Strike: ${target:,.2f} | BTC: ${precio:,.2f}")
+            st.info(f"⚪ **{ticker}** | **{decision}** ({fuerza}) | Prob: {prob:.1f}%")
 else:
     st.write("Aún no hay registros disponibles.")

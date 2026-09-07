@@ -1,12 +1,6 @@
 """
 MOTOR KALSHI BTC 15M - PROFIT ENGINE V3 (PRE-INICIO)
-
-Modificaciones principales:
-- Predice 15 segundos ANTES de que comience el contrato real de 15 minutos.
-- Estima el target/strike con el precio actual si Kalshi aún no lo ha fijado.
-- Ignora el spread y edge de Kalshi (ya que no hay liquidez antes de abrir).
-- Manda notificación pura (ARRIBA/ABAJO) basada estrictamente en el modelo técnico.
-- Sincroniza automáticamente el historial con GitHub para la app de Streamlit.
+Configurado para apuntar al archivo historial_btc_15m_v2.json
 """
 
 import base64
@@ -42,7 +36,7 @@ BITSTAMP_BASE = "https://www.bitstamp.net"
 MEMPOOL_BASE = "https://mempool.space"
 
 LOCAL_TZ = ZoneInfo("America/Chicago")
-HISTORIAL_FILE = os.getenv("HISTORIAL_FILE", "historial_btc_15m_v3.json")
+HISTORIAL_FILE = os.getenv("HISTORIAL_FILE", "historial_btc_15m_v2.json")
 
 
 # ============================================================
@@ -410,7 +404,7 @@ def decidir_senal(score, prob_arriba, regimen):
 
 
 # ============================================================
-# ANALISIS Y GUARDADO CON SINCRONIZACION A GITHUB
+# ANALISIS Y GUARDADO CON SINCRONIZACION A GITHUB (V2)
 # ============================================================
 
 def analizar_mercado(mercado):
@@ -506,7 +500,7 @@ def guardar_y_sincronizar_github(analisis):
             contenido_b64 = base64.b64encode(contenido_bytes).decode("utf-8")
 
             payload = {
-                "message": f"Update historial btc via Profit Engine V3 [{analisis.get('ticker')}]",
+                "message": f"Update historial btc v2 via Profit Engine [{analisis.get('ticker')}]",
                 "content": contenido_b64,
                 "branch": "main"
             }
@@ -514,7 +508,7 @@ def guardar_y_sincronizar_github(analisis):
                 payload["sha"] = sha
 
             requests.put(url, headers=headers, json=payload, timeout=8)
-            print("[MOTOR] Historial sincronizado con éxito en GitHub.")
+            print("[MOTOR] Historial v2 sincronizado con éxito en GitHub.")
         except Exception as exc:
             print(f"[MOTOR] No se pudo sincronizar con GitHub: {exc}")
 
@@ -531,7 +525,7 @@ def guardar_si_corresponde(analisis):
 def main():
     print("\n========================================")
     print(" MOTOR BTC 15M INICIADO - V3 PRE-INICIO")
-    print(" Ventana -15s a 0s | Sin bloqueo de spread")
+    print(" Ventana -15s a 0s | Apuntando a historial v2")
     print("========================================")
 
     try:

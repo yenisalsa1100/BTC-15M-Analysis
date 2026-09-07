@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "version": "BTC_15M_PROFIT_ENGINE_V3_FULL",
+    "ticker": "KXBTC15M-26SEP071600-00",
+    "target": 65000.0,
+    "precio_consenso": 65000.0,
+    "minuto_entrada": -0.22508399999999998,
+    "score": 65.0,
+    "probabilidad_arriba": 93.75165877243293,
+    "probabilidad_abajo": 6.248341227567067,
+    "decision": "ARRIBA",
+    "fuerza": "FUERTE",
+    "probabilidad": 93.75165877243293,
+    "motivo_bloqueo": null,
+    "resultado": "PENDIENTE",
+    "profit_15_alcanzado": false
+  }
+]
